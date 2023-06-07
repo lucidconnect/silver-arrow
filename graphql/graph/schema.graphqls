@@ -1,0 +1,34 @@
+# GraphQL schema example
+#
+# https://gqlgen.com/getting-started/
+
+type Query {
+  fetchSubscriptions(account: String!): [Subscription!]!
+}
+
+type Mutation {
+  # addAccount(input: Account!): String!
+  # addSubscription(input: NewSubscription!): Subscription!
+  cancelSubscription(id: String!): String!
+}
+
+input NewSubscription {
+  amount: Float!
+  destinationAddress: String!
+  fromAddress: String!
+  interval: Int!
+}
+
+type Subscription {
+  id: ID!
+  amount: Float!
+  destinationAddress: String!
+  account: String!
+  interval: Int!
+}
+
+input Account {
+  address: String!
+  signerAddress: String
+}
+
