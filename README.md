@@ -30,4 +30,4 @@ Address --> Subscription (one to many)
 ## API
 
 RPC?
-Graphql
+Graphql?

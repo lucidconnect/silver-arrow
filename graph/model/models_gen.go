@@ -13,3 +13,11 @@ type NewSubscription struct {
 	FromAddress        string  `json:"fromAddress"`
 	Interval           int     `json:"interval"`
 }
+
+type SubscriptionData struct {
+	ID                 string  `json:"id"`
+	Amount             float64 `json:"amount"`
+	DestinationAddress string  `json:"destinationAddress"`
+	Account            string  `json:"account"`
+	Interval           int     `json:"interval"`
+}

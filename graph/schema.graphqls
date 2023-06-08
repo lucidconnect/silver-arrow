@@ -3,23 +3,16 @@
 # https://gqlgen.com/getting-started/
 
 type Query {
-  fetchSubscriptions(account: String!): [Subscription!]!
+  fetchSubscriptions(account: String!): [SubscriptionData!]!
 }
 
 type Mutation {
-  # addAccount(input: Account!): String!
-  # addSubscription(input: NewSubscription!): Subscription!
+  addAccount(input: Account!): String!
+  addSubscription(input: NewSubscription!): SubscriptionData!
   cancelSubscription(id: String!): String!
 }
 
-input NewSubscription {
-  amount: Float!
-  destinationAddress: String!
-  fromAddress: String!
-  interval: Int!
-}
-
-type Subscription {
+type SubscriptionData {
   id: ID!
   amount: Float!
   destinationAddress: String!
@@ -32,3 +25,9 @@ input Account {
   signerAddress: String
 }
 
+input NewSubscription {
+  amount: Float!
+  destinationAddress: String!
+  fromAddress: String!
+  interval: Int!
+}
