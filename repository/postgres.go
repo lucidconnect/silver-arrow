@@ -25,6 +25,10 @@ func SetupDatabase(dsn string, dbconn *sql.DB) (*gorm.DB, error) {
 	}
 
 	// ...
+
+	db.Model(&models.Subscription{}).
+		Exec(createForeignKeyIfNotExistsQuery("subscriptions", "accounts", "account_address", "account_address"))
+
 	return db, nil
 }
 
@@ -52,4 +56,33 @@ func (p *PostgresDb) ListSubscriptions(address string) ([]models.Subscription, e
 
 func (p *PostgresDb) RemoveSubscription(id uint64) error {
 	return p.Db.Where("id = ?", id).UpdateColumn("active", false).Error
+}
+
+func createForeignKeyIfNotExistsQuery(fromTable, targetTable, fromCol, targetCol string) string {
+	return fmt.Sprintf(`
+		DO $$
+		BEGIN
+			IF NOT (
+				SELECT
+					COUNT(1) >= 1
+				FROM 
+					information_schema.table_constraints AS tc 
+					JOIN information_schema.key_column_usage AS kcu
+						ON tc.constraint_name = kcu.constraint_name
+						AND tc.table_schema = kcu.table_schema
+					JOIN information_schema.constraint_column_usage AS ccu
+						ON ccu.constraint_name = tc.constraint_name
+						AND ccu.table_schema = tc.table_schema
+				WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_name='%s' AND ccu.column_name = '%s'
+			) THEN
+					ALTER TABLE %s
+					ADD CONSTRAINT %s_%s_%s_%s_foreign
+					FOREIGN KEY (%s) REFERENCES %s(%s)
+					ON UPDATE RESTRICT
+					ON DELETE RESTRICT;
+			END IF;
+		END;
+		$$;`,
+		fromTable, targetCol, fromTable, fromTable, fromCol, targetTable, targetCol, fromCol, targetTable, targetCol,
+	)
 }
