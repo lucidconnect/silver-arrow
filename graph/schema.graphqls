@@ -12,22 +12,26 @@ type Mutation {
   cancelSubscription(id: String!): String!
 }
 
+# account creation
+input Account {
+	email: String
+  address: String!
+}
+
+# subscription data
+input NewSubscription {
+	token: String!
+	amount: Float!
+	interval: Int!
+	originAddress: String!
+  destinationAddress: String!
+}
+
 type SubscriptionData {
   id: ID!
+	token: String!
   amount: Float!
+	interval: Int!
+	originAddress: String!
   destinationAddress: String!
-  account: String!
-  interval: Int!
-}
-
-input Account {
-  address: String!
-  signerAddress: String
-}
-
-input NewSubscription {
-  amount: Float!
-  destinationAddress: String!
-  fromAddress: String!
-  interval: Int!
 }

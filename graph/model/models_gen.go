@@ -3,21 +3,23 @@
 package model
 
 type Account struct {
-	Address       string  `json:"address"`
-	SignerAddress *string `json:"signerAddress,omitempty"`
+	Email   *string `json:"email,omitempty"`
+	Address string  `json:"address"`
 }
 
 type NewSubscription struct {
+	Token              string  `json:"token"`
 	Amount             float64 `json:"amount"`
-	DestinationAddress string  `json:"destinationAddress"`
-	FromAddress        string  `json:"fromAddress"`
 	Interval           int     `json:"interval"`
+	OriginAddress      string  `json:"originAddress"`
+	DestinationAddress string  `json:"destinationAddress"`
 }
 
 type SubscriptionData struct {
 	ID                 string  `json:"id"`
+	Token              string  `json:"token"`
 	Amount             float64 `json:"amount"`
-	DestinationAddress string  `json:"destinationAddress"`
-	Account            string  `json:"account"`
 	Interval           int     `json:"interval"`
+	OriginAddress      string  `json:"originAddress"`
+	DestinationAddress string  `json:"destinationAddress"`
 }

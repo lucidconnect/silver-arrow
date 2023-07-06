@@ -55,11 +55,12 @@ type ComplexityRoot struct {
 	}
 
 	SubscriptionData struct {
-		Account            func(childComplexity int) int
 		Amount             func(childComplexity int) int
 		DestinationAddress func(childComplexity int) int
 		ID                 func(childComplexity int) int
 		Interval           func(childComplexity int) int
+		OriginAddress      func(childComplexity int) int
+		Token              func(childComplexity int) int
 	}
 }
 
@@ -135,13 +136,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.FetchSubscriptions(childComplexity, args["account"].(string)), true
 
-	case "SubscriptionData.account":
-		if e.complexity.SubscriptionData.Account == nil {
-			break
-		}
-
-		return e.complexity.SubscriptionData.Account(childComplexity), true
-
 	case "SubscriptionData.amount":
 		if e.complexity.SubscriptionData.Amount == nil {
 			break
@@ -169,6 +163,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.SubscriptionData.Interval(childComplexity), true
+
+	case "SubscriptionData.originAddress":
+		if e.complexity.SubscriptionData.OriginAddress == nil {
+			break
+		}
+
+		return e.complexity.SubscriptionData.OriginAddress(childComplexity), true
+
+	case "SubscriptionData.token":
+		if e.complexity.SubscriptionData.Token == nil {
+			break
+		}
+
+		return e.complexity.SubscriptionData.Token(childComplexity), true
 
 	}
 	return 0, false
@@ -291,24 +299,28 @@ type Mutation {
   cancelSubscription(id: String!): String!
 }
 
+# account creation
+input Account {
+	email: String
+  address: String!
+}
+
+# subscription data
+input NewSubscription {
+	token: String!
+	amount: Float!
+	interval: Int!
+	originAddress: String!
+  destinationAddress: String!
+}
+
 type SubscriptionData {
   id: ID!
+	token: String!
   amount: Float!
+	interval: Int!
+	originAddress: String!
   destinationAddress: String!
-  account: String!
-  interval: Int!
-}
-
-input Account {
-  address: String!
-  signerAddress: String
-}
-
-input NewSubscription {
-  amount: Float!
-  destinationAddress: String!
-  fromAddress: String!
-  interval: Int!
 }
 `, BuiltIn: false},
 }
@@ -481,7 +493,7 @@ func (ec *executionContext) fieldContext_Mutation_addAccount(ctx context.Context
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_addAccount_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -527,14 +539,16 @@ func (ec *executionContext) fieldContext_Mutation_addSubscription(ctx context.Co
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_SubscriptionData_id(ctx, field)
+			case "token":
+				return ec.fieldContext_SubscriptionData_token(ctx, field)
 			case "amount":
 				return ec.fieldContext_SubscriptionData_amount(ctx, field)
-			case "destinationAddress":
-				return ec.fieldContext_SubscriptionData_destinationAddress(ctx, field)
-			case "account":
-				return ec.fieldContext_SubscriptionData_account(ctx, field)
 			case "interval":
 				return ec.fieldContext_SubscriptionData_interval(ctx, field)
+			case "originAddress":
+				return ec.fieldContext_SubscriptionData_originAddress(ctx, field)
+			case "destinationAddress":
+				return ec.fieldContext_SubscriptionData_destinationAddress(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type SubscriptionData", field.Name)
 		},
@@ -548,7 +562,7 @@ func (ec *executionContext) fieldContext_Mutation_addSubscription(ctx context.Co
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_addSubscription_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -603,7 +617,7 @@ func (ec *executionContext) fieldContext_Mutation_cancelSubscription(ctx context
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_cancelSubscription_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -649,14 +663,16 @@ func (ec *executionContext) fieldContext_Query_fetchSubscriptions(ctx context.Co
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_SubscriptionData_id(ctx, field)
+			case "token":
+				return ec.fieldContext_SubscriptionData_token(ctx, field)
 			case "amount":
 				return ec.fieldContext_SubscriptionData_amount(ctx, field)
-			case "destinationAddress":
-				return ec.fieldContext_SubscriptionData_destinationAddress(ctx, field)
-			case "account":
-				return ec.fieldContext_SubscriptionData_account(ctx, field)
 			case "interval":
 				return ec.fieldContext_SubscriptionData_interval(ctx, field)
+			case "originAddress":
+				return ec.fieldContext_SubscriptionData_originAddress(ctx, field)
+			case "destinationAddress":
+				return ec.fieldContext_SubscriptionData_destinationAddress(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type SubscriptionData", field.Name)
 		},
@@ -670,7 +686,7 @@ func (ec *executionContext) fieldContext_Query_fetchSubscriptions(ctx context.Co
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_fetchSubscriptions_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -744,7 +760,7 @@ func (ec *executionContext) fieldContext_Query___type(ctx context.Context, field
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query___type_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -848,6 +864,50 @@ func (ec *executionContext) fieldContext_SubscriptionData_id(ctx context.Context
 	return fc, nil
 }
 
+func (ec *executionContext) _SubscriptionData_token(ctx context.Context, field graphql.CollectedField, obj *model.SubscriptionData) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SubscriptionData_token(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Token, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SubscriptionData_token(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SubscriptionData",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _SubscriptionData_amount(ctx context.Context, field graphql.CollectedField, obj *model.SubscriptionData) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_SubscriptionData_amount(ctx, field)
 	if err != nil {
@@ -892,94 +952,6 @@ func (ec *executionContext) fieldContext_SubscriptionData_amount(ctx context.Con
 	return fc, nil
 }
 
-func (ec *executionContext) _SubscriptionData_destinationAddress(ctx context.Context, field graphql.CollectedField, obj *model.SubscriptionData) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SubscriptionData_destinationAddress(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.DestinationAddress, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_SubscriptionData_destinationAddress(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SubscriptionData",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SubscriptionData_account(ctx context.Context, field graphql.CollectedField, obj *model.SubscriptionData) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SubscriptionData_account(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Account, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_SubscriptionData_account(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SubscriptionData",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _SubscriptionData_interval(ctx context.Context, field graphql.CollectedField, obj *model.SubscriptionData) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_SubscriptionData_interval(ctx, field)
 	if err != nil {
@@ -1019,6 +991,94 @@ func (ec *executionContext) fieldContext_SubscriptionData_interval(ctx context.C
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SubscriptionData_originAddress(ctx context.Context, field graphql.CollectedField, obj *model.SubscriptionData) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SubscriptionData_originAddress(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.OriginAddress, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SubscriptionData_originAddress(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SubscriptionData",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SubscriptionData_destinationAddress(ctx context.Context, field graphql.CollectedField, obj *model.SubscriptionData) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SubscriptionData_destinationAddress(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DestinationAddress, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SubscriptionData_destinationAddress(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SubscriptionData",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -2445,7 +2505,7 @@ func (ec *executionContext) fieldContext___Type_fields(ctx context.Context, fiel
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field___Type_fields_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -2633,7 +2693,7 @@ func (ec *executionContext) fieldContext___Type_enumValues(ctx context.Context, 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field___Type_enumValues_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -2804,13 +2864,22 @@ func (ec *executionContext) unmarshalInputAccount(ctx context.Context, obj inter
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"address", "signerAddress"}
+	fieldsInOrder := [...]string{"email", "address"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
+		case "email":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Email = data
 		case "address":
 			var err error
 
@@ -2820,15 +2889,6 @@ func (ec *executionContext) unmarshalInputAccount(ctx context.Context, obj inter
 				return it, err
 			}
 			it.Address = data
-		case "signerAddress":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("signerAddress"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.SignerAddress = data
 		}
 	}
 
@@ -2842,13 +2902,22 @@ func (ec *executionContext) unmarshalInputNewSubscription(ctx context.Context, o
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"amount", "destinationAddress", "fromAddress", "interval"}
+	fieldsInOrder := [...]string{"token", "amount", "interval", "originAddress", "destinationAddress"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
+		case "token":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("token"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Token = data
 		case "amount":
 			var err error
 
@@ -2858,24 +2927,6 @@ func (ec *executionContext) unmarshalInputNewSubscription(ctx context.Context, o
 				return it, err
 			}
 			it.Amount = data
-		case "destinationAddress":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("destinationAddress"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DestinationAddress = data
-		case "fromAddress":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fromAddress"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.FromAddress = data
 		case "interval":
 			var err error
 
@@ -2885,6 +2936,24 @@ func (ec *executionContext) unmarshalInputNewSubscription(ctx context.Context, o
 				return it, err
 			}
 			it.Interval = data
+		case "originAddress":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("originAddress"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OriginAddress = data
+		case "destinationAddress":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("destinationAddress"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DestinationAddress = data
 		}
 	}
 
@@ -3050,23 +3119,28 @@ func (ec *executionContext) _SubscriptionData(ctx context.Context, sel ast.Selec
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "token":
+			out.Values[i] = ec._SubscriptionData_token(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "amount":
 			out.Values[i] = ec._SubscriptionData_amount(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "destinationAddress":
-			out.Values[i] = ec._SubscriptionData_destinationAddress(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "account":
-			out.Values[i] = ec._SubscriptionData_account(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "interval":
 			out.Values[i] = ec._SubscriptionData_interval(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "originAddress":
+			out.Values[i] = ec._SubscriptionData_originAddress(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "destinationAddress":
+			out.Values[i] = ec._SubscriptionData_destinationAddress(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

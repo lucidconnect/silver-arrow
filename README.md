@@ -31,3 +31,11 @@ Address --> Subscription (one to many)
 
 RPC?
 Graphql?
+During account creation:
+    Email, AccountAddress
+Adding a new subscription/recurring payment:
+    OriginAddress
+    DestinationAddress
+    Amount
+    Token
+    Interval
