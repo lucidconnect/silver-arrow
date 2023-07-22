@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: silver-arrow-staging
+    env: go
+    region: oregon
+    buildCommand: ./render-build.sh
+    startCommand: ./silver-arrow
+    healthCheckPath: /
+    envVars:
+      - key: APP_ENV
+        sync: false
+      - key: GITHUB_TOKEN
+        sync: false
+      - key: GITHUB_USER
+        sync: false
+      - key: NODE_URL
+        sync: false
+      - key: PAYMASTER_URL
+        sync: false
+      - key: ENTRY_POINT
+        sync: false
+      - key: DATABASE_URL
+        sync: false
