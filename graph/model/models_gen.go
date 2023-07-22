@@ -5,21 +5,22 @@ package model
 type Account struct {
 	Email   *string `json:"email,omitempty"`
 	Address string  `json:"address"`
+	Signer  *string `json:"signer,omitempty"`
 }
 
 type NewSubscription struct {
-	Token              string  `json:"token"`
-	Amount             float64 `json:"amount"`
-	Interval           int     `json:"interval"`
-	OriginAddress      string  `json:"originAddress"`
-	DestinationAddress string  `json:"destinationAddress"`
+	Token         string  `json:"token"`
+	Amount        float64 `json:"amount"`
+	Interval      int     `json:"interval"`
+	MerchantID    string  `json:"merchantId"`
+	WalletAddress string  `json:"walletAddress"`
 }
 
 type SubscriptionData struct {
-	ID                 string  `json:"id"`
-	Token              string  `json:"token"`
-	Amount             float64 `json:"amount"`
-	Interval           int     `json:"interval"`
-	OriginAddress      string  `json:"originAddress"`
-	DestinationAddress string  `json:"destinationAddress"`
+	ID            string  `json:"id"`
+	Token         string  `json:"token"`
+	Amount        float64 `json:"amount"`
+	Interval      int     `json:"interval"`
+	MerchantID    string  `json:"merchantId"`
+	WalletAddress string  `json:"walletAddress"`
 }

@@ -1,11 +1,10 @@
 package models
 
 type Subscription struct {
-	ID                uint64  `gorm:"primaryKey"`
-	Amount            float64 `gorm:"not null"`
-	Active            bool    `gorm:"index;not null;default:TRUE"`
-	Interval          int     `gorm:"not null"`
-	Currency          string  `gorm:"not null"`
-	AccountAddress    string  `gorm:"index;not null"`
-	DestinationAdress string  `gorm:"index;not null"`
+	Amount        float64 `bson:"amount"`
+	Active        bool    `bson:"active"`
+	Interval      int     `bson:"interval"`
+	Token         string  `bson:"token"` // really the token contract
+	MerchantId    string  `bson:"merchant_id"`
+	WalletAddress string  `bson:"wallet_address"`
 }

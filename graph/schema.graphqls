@@ -16,6 +16,7 @@ type Mutation {
 input Account {
 	email: String
   address: String!
+  signer: String
 }
 
 # subscription data
@@ -23,8 +24,8 @@ input NewSubscription {
 	token: String!
 	amount: Float!
 	interval: Int!
-	originAddress: String!
-  destinationAddress: String!
+  merchantId: String!
+	walletAddress: String!
 }
 
 type SubscriptionData {
@@ -32,6 +33,6 @@ type SubscriptionData {
 	token: String!
   amount: Float!
 	interval: Int!
-	originAddress: String!
-  destinationAddress: String!
+  merchantId: String!
+	walletAddress: String!
 }

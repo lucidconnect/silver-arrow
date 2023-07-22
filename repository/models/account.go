@@ -1,7 +1,8 @@
 package models
 
-type Account struct {
-	ID             uint64 `gorm:"primaryKey"`
-	SignerAddress  string `gorm:"not null"`
-	AccountAddress string `gorm:"not null"`
+type Wallet struct {
+	Email          string `bson:"email,omitempty"`
+	SignerAddress  string `bson:"signer_address,omitempty"`
+	AccountAddress string `bson:"account_address,omitempty"`
+	Subscriptions  []Subscription
 }

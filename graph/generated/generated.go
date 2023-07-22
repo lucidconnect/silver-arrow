@@ -55,12 +55,12 @@ type ComplexityRoot struct {
 	}
 
 	SubscriptionData struct {
-		Amount             func(childComplexity int) int
-		DestinationAddress func(childComplexity int) int
-		ID                 func(childComplexity int) int
-		Interval           func(childComplexity int) int
-		OriginAddress      func(childComplexity int) int
-		Token              func(childComplexity int) int
+		Amount        func(childComplexity int) int
+		ID            func(childComplexity int) int
+		Interval      func(childComplexity int) int
+		MerchantID    func(childComplexity int) int
+		Token         func(childComplexity int) int
+		WalletAddress func(childComplexity int) int
 	}
 }
 
@@ -143,13 +143,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.SubscriptionData.Amount(childComplexity), true
 
-	case "SubscriptionData.destinationAddress":
-		if e.complexity.SubscriptionData.DestinationAddress == nil {
-			break
-		}
-
-		return e.complexity.SubscriptionData.DestinationAddress(childComplexity), true
-
 	case "SubscriptionData.id":
 		if e.complexity.SubscriptionData.ID == nil {
 			break
@@ -164,12 +157,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.SubscriptionData.Interval(childComplexity), true
 
-	case "SubscriptionData.originAddress":
-		if e.complexity.SubscriptionData.OriginAddress == nil {
+	case "SubscriptionData.merchantId":
+		if e.complexity.SubscriptionData.MerchantID == nil {
 			break
 		}
 
-		return e.complexity.SubscriptionData.OriginAddress(childComplexity), true
+		return e.complexity.SubscriptionData.MerchantID(childComplexity), true
 
 	case "SubscriptionData.token":
 		if e.complexity.SubscriptionData.Token == nil {
@@ -177,6 +170,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.SubscriptionData.Token(childComplexity), true
+
+	case "SubscriptionData.walletAddress":
+		if e.complexity.SubscriptionData.WalletAddress == nil {
+			break
+		}
+
+		return e.complexity.SubscriptionData.WalletAddress(childComplexity), true
 
 	}
 	return 0, false
@@ -303,6 +303,7 @@ type Mutation {
 input Account {
 	email: String
   address: String!
+  signer: String
 }
 
 # subscription data
@@ -310,8 +311,8 @@ input NewSubscription {
 	token: String!
 	amount: Float!
 	interval: Int!
-	originAddress: String!
-  destinationAddress: String!
+  merchantId: String!
+	walletAddress: String!
 }
 
 type SubscriptionData {
@@ -319,8 +320,8 @@ type SubscriptionData {
 	token: String!
   amount: Float!
 	interval: Int!
-	originAddress: String!
-  destinationAddress: String!
+  merchantId: String!
+	walletAddress: String!
 }
 `, BuiltIn: false},
 }
@@ -545,10 +546,10 @@ func (ec *executionContext) fieldContext_Mutation_addSubscription(ctx context.Co
 				return ec.fieldContext_SubscriptionData_amount(ctx, field)
 			case "interval":
 				return ec.fieldContext_SubscriptionData_interval(ctx, field)
-			case "originAddress":
-				return ec.fieldContext_SubscriptionData_originAddress(ctx, field)
-			case "destinationAddress":
-				return ec.fieldContext_SubscriptionData_destinationAddress(ctx, field)
+			case "merchantId":
+				return ec.fieldContext_SubscriptionData_merchantId(ctx, field)
+			case "walletAddress":
+				return ec.fieldContext_SubscriptionData_walletAddress(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type SubscriptionData", field.Name)
 		},
@@ -669,10 +670,10 @@ func (ec *executionContext) fieldContext_Query_fetchSubscriptions(ctx context.Co
 				return ec.fieldContext_SubscriptionData_amount(ctx, field)
 			case "interval":
 				return ec.fieldContext_SubscriptionData_interval(ctx, field)
-			case "originAddress":
-				return ec.fieldContext_SubscriptionData_originAddress(ctx, field)
-			case "destinationAddress":
-				return ec.fieldContext_SubscriptionData_destinationAddress(ctx, field)
+			case "merchantId":
+				return ec.fieldContext_SubscriptionData_merchantId(ctx, field)
+			case "walletAddress":
+				return ec.fieldContext_SubscriptionData_walletAddress(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type SubscriptionData", field.Name)
 		},
@@ -996,8 +997,8 @@ func (ec *executionContext) fieldContext_SubscriptionData_interval(ctx context.C
 	return fc, nil
 }
 
-func (ec *executionContext) _SubscriptionData_originAddress(ctx context.Context, field graphql.CollectedField, obj *model.SubscriptionData) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SubscriptionData_originAddress(ctx, field)
+func (ec *executionContext) _SubscriptionData_merchantId(ctx context.Context, field graphql.CollectedField, obj *model.SubscriptionData) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SubscriptionData_merchantId(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1010,7 +1011,7 @@ func (ec *executionContext) _SubscriptionData_originAddress(ctx context.Context,
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.OriginAddress, nil
+		return obj.MerchantID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1027,7 +1028,7 @@ func (ec *executionContext) _SubscriptionData_originAddress(ctx context.Context,
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SubscriptionData_originAddress(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_SubscriptionData_merchantId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "SubscriptionData",
 		Field:      field,
@@ -1040,8 +1041,8 @@ func (ec *executionContext) fieldContext_SubscriptionData_originAddress(ctx cont
 	return fc, nil
 }
 
-func (ec *executionContext) _SubscriptionData_destinationAddress(ctx context.Context, field graphql.CollectedField, obj *model.SubscriptionData) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SubscriptionData_destinationAddress(ctx, field)
+func (ec *executionContext) _SubscriptionData_walletAddress(ctx context.Context, field graphql.CollectedField, obj *model.SubscriptionData) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SubscriptionData_walletAddress(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1054,7 +1055,7 @@ func (ec *executionContext) _SubscriptionData_destinationAddress(ctx context.Con
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.DestinationAddress, nil
+		return obj.WalletAddress, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1071,7 +1072,7 @@ func (ec *executionContext) _SubscriptionData_destinationAddress(ctx context.Con
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SubscriptionData_destinationAddress(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_SubscriptionData_walletAddress(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "SubscriptionData",
 		Field:      field,
@@ -2864,7 +2865,7 @@ func (ec *executionContext) unmarshalInputAccount(ctx context.Context, obj inter
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"email", "address"}
+	fieldsInOrder := [...]string{"email", "address", "signer"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -2889,6 +2890,15 @@ func (ec *executionContext) unmarshalInputAccount(ctx context.Context, obj inter
 				return it, err
 			}
 			it.Address = data
+		case "signer":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("signer"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Signer = data
 		}
 	}
 
@@ -2902,7 +2912,7 @@ func (ec *executionContext) unmarshalInputNewSubscription(ctx context.Context, o
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"token", "amount", "interval", "originAddress", "destinationAddress"}
+	fieldsInOrder := [...]string{"token", "amount", "interval", "merchantId", "walletAddress"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -2936,24 +2946,24 @@ func (ec *executionContext) unmarshalInputNewSubscription(ctx context.Context, o
 				return it, err
 			}
 			it.Interval = data
-		case "originAddress":
+		case "merchantId":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("originAddress"))
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("merchantId"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.OriginAddress = data
-		case "destinationAddress":
+			it.MerchantID = data
+		case "walletAddress":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("destinationAddress"))
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("walletAddress"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.DestinationAddress = data
+			it.WalletAddress = data
 		}
 	}
 
@@ -3134,13 +3144,13 @@ func (ec *executionContext) _SubscriptionData(ctx context.Context, sel ast.Selec
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "originAddress":
-			out.Values[i] = ec._SubscriptionData_originAddress(ctx, field, obj)
+		case "merchantId":
+			out.Values[i] = ec._SubscriptionData_merchantId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "destinationAddress":
-			out.Values[i] = ec._SubscriptionData_destinationAddress(ctx, field, obj)
+		case "walletAddress":
+			out.Values[i] = ec._SubscriptionData_walletAddress(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
