@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"net/url"
 	"os"
 
 	"github.com/helicarrierstudio/silver-arrow/repository/models"
@@ -23,13 +22,9 @@ func NewMongoDb(mongo *mongo.Client) *MongoDb {
 }
 
 func SetupMongoDatabase() (*mongo.Client, error) {
-	username := os.Getenv("MONGO_USER")
-	password := os.Getenv("MONGO_PASSWORD")
-	uri := os.Getenv("MONGO_URL")
-	fullUri := fmt.Sprintf("mongodb+srv://%s:%s@%s", url.QueryEscape(username), url.QueryEscape(password), uri)
-
+	uri := os.Getenv("DATABASE_URL")
 	serverAPI := options.ServerAPI(options.ServerAPIVersion1)
-	opts := options.Client().ApplyURI(fullUri).SetServerAPIOptions(serverAPI)
+	opts := options.Client().ApplyURI(uri).SetServerAPIOptions(serverAPI)
 
 	// Create a new client and connect to the server
 	client, err := mongo.Connect(context.TODO(), opts)

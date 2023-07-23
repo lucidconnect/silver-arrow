@@ -34,13 +34,17 @@ func (ws *WalletService) AddAccount(input model.Account) error {
 }
 
 func (ws *WalletService) AddSubscription(input model.NewSubscription) (*model.SubscriptionData, error) {
+	CreateAccessKey()
 	sub := models.Subscription{
-		Amount:   input.Amount,
-		Active:   true,
-		Interval: input.Interval,
-		Token:    input.Token,
-		
+		Amount:     input.Amount,
+		Active:     true,
+		Interval:   input.Interval,
+		Token:      input.Token,
+		MerchantId: input.MerchantID,
 	}
+
+	// strconv.
+	// CreateaWhitelistData(in)
 	err := ws.repository.AddSubscription(sub)
 	if err != nil {
 		log.Println(err)

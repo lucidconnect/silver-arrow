@@ -4,22 +4,22 @@ import (
 	"encoding/binary"
 	"errors"
 
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
-func CreateAccessKey() ([]byte, error) {
+func CreateAccessKey() (string, string, error) {
 	privateKey, err := crypto.GenerateKey()
 	if err != nil {
-		return nil, err
+		return "", "", err
 	}
-
-	signer := crypto.PubkeyToAddress(privateKey.PublicKey)
 
 	// encrypt and store the private key (not ideal)
 	// I plan to use hashicorp vault to manage the private keys, for now a database will do.
-	crypto.FromECDSA(privateKey)
+	pubKey := crypto.PubkeyToAddress(privateKey.PublicKey).Hex()
+	signer := hexutil.EncodeBig(privateKey.D)
 
-	return signer.Bytes(), nil
+	return signer, pubKey, nil
 }
 
 // should return a byte array consisting of the publicKey, merchantid
