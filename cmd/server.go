@@ -30,6 +30,7 @@ func main() {
 	}
 
 	router := chi.NewRouter()
+	loadCORS(router)
 
 	walletRepo := repository.NewMongoDb(mongoClient)
 	walletSrv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{
