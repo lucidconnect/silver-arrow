@@ -7,10 +7,12 @@ import (
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/go-chi/chi"
 	"github.com/helicarrierstudio/silver-arrow/graph"
 	"github.com/helicarrierstudio/silver-arrow/graph/generated"
 	"github.com/helicarrierstudio/silver-arrow/repository"
 	"github.com/joho/godotenv"
+	"github.com/rs/cors"
 )
 
 const defaultPort = "8080"
@@ -27,13 +29,14 @@ func main() {
 		log.Panic(err)
 	}
 
+	router := chi.NewRouter()
+
 	walletRepo := repository.NewMongoDb(mongoClient)
 	walletSrv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{
 		WalletRepository: walletRepo,
 	}}))
-
-	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	http.Handle("/query", walletSrv)
+	router.Handle("/", playground.Handler("GraphQL playground", "/query"))
+	router.Handle("/query", walletSrv)
 
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
 	log.Fatal(http.ListenAndServe(":"+port, nil))
@@ -55,5 +58,49 @@ func loadEnv() {
 		if err != nil {
 			log.Fatal("Error loading .env file")
 		}
+	}
+}
+
+func loadCORS(router *chi.Mux) {
+	switch os.Getenv("APP_ENV") {
+	// case "production":
+	// 	{
+	// 		allowedOrigins := []string{"https://checkout.sendcashpay.com", "https://checkout.transfers.africa", "https://sendcashpay.com"}
+	// 		for i := range utils.CustomMerchantCodes {
+	// 			allowedOrigins = append(allowedOrigins, fmt.Sprintf("https://%v.web3-pay.com", utils.CustomMerchantCodes[i]))
+	// 		}
+	// 		router.Use(cors.New(cors.Options{
+	// 			AllowedOrigins: allowedOrigins,
+	// 			AllowedMethods: []string{
+	// 				http.MethodOptions,
+	// 				http.MethodGet,
+	// 				http.MethodPost,
+	// 			},
+	// 			AllowedHeaders:   []string{"*"},
+	// 			AllowCredentials: false,
+	// 		}).Handler)
+	// 	}
+	// case "staging":
+	// 	router.Use(cors.New(cors.Options{
+	// 		AllowedOrigins: []string{"https://checkout.sendcashpay.com", "https://*", "http://*", "https://checkout.transfers.africa"},
+	// 		AllowedMethods: []string{
+	// 			http.MethodOptions,
+	// 			http.MethodGet,
+	// 			http.MethodPost,
+	// 		},
+	// 		AllowedHeaders:   []string{"*"},
+	// 		AllowCredentials: false,
+	// 	}).Handler)
+	default:
+		router.Use(cors.New(cors.Options{
+			AllowedOrigins: []string{"https://*", "http://*"},
+			AllowedMethods: []string{
+				http.MethodOptions,
+				http.MethodGet,
+				http.MethodPost,
+			},
+			AllowedHeaders:   []string{"*"},
+			AllowCredentials: false,
+		}).Handler)
 	}
 }
