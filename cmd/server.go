@@ -101,7 +101,7 @@ func loadCORS(router *chi.Mux) {
 				http.MethodPost,
 			},
 			AllowedHeaders:   []string{"*"},
-			AllowCredentials: false,
+			AllowCredentials: true,
 		}).Handler)
 	}
 }
