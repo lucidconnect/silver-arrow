@@ -1,4 +1,4 @@
-package useroperation
+package erc4337
 
 import (
 	"crypto/ecdsa"
@@ -6,28 +6,31 @@ import (
 	"fmt"
 	"log"
 	"math/big"
-	"os"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/helicarrierstudio/silver-arrow/bundlerclient"
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/pkg/errors"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
 
 type ERCBundler struct {
 	EntryPoint string
-	client     *bundlerclient.Client
+	client     *Client
 }
 
-func NewERCBundler(entrypoint string, client *bundlerclient.Client) *ERCBundler {
+func NewERCBundler(entrypoint string, client *Client) *ERCBundler {
 	return &ERCBundler{
 		EntryPoint: entrypoint,
 		client:     client,
 	}
+}
+
+func (b *ERCBundler) GetClient() *ethclient.Client {
+	return b.client.GetEthClient()
 }
 
 func (b *ERCBundler) AccountNonce(sender string) uint64 {
@@ -39,8 +42,8 @@ func (b *ERCBundler) AccountNonce(sender string) uint64 {
 
 // UserOperation represents an EIP-4337 style transaction for a smart contract account.
 // CreateUserOperation returns a signed useroperation
-func (b *ERCBundler) CreateUserOperation(sender, target, token string, callData []byte, nonce, amount *big.Int, sponsored bool) (map[string]any, error) {
-	var paymasterResult *bundlerclient.PaymasterResult
+func (b *ERCBundler) CreateUserOperation(sender, target, token string, callData []byte, nonce, amount *big.Int, sponsored bool, key string, chain int64) (map[string]any, error) {
+	var paymasterResult *PaymasterResult
 	var err error
 	var callGasLimit, verificationGas, preVerificationGas *big.Int
 
@@ -107,7 +110,7 @@ func (b *ERCBundler) CreateUserOperation(sender, target, token string, callData 
 	o["verificationGasLimit"] = verificationGas
 	o["preVerificationGas"] = preVerificationGas
 
-	sig, err := signUserOp(o)
+	sig, err := signUserOp(o, key, chain)
 	if err != nil {
 		err = errors.Wrap(err, "call to sign user op failed")
 		return nil, err
@@ -133,8 +136,8 @@ func (b *ERCBundler) GetUserOp(userophash string) error {
 	return b.client.GetUserOperationByHash(userophash)
 }
 
-func signUserOp(op map[string]any) ([]byte, error) {
-	chainId := big.NewInt(80001)
+func signUserOp(op map[string]any, key string, chain int64) ([]byte, error) {
+	chainId := big.NewInt(chain)
 	entrypoint := getEntryPointAddress()
 
 	operation, err := userop.New(op)
@@ -146,7 +149,7 @@ func signUserOp(op map[string]any) ([]byte, error) {
 
 	fmt.Println("userop hash - ", opHash)
 	fmt.Println("userop hash bytes - ", opHash.Bytes())
-	privKey, err := getSigningKey()
+	privKey, err := getSigningKey(key)
 	if err != nil {
 		fmt.Println(err)
 		return nil, err
@@ -163,7 +166,7 @@ func signUserOp(op map[string]any) ([]byte, error) {
 	signatureBytes[64] += 27
 	sig = append(sig, signatureBytes...)
 	signature := hexutil.Encode(sig)
-	
+
 	fmt.Println("signature - ", sig)
 	fmt.Println("signature - ", signature)
 	return sig, nil
@@ -301,9 +304,9 @@ func getAccountABI() string {
 	return accountABI
 }
 
-func getERC20TokenAddress(token string) string {
-	return ""
-}
+// func getERC20TokenAddress(token string) string {
+// 	return ""
+// }
 
 func getEntryPointAddress() common.Address {
 	entrypointAddress := "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789"
@@ -340,8 +343,7 @@ func getMaxPriorityFeePerGas() *big.Int {
 	return big.NewInt(2400000018)
 }
 
-func getSigningKey() (*ecdsa.PrivateKey, error) {
-	privateKey := os.Getenv("SIGNING_KEY")
+func getSigningKey(privateKey string) (*ecdsa.PrivateKey, error) {
 	privKey, err := crypto.HexToECDSA(privateKey[2:])
 	if err != nil {
 		err = errors.Wrap(err, "private key parse failure")
@@ -349,4 +351,3 @@ func getSigningKey() (*ecdsa.PrivateKey, error) {
 	}
 	return privKey, nil
 }
-

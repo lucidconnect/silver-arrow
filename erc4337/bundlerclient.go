@@ -1,4 +1,4 @@
-package bundlerclient
+package erc4337
 
 import (
 	"context"
@@ -21,6 +21,24 @@ type GasEstimateResult struct {
 	VerificationGas    *big.Int `json:"VerificationGas"`
 	CallGasLimit       *big.Int `json:"CallGasLimit"`
 }
+
+// func initialiseBundler() (*useroperation.ERCBundler, error) {
+// 	rpc := os.Getenv("NODE_URL")
+// 	paymaster := os.Getenv("PAYMASTER_URL")
+// 	entryPoint := os.Getenv("ENTRY_POINT")
+
+// 	node, err := Dial(rpc, paymaster)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	// time.DateOnly
+// 	bundler := useroperation.NewERCBundler(entryPoint, node)
+// 	if bundler == nil {
+// 		return nil, errors.New("bundler was not initialised")
+// 	}
+
+// 	return bundler, nil
+// }
 
 func Dial(url, paymasterUrl string) (*Client, error) {
 	var client, paymasterClient *ethclient.Client
@@ -50,6 +68,10 @@ func newClient(ctx context.Context, client, paymasterClient *ethclient.Client) *
 		c:   client,
 		p:   paymasterClient,
 	}
+}
+
+func (nc *Client) GetEthClient() *ethclient.Client {
+	return nc.c
 }
 
 // GetAccountCode is a wrapper around ethclient.CodeAt()

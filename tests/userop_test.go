@@ -7,8 +7,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/helicarrierstudio/silver-arrow/bundlerclient"
-	"github.com/helicarrierstudio/silver-arrow/useroperation"
+	"github.com/helicarrierstudio/silver-arrow/erc4337"
 	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/assert"
 )
@@ -16,7 +15,7 @@ import (
 var nodeUrl, entrypointAddress, paymasterUrl string
 
 func TestMain(m *testing.M) {
-	if err := godotenv.Load(".env.test"); err != nil {
+	if err := godotenv.Load("../.env.test"); err != nil {
 		log.Fatal(err)
 	}
 	entrypointAddress = os.Getenv("ENTRY_POINT")
@@ -28,27 +27,31 @@ func TestMain(m *testing.M) {
 }
 
 func TestSendUserOp(t *testing.T) {
-	sender := "0x6a6F07c5c32F5fb20393a2110B2Bf0925e59571b"
-	target := "0x605F2a359EFbCf1aAF708153Ec0ED402d0746ACC"
+	// sender := "0x6a6F07c5c32F5fb20393a2110B2Bf0925e59571b"
+	// target := "0x605F2a359EFbCf1aAF708153Ec0ED402d0746ACC"
+	sender := "0x85fc2E4425d0DAba7426F50091a384ee05D37Cd2"
+	target := "0xB77ce6ec08B85DcC468B94Cea7Cc539a3BbF9510"
 	token := "ETH"
 
-	nodeClient, err := bundlerclient.Dial(nodeUrl, paymasterUrl)
+	nodeClient, err := erc4337.Dial(nodeUrl, paymasterUrl)
 	if !assert.NoError(t, err) {
 		t.FailNow()
 	}
-	ercBundler := useroperation.NewERCBundler(entrypointAddress, nodeClient)
+	ercBundler := erc4337.NewERCBundler(entrypointAddress, nodeClient)
 
 	// 1000000000000000000 = 1 ether
 	// 1000000000000000000 = 1 erc20Token
 	// 10000000000000000 = 0.01 erc20Token
 	amount := big.NewInt(6000000000000000)
-	data, err := useroperation.CreateTransferCallData(target, token, amount)
+	data, err := erc4337.CreateTransferCallData(target, token, amount)
 	if !assert.NoError(t, err) {
 		t.FailNow()
 	}
 
 	nonce := big.NewInt(8)
-	op, err := ercBundler.CreateUserOperation(sender, target, token, data, nonce, amount, true)
+	key := ""
+	chainId := 8001
+	op, err := ercBundler.CreateUserOperation(sender, target, token, data, nonce, amount, false, key, int64(chainId))
 	assert.NoError(t, err)
 	if !assert.NoError(t, err) {
 		t.FailNow()
@@ -66,11 +69,11 @@ func TestSendUserOp(t *testing.T) {
 }
 
 func TestGetUserOperationByHash(t *testing.T) {
-	nodeClient, err := bundlerclient.Dial(nodeUrl, "")
+	nodeClient, err := erc4337.Dial(nodeUrl, "")
 	if !assert.NoError(t, err) {
 		t.FailNow()
 	}
-	ercBundler := useroperation.NewERCBundler(entrypointAddress, nodeClient)
+	ercBundler := erc4337.NewERCBundler(entrypointAddress, nodeClient)
 
 	useropshash := "0x28b45cf378c23fbdbbcb4f4c4d085791eb6d660214ff4a2402e40fd1c73751c6"
 	err = ercBundler.GetUserOp(useropshash)

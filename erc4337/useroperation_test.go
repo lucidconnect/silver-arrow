@@ -1,4 +1,4 @@
-package useroperation_test
+package erc4337_test
 
 import (
 	"fmt"
@@ -8,7 +8,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/helicarrierstudio/silver-arrow/useroperation"
+	"github.com/helicarrierstudio/silver-arrow/erc4337"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -39,7 +39,7 @@ func TestTransferFnData(t *testing.T) {
 
 	amount := big.NewInt(2)
 	to := "0x0aDfe6188b916F25062b689E070Aa49bdbe8d161"
-	data, err := useroperation.GetTransferFnData(partialERC20TokenABI, to, amount)
+	data, err := erc4337.GetTransferFnData(partialERC20TokenABI, to, amount)
 	assert.NoError(t, err)
 	fmt.Println(hexutil.Encode(data))
 	methodId := data[:4]
@@ -77,7 +77,7 @@ func TestExecuteFnSignature(t *testing.T) {
 	}]`
 	erc20TokenAddress := "0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d"
 	data := common.Hex2Bytes("0xa9059cbb0000000000000000000000000adfe6188b916f25062b689e070aa49bdbe8d1610000000000000000000000000000000000000000000000000000000000000002")
-	data, err := useroperation.GetExecuteFnData(partialAccountABI, erc20TokenAddress, big.NewInt(0), data)
+	data, err := erc4337.GetExecuteFnData(partialAccountABI, erc20TokenAddress, big.NewInt(0), data)
 	assert.NoError(t, err)
 	methodId := data[:4]
 	assert.Equal(t, "0xb61d27f6", hexutil.Encode(methodId))
