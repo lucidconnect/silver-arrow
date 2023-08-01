@@ -7,6 +7,7 @@ package graph
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/helicarrierstudio/silver-arrow/graph/generated"
@@ -17,7 +18,9 @@ import (
 // AddAccount is the resolver for the addAccount field.
 func (r *mutationResolver) AddAccount(ctx context.Context, input model.Account) (string, error) {
 	address := common.HexToAddress(input.Address)
-	walletService := wallet.NewWalletService(r.WalletRepository)
+	walletService := wallet.NewWalletService(r.WalletRepository, r.Bundler)
+	// should check if the account is deployed
+	// deploy if not deployed
 	err := walletService.AddAccount(input)
 	if err != nil {
 		return "", err
@@ -26,13 +29,33 @@ func (r *mutationResolver) AddAccount(ctx context.Context, input model.Account) 
 }
 
 // AddSubscription is the resolver for the addSubscription field.
-func (r *mutationResolver) AddSubscription(ctx context.Context, input model.NewSubscription) (*model.SubscriptionData, error) {
-	walletService := wallet.NewWalletService(r.WalletRepository)
-	subData, err := walletService.AddSubscription(input)
+func (r *mutationResolver) AddSubscription(ctx context.Context, input model.NewSubscription) (*model.ValidationData, error) {
+	walletService := wallet.NewWalletService(r.WalletRepository, r.Bundler)
+	validationData, userOp, err := walletService.AddSubscription(input)
 	if err != nil {
+		log.Println(err)
 		return nil, err
 	}
-	return subData, nil
+	err = r.Cache.Set(validationData.UserOpHash, userOp)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+	return validationData, nil
+}
+
+// ValidateSubscription is the resolver for the validateSubscription field.
+func (r *mutationResolver) ValidateSubscription(ctx context.Context, input model.SubscriptionValidation) (*model.SubscriptionData, error) {
+	opInterface, err := r.Cache.Get(input.UserOpHash)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+	op, _ := opInterface.(map[string]any)
+	op["signature"] = input.SignedMessage
+	walletService := wallet.NewWalletService(r.WalletRepository, r.Bundler)
+	walletService.ValidateSubscription(op)
+	panic(fmt.Errorf("not implemented: ValidateSubscription - validateSubscription"))
 }
 
 // CancelSubscription is the resolver for the cancelSubscription field.
@@ -42,7 +65,7 @@ func (r *mutationResolver) CancelSubscription(ctx context.Context, id string) (s
 
 // FetchSubscriptions is the resolver for the fetchSubscriptions field.
 func (r *queryResolver) FetchSubscriptions(ctx context.Context, account string) ([]*model.SubscriptionData, error) {
-	_ = wallet.NewWalletService(r.WalletRepository)
+	_ = wallet.NewWalletService(r.WalletRepository, r.Bundler)
 	panic(fmt.Errorf("not implemented: FetchSubscriptions - fetchSubscriptions"))
 }
 

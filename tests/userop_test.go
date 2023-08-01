@@ -8,19 +8,35 @@ import (
 	"testing"
 
 	"github.com/helicarrierstudio/silver-arrow/erc4337"
+	"github.com/helicarrierstudio/silver-arrow/repository"
 	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/assert"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
-var nodeUrl, entrypointAddress, paymasterUrl string
+var (
+	nodeUrl, entrypointAddress, paymasterUrl string
+	mongoClient                              *mongo.Client
+	nodeClient                               *erc4337.Client
+)
 
 func TestMain(m *testing.M) {
-	if err := godotenv.Load("../.env.test"); err != nil {
+	var err error
+	if err = godotenv.Load("../.env.test"); err != nil {
+		log.Fatal(err)
+	}
+	mongoClient, err = repository.SetupMongoDatabase()
+	if err != nil {
 		log.Fatal(err)
 	}
 	entrypointAddress = os.Getenv("ENTRY_POINT")
 	nodeUrl = os.Getenv("NODE_URL")
 	paymasterUrl = os.Getenv("PAYMASTER_URL")
+
+	nodeClient, err = erc4337.Dial(nodeUrl, paymasterUrl)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	exitVal := m.Run()
 	os.Exit(exitVal)
@@ -33,10 +49,6 @@ func TestSendUserOp(t *testing.T) {
 	target := "0xB77ce6ec08B85DcC468B94Cea7Cc539a3BbF9510"
 	token := "ETH"
 
-	nodeClient, err := erc4337.Dial(nodeUrl, paymasterUrl)
-	if !assert.NoError(t, err) {
-		t.FailNow()
-	}
 	ercBundler := erc4337.NewERCBundler(entrypointAddress, nodeClient)
 
 	// 1000000000000000000 = 1 ether
@@ -51,7 +63,7 @@ func TestSendUserOp(t *testing.T) {
 	nonce := big.NewInt(8)
 	key := ""
 	chainId := 8001
-	op, err := ercBundler.CreateUserOperation(sender, target, token, data, nonce, amount, false, key, int64(chainId))
+	op, err := ercBundler.CreateUserOperation(sender, target, data, nonce, amount, false, key, int64(chainId))
 	assert.NoError(t, err)
 	if !assert.NoError(t, err) {
 		t.FailNow()
@@ -76,7 +88,7 @@ func TestGetUserOperationByHash(t *testing.T) {
 	ercBundler := erc4337.NewERCBundler(entrypointAddress, nodeClient)
 
 	useropshash := "0x28b45cf378c23fbdbbcb4f4c4d085791eb6d660214ff4a2402e40fd1c73751c6"
-	err = ercBundler.GetUserOp(useropshash)
+	_, err = ercBundler.GetUserOp(useropshash)
 	if !assert.NoError(t, err) {
 		t.FailNow()
 	}

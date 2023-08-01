@@ -2,6 +2,10 @@
 
 package model
 
+import (
+	"time"
+)
+
 type Account struct {
 	Email   *string `json:"email,omitempty"`
 	Address string  `json:"address"`
@@ -9,18 +13,31 @@ type Account struct {
 }
 
 type NewSubscription struct {
-	Token         string  `json:"token"`
-	Amount        float64 `json:"amount"`
-	Interval      int     `json:"interval"`
-	MerchantID    string  `json:"merchantId"`
-	WalletAddress string  `json:"walletAddress"`
+	Chain         int        `json:"chain"`
+	NextChargeAt  *time.Time `json:"nextChargeAt,omitempty"`
+	Token         string     `json:"token"`
+	Amount        float64    `json:"amount"`
+	Interval      int        `json:"interval"`
+	MerchantID    string     `json:"merchantId"`
+	WalletAddress string     `json:"walletAddress"`
+	OwnerAddress  string     `json:"OwnerAddress"`
 }
 
 type SubscriptionData struct {
-	ID            string  `json:"id"`
-	Token         string  `json:"token"`
-	Amount        float64 `json:"amount"`
-	Interval      int     `json:"interval"`
-	MerchantID    string  `json:"merchantId"`
-	WalletAddress string  `json:"walletAddress"`
+	ID              string  `json:"id"`
+	Token           string  `json:"token"`
+	Amount          float64 `json:"amount"`
+	Interval        int     `json:"interval"`
+	MerchantID      string  `json:"merchantId"`
+	WalletAddress   string  `json:"walletAddress"`
+	SubscriptionKey string  `json:"subscriptionKey"`
+}
+
+type SubscriptionValidation struct {
+	UserOpHash    string `json:"userOpHash"`
+	SignedMessage string `json:"signedMessage"`
+}
+
+type ValidationData struct {
+	UserOpHash string `json:"userOpHash"`
 }

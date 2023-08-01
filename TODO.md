@@ -7,7 +7,7 @@
     [x] Deploy a smart account
     [x] Interact with the account contract
     [] Add another signer to the deployed account
-    [] Send user opeerations signed by the second signer
+    [] Deploy the smart contract account when a new smart wallet address is added
 
 ## Less Priority
 

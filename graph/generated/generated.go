@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
@@ -45,9 +46,10 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	Mutation struct {
-		AddAccount         func(childComplexity int, input model.Account) int
-		AddSubscription    func(childComplexity int, input model.NewSubscription) int
-		CancelSubscription func(childComplexity int, id string) int
+		AddAccount           func(childComplexity int, input model.Account) int
+		AddSubscription      func(childComplexity int, input model.NewSubscription) int
+		CancelSubscription   func(childComplexity int, id string) int
+		ValidateSubscription func(childComplexity int, input model.SubscriptionValidation) int
 	}
 
 	Query struct {
@@ -55,18 +57,24 @@ type ComplexityRoot struct {
 	}
 
 	SubscriptionData struct {
-		Amount        func(childComplexity int) int
-		ID            func(childComplexity int) int
-		Interval      func(childComplexity int) int
-		MerchantID    func(childComplexity int) int
-		Token         func(childComplexity int) int
-		WalletAddress func(childComplexity int) int
+		Amount          func(childComplexity int) int
+		ID              func(childComplexity int) int
+		Interval        func(childComplexity int) int
+		MerchantID      func(childComplexity int) int
+		SubscriptionKey func(childComplexity int) int
+		Token           func(childComplexity int) int
+		WalletAddress   func(childComplexity int) int
+	}
+
+	ValidationData struct {
+		UserOpHash func(childComplexity int) int
 	}
 }
 
 type MutationResolver interface {
 	AddAccount(ctx context.Context, input model.Account) (string, error)
-	AddSubscription(ctx context.Context, input model.NewSubscription) (*model.SubscriptionData, error)
+	AddSubscription(ctx context.Context, input model.NewSubscription) (*model.ValidationData, error)
+	ValidateSubscription(ctx context.Context, input model.SubscriptionValidation) (*model.SubscriptionData, error)
 	CancelSubscription(ctx context.Context, id string) (string, error)
 }
 type QueryResolver interface {
@@ -124,6 +132,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.CancelSubscription(childComplexity, args["id"].(string)), true
 
+	case "Mutation.validateSubscription":
+		if e.complexity.Mutation.ValidateSubscription == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_validateSubscription_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.ValidateSubscription(childComplexity, args["input"].(model.SubscriptionValidation)), true
+
 	case "Query.fetchSubscriptions":
 		if e.complexity.Query.FetchSubscriptions == nil {
 			break
@@ -164,6 +184,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.SubscriptionData.MerchantID(childComplexity), true
 
+	case "SubscriptionData.subscriptionKey":
+		if e.complexity.SubscriptionData.SubscriptionKey == nil {
+			break
+		}
+
+		return e.complexity.SubscriptionData.SubscriptionKey(childComplexity), true
+
 	case "SubscriptionData.token":
 		if e.complexity.SubscriptionData.Token == nil {
 			break
@@ -178,6 +205,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.SubscriptionData.WalletAddress(childComplexity), true
 
+	case "ValidationData.userOpHash":
+		if e.complexity.ValidationData.UserOpHash == nil {
+			break
+		}
+
+		return e.complexity.ValidationData.UserOpHash(childComplexity), true
+
 	}
 	return 0, false
 }
@@ -188,6 +222,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
 		ec.unmarshalInputAccount,
 		ec.unmarshalInputNewSubscription,
+		ec.unmarshalInputSubscriptionValidation,
 	)
 	first := true
 
@@ -295,7 +330,8 @@ type Query {
 
 type Mutation {
   addAccount(input: Account!): String!
-  addSubscription(input: NewSubscription!): SubscriptionData!
+  addSubscription(input: NewSubscription!): ValidationData!
+  validateSubscription(input: SubscriptionValidation!): SubscriptionData!
   cancelSubscription(id: String!): String!
 }
 
@@ -308,11 +344,23 @@ input Account {
 
 # subscription data
 input NewSubscription {
+  chain: Int!
+  nextChargeAt: Time
 	token: String!
 	amount: Float!
 	interval: Int!
   merchantId: String!
 	walletAddress: String!
+  OwnerAddress: String!
+}
+
+input SubscriptionValidation {
+  userOpHash: String!
+  signedMessage: String!
+}
+
+type ValidationData {
+  userOpHash: String!
 }
 
 type SubscriptionData {
@@ -322,8 +370,10 @@ type SubscriptionData {
 	interval: Int!
   merchantId: String!
 	walletAddress: String!
+  subscriptionKey: String!
 }
-`, BuiltIn: false},
+
+scalar Time`, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
@@ -373,6 +423,21 @@ func (ec *executionContext) field_Mutation_cancelSubscription_args(ctx context.C
 		}
 	}
 	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_validateSubscription_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.SubscriptionValidation
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNSubscriptionValidation2githubᚗcomᚋhelicarrierstudioᚋsilverᚑarrowᚋgraphᚋmodelᚐSubscriptionValidation(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
 	return args, nil
 }
 
@@ -525,12 +590,71 @@ func (ec *executionContext) _Mutation_addSubscription(ctx context.Context, field
 		}
 		return graphql.Null
 	}
+	res := resTmp.(*model.ValidationData)
+	fc.Result = res
+	return ec.marshalNValidationData2ᚖgithubᚗcomᚋhelicarrierstudioᚋsilverᚑarrowᚋgraphᚋmodelᚐValidationData(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_addSubscription(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "userOpHash":
+				return ec.fieldContext_ValidationData_userOpHash(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ValidationData", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_addSubscription_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_validateSubscription(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_validateSubscription(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().ValidateSubscription(rctx, fc.Args["input"].(model.SubscriptionValidation))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
 	res := resTmp.(*model.SubscriptionData)
 	fc.Result = res
 	return ec.marshalNSubscriptionData2ᚖgithubᚗcomᚋhelicarrierstudioᚋsilverᚑarrowᚋgraphᚋmodelᚐSubscriptionData(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_addSubscription(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_validateSubscription(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -550,6 +674,8 @@ func (ec *executionContext) fieldContext_Mutation_addSubscription(ctx context.Co
 				return ec.fieldContext_SubscriptionData_merchantId(ctx, field)
 			case "walletAddress":
 				return ec.fieldContext_SubscriptionData_walletAddress(ctx, field)
+			case "subscriptionKey":
+				return ec.fieldContext_SubscriptionData_subscriptionKey(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type SubscriptionData", field.Name)
 		},
@@ -561,7 +687,7 @@ func (ec *executionContext) fieldContext_Mutation_addSubscription(ctx context.Co
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_addSubscription_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_validateSubscription_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -674,6 +800,8 @@ func (ec *executionContext) fieldContext_Query_fetchSubscriptions(ctx context.Co
 				return ec.fieldContext_SubscriptionData_merchantId(ctx, field)
 			case "walletAddress":
 				return ec.fieldContext_SubscriptionData_walletAddress(ctx, field)
+			case "subscriptionKey":
+				return ec.fieldContext_SubscriptionData_subscriptionKey(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type SubscriptionData", field.Name)
 		},
@@ -1075,6 +1203,94 @@ func (ec *executionContext) _SubscriptionData_walletAddress(ctx context.Context,
 func (ec *executionContext) fieldContext_SubscriptionData_walletAddress(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "SubscriptionData",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SubscriptionData_subscriptionKey(ctx context.Context, field graphql.CollectedField, obj *model.SubscriptionData) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SubscriptionData_subscriptionKey(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SubscriptionKey, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SubscriptionData_subscriptionKey(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SubscriptionData",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ValidationData_userOpHash(ctx context.Context, field graphql.CollectedField, obj *model.ValidationData) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ValidationData_userOpHash(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UserOpHash, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ValidationData_userOpHash(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ValidationData",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -2912,13 +3128,31 @@ func (ec *executionContext) unmarshalInputNewSubscription(ctx context.Context, o
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"token", "amount", "interval", "merchantId", "walletAddress"}
+	fieldsInOrder := [...]string{"chain", "nextChargeAt", "token", "amount", "interval", "merchantId", "walletAddress", "OwnerAddress"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
+		case "chain":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chain"))
+			data, err := ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Chain = data
+		case "nextChargeAt":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nextChargeAt"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NextChargeAt = data
 		case "token":
 			var err error
 
@@ -2964,6 +3198,53 @@ func (ec *executionContext) unmarshalInputNewSubscription(ctx context.Context, o
 				return it, err
 			}
 			it.WalletAddress = data
+		case "OwnerAddress":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("OwnerAddress"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerAddress = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputSubscriptionValidation(ctx context.Context, obj interface{}) (model.SubscriptionValidation, error) {
+	var it model.SubscriptionValidation
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"userOpHash", "signedMessage"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "userOpHash":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userOpHash"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.UserOpHash = data
+		case "signedMessage":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("signedMessage"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SignedMessage = data
 		}
 	}
 
@@ -3007,6 +3288,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "addSubscription":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_addSubscription(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "validateSubscription":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_validateSubscription(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -3151,6 +3439,50 @@ func (ec *executionContext) _SubscriptionData(ctx context.Context, sel ast.Selec
 			}
 		case "walletAddress":
 			out.Values[i] = ec._SubscriptionData_walletAddress(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "subscriptionKey":
+			out.Values[i] = ec._SubscriptionData_subscriptionKey(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var validationDataImplementors = []string{"ValidationData"}
+
+func (ec *executionContext) _ValidationData(ctx context.Context, sel ast.SelectionSet, obj *model.ValidationData) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, validationDataImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ValidationData")
+		case "userOpHash":
+			out.Values[i] = ec._ValidationData_userOpHash(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -3646,6 +3978,25 @@ func (ec *executionContext) marshalNSubscriptionData2ᚖgithubᚗcomᚋhelicarri
 	return ec._SubscriptionData(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNSubscriptionValidation2githubᚗcomᚋhelicarrierstudioᚋsilverᚑarrowᚋgraphᚋmodelᚐSubscriptionValidation(ctx context.Context, v interface{}) (model.SubscriptionValidation, error) {
+	res, err := ec.unmarshalInputSubscriptionValidation(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNValidationData2githubᚗcomᚋhelicarrierstudioᚋsilverᚑarrowᚋgraphᚋmodelᚐValidationData(ctx context.Context, sel ast.SelectionSet, v model.ValidationData) graphql.Marshaler {
+	return ec._ValidationData(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNValidationData2ᚖgithubᚗcomᚋhelicarrierstudioᚋsilverᚑarrowᚋgraphᚋmodelᚐValidationData(ctx context.Context, sel ast.SelectionSet, v *model.ValidationData) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ValidationData(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx context.Context, sel ast.SelectionSet, v introspection.Directive) graphql.Marshaler {
 	return ec.___Directive(ctx, sel, &v)
 }
@@ -3938,6 +4289,22 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 		return graphql.Null
 	}
 	res := graphql.MarshalString(*v)
+	return res
+}
+
+func (ec *executionContext) unmarshalOTime2ᚖtimeᚐTime(ctx context.Context, v interface{}) (*time.Time, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalTime(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOTime2ᚖtimeᚐTime(ctx context.Context, sel ast.SelectionSet, v *time.Time) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalTime(*v)
 	return res
 }
 

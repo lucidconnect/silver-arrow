@@ -19,13 +19,13 @@ func CreateAccessKey() (string, string, error) {
 	pubKey := crypto.PubkeyToAddress(privateKey.PublicKey).Hex()
 	signer := hexutil.EncodeBig(privateKey.D)
 
-	return signer, pubKey, nil
+	return pubKey, signer, nil
 }
 
 // should return a byte array consisting of the publicKey, merchantid
 // the public key is unique for each subscription hence can be used to identify the subscription
 func CreateaWhitelistData(merchantId uint32, key []byte) ([]byte, error) {
-	var whitelistData []byte
+	whitelistData := []byte{}
 
 	if len(key) < 20 {
 		return nil, errors.New("INVALID KEY")

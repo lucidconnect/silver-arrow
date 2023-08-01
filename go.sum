@@ -1,6 +1,8 @@
 github.com/99designs/gqlgen v0.17.34 h1:5cS5/OKFguQt+Ws56uj9FlG2xm1IlcJWNF2jrMIKYFQ=
 github.com/99designs/gqlgen v0.17.34/go.mod h1:Axcd3jIFHBVcqzixujJQr1wGqE+lGTpz6u4iZBZg1G8=
 github.com/DataDog/zstd v1.5.2 h1:vUG4lAyuPCXO0TLbXvPv7EB7cNK1QV/luu55UHLrrn8=
+github.com/OrlovEvgeny/go-mcache v0.0.0-20200121124330-1a8195b34f3a h1:Cf4CrDeyrIcuIiJZEZJAH5dapqQ6J3OmP/vHPbDjaFA=
+github.com/OrlovEvgeny/go-mcache v0.0.0-20200121124330-1a8195b34f3a/go.mod h1:ig6eVXkYn/9dz0Vm8UdLf+E0u1bE6kBSn3n2hqk6jas=
 github.com/VictoriaMetrics/fastcache v1.6.0 h1:C/3Oi3EiBCqufydp1neRZkqcwmEiuRT9c3fqvvgKm5o=
 github.com/agnivade/levenshtein v1.1.1 h1:QY8M92nrzkmr798gCo3kmMyqXFzdQVpxLlGPRBij0P8=
 github.com/agnivade/levenshtein v1.1.1/go.mod h1:veldBMzWxcCG2ZvUTKD2kJNRdCk5hVbJomOvKkmgYbo=

@@ -8,10 +8,12 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/go-chi/chi"
+	"github.com/helicarrierstudio/silver-arrow/erc4337"
 	"github.com/helicarrierstudio/silver-arrow/graph"
 	"github.com/helicarrierstudio/silver-arrow/graph/generated"
 	"github.com/helicarrierstudio/silver-arrow/repository"
 	"github.com/joho/godotenv"
+	"github.com/pkg/errors"
 	"github.com/rs/cors"
 )
 
@@ -33,8 +35,15 @@ func main() {
 	loadCORS(router)
 
 	walletRepo := repository.NewMongoDb(mongoClient)
+	bundler, err := erc4337.InitialiseBundler()
+	if err != nil {
+		err = errors.Wrap(err, "failed to initialise bundler")
+		log.Println(err)
+	}
 	walletSrv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{
 		WalletRepository: walletRepo,
+		Bundler:          bundler,
+		Cache:            repository.NewMCache(),
 	}}))
 	router.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	router.Handle("/query", walletSrv)

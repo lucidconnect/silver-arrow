@@ -1,7 +1,6 @@
 package scheduler
 
 import (
-	"errors"
 	"log"
 	"math/big"
 	"os"
@@ -17,16 +16,12 @@ import (
 
 type Scheduler struct {
 	bundler   *erc4337.ERCBundler
-	queue     repository.QueueCache
+	queue     repository.Queuer
 	datastore repository.WalletRepository
 }
 
-func NewScheduler(data repository.WalletRepository) *Scheduler {
-	bundler, err := initialiseBundler()
-	if err != nil {
-		log.Println(err)
-	}
-	queue := repository.NewCache()
+func NewScheduler(data repository.WalletRepository, bundler *erc4337.ERCBundler) *Scheduler {
+	queue := repository.NewDeque()
 	return &Scheduler{
 		bundler:   bundler,
 		queue:     queue,
@@ -62,7 +57,7 @@ func (s *Scheduler) SendUserOp(sub models.Subscription) error {
 	}
 	nonce := getAccountNonce(sub.WalletAddress)
 	signingKey := sub.SigningKey
-	op, err := s.bundler.CreateUserOperation(sub.WalletAddress, address, token, data, nonce, amount, true, signingKey, 0)
+	op, err := s.bundler.CreateUserOperation(sub.WalletAddress, address, data, nonce, amount, true, signingKey, 0)
 	if err != nil {
 		return err
 	}
@@ -76,23 +71,6 @@ func (s *Scheduler) SendUserOp(sub models.Subscription) error {
 
 func getAccountNonce(address string) *big.Int {
 	return big.NewInt(0)
-}
-func initialiseBundler() (*erc4337.ERCBundler, error) {
-	rpc := os.Getenv("NODE_URL")
-	paymaster := os.Getenv("PAYMASTER_URL")
-	entryPoint := os.Getenv("ENTRY_POINT")
-
-	node, err := erc4337.Dial(rpc, paymaster)
-	if err != nil {
-		return nil, err
-	}
-	// time.DateOnly
-	bundler := erc4337.NewERCBundler(entryPoint, node)
-	if bundler == nil {
-		return nil, errors.New("bundler was not initialised")
-	}
-
-	return bundler, nil
 }
 
 // FetchMerchantAddress call's the merchant contract

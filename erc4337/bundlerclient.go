@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"math/big"
+	"os"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -22,23 +23,23 @@ type GasEstimateResult struct {
 	CallGasLimit       *big.Int `json:"CallGasLimit"`
 }
 
-// func initialiseBundler() (*useroperation.ERCBundler, error) {
-// 	rpc := os.Getenv("NODE_URL")
-// 	paymaster := os.Getenv("PAYMASTER_URL")
-// 	entryPoint := os.Getenv("ENTRY_POINT")
+func InitialiseBundler() (*ERCBundler, error) {
+	rpc := os.Getenv("NODE_URL")
+	paymaster := os.Getenv("PAYMASTER_URL")
+	entryPoint := os.Getenv("ENTRY_POINT")
 
-// 	node, err := Dial(rpc, paymaster)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	// time.DateOnly
-// 	bundler := useroperation.NewERCBundler(entryPoint, node)
-// 	if bundler == nil {
-// 		return nil, errors.New("bundler was not initialised")
-// 	}
+	node, err := Dial(rpc, paymaster)
+	if err != nil {
+		return nil, err
+	}
+	// time.DateOnly
+	bundler := NewERCBundler(entryPoint, node)
+	if bundler == nil {
+		return nil, errors.New("bundler was not initialised")
+	}
 
-// 	return bundler, nil
-// }
+	return bundler, nil
+}
 
 func Dial(url, paymasterUrl string) (*Client, error) {
 	var client, paymasterClient *ethclient.Client
@@ -115,17 +116,17 @@ func (nc *Client) GetBalance(address string) (*big.Int, error) {
 }
 
 // GetUserOperationByHash calls eth_getUserOperationByHash bundler rpc method
-func (nc *Client) GetUserOperationByHash(userophash string) error {
-	var result map[string]interface{}
+func (nc *Client) GetUserOperationByHash(userophash string) (map[string]any, error) {
+	var result map[string]any
 
 	err := nc.c.Client().CallContext(nc.ctx, &result, "eth_getUserOperationByHash", userophash)
 	if err != nil {
 		err = errors.Wrap(err, "eth_getUserOperationByHash call error")
-		return err
+		return nil, err
 	}
 
 	fmt.Println("user operation - ", result)
-	return nil
+	return result, nil
 }
 
 // eth_getUserOperationReciept

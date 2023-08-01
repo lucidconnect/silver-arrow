@@ -50,10 +50,10 @@ func (m *MongoDb) SetAddress(wallet models.Wallet) error {
 	return err
 }
 
-func (m *MongoDb) AddSubscription(subscriptionData models.Subscription) error {
+func (m *MongoDb) AddSubscription(subscriptionData models.Subscription) (any, error) {
 	coll := m.client.Database("db").Collection("subscriptions")
-	_, err := coll.InsertOne(context.Background(), subscriptionData)
-	return err
+	i, err := coll.InsertOne(context.Background(), subscriptionData)
+	return i.InsertedID, err
 }
 
 func (m *MongoDb) ListSubscriptions(address string) ([]models.Subscription, error) {
@@ -62,4 +62,23 @@ func (m *MongoDb) ListSubscriptions(address string) ([]models.Subscription, erro
 
 func (m *MongoDb) RemoveSubscription(id int64) error {
 	return errors.New("NOT IMPLEMENTED")
+}
+
+func (m *MongoDb) FindSubscriptionsByFilter(f any) ([]models.Subscription, error) {
+	filter, ok := f.(bson.D)
+	if !ok {
+		return nil, errors.New("invalid bson filter")
+	}
+	coll := m.client.Database("db").Collection("subscriptions")
+	cursor, err := coll.Find(context.Background(), filter)
+	if err != nil {
+		return nil, err
+	}
+
+	var results []models.Subscription
+	if err = cursor.All(context.Background(), &results); err != nil {
+		return nil, err
+	}
+
+	return results, nil
 }
