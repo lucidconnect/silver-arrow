@@ -62,7 +62,7 @@ func TestSendUserOp(t *testing.T) {
 	}
 
 
-	nonce := ercBundler.AccountNonce(sender)
+	nonce, _ := ercBundler.AccountNonce(sender)
 	key := "0xcea5314e325233134348f39363151a5fff8051a5e48f8ac96b6dd9866bc2336b"
 
 	mId, _ := hexutil.Decode("0x829f80a98190408d9c22d06ef11ecb213c3fde8a388e9b2052bc1eeee89f2fb7")
