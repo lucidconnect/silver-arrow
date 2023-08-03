@@ -61,7 +61,7 @@ func (r *mutationResolver) ValidateSubscription(ctx context.Context, input model
 		return nil, err
 	}
 	// x := int64(subData.Amount)
-	target := "0xB77ce6ec08B85DcC468B94Cea7Cc539a3BbF9510"
+	target := "0x1BB271879576fD79324156F539DD760756C9D061"
 
 	err = walletService.ExecuteCharge(subData.WalletAddress, target, subData.MerchantID, subData.Token, key, int64(subData.Amount))
 	if err != nil {
