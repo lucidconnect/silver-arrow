@@ -122,7 +122,11 @@ func (ws *WalletService) AddSubscription(input model.NewSubscription) (*model.Va
 		err = errors.Wrap(err, "error creating validator data")
 		return nil, nil, err
 	}
-	nonce := ws.bundler.AccountNonce(input.WalletAddress)
+	nonce, err := ws.bundler.AccountNonce(input.WalletAddress)
+	if err != nil {
+		log.Println(err)
+		return nil, nil, err
+	}
 	op, err := ws.bundler.CreateUnsignedUserOperation(input.WalletAddress, input.WalletAddress, initCode, callData, nonce, true, int64(input.Chain))
 	if err != nil {
 		log.Println(err)
@@ -230,7 +234,11 @@ func (ws *WalletService) ExecuteCharge(sender, target, mId, token, key string, a
 		return err
 	}
 
-	nonce := ws.bundler.AccountNonce(sender)
+	nonce, err := ws.bundler.AccountNonce(sender)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
 	merchant, _ := hexutil.Decode(mId)
 	chainId := int64(80001)
 

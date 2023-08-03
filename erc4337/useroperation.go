@@ -36,15 +36,16 @@ func (b *ERCBundler) GetClient() *ethclient.Client {
 	return b.client.GetEthClient()
 }
 
-func (b *ERCBundler) AccountNonce(sender string) *big.Int {
+func (b *ERCBundler) AccountNonce(sender string) (*big.Int, error) {
 	senderAddress := common.HexToAddress(sender)
 
 	nonce, err := b.client.GetAccountNonce(senderAddress)
 	if err != nil {
 		err = errors.Wrap(err, "AccountNonce() -")
+		return nil, err
 	}
 	fmt.Println("nonce:", nonce)
-	return nonce
+	return nonce, nil
 }
 
 // UserOperation represents an EIP-4337 style transaction for a smart contract account.
