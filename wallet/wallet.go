@@ -82,7 +82,7 @@ func (ws *WalletService) ValidateSubscription(userop map[string]any) (*model.Sub
 func (ws *WalletService) AddSubscription(input model.NewSubscription) (*model.ValidationData, map[string]any, error) {
 	var nextChargeAt time.Time
 	var initCode []byte
-	var amount *big.Int
+	var nonce, amount *big.Int
 	publicKey, signingKey, err := CreateAccessKey()
 	if err != nil {
 		return nil, nil, err
@@ -110,7 +110,8 @@ func (ws *WalletService) AddSubscription(input model.NewSubscription) (*model.Va
 
 	nextChargeAt = time.Now().Add(interval)
 
-	if !ws.isAccountDeployed(input.WalletAddress) {
+	isAccountDeployed := ws.isAccountDeployed(input.WalletAddress)
+	if !isAccountDeployed {
 		initCode, err = ws.getContractInitCode(common.HexToAddress(input.OwnerAddress))
 		if err != nil {
 			return nil, nil, err
@@ -122,11 +123,16 @@ func (ws *WalletService) AddSubscription(input model.NewSubscription) (*model.Va
 		err = errors.Wrap(err, "error creating validator data")
 		return nil, nil, err
 	}
-	nonce, err := ws.bundler.AccountNonce(input.WalletAddress)
-	if err != nil {
-		log.Println(err)
-		return nil, nil, err
+	if !isAccountDeployed {
+		nonce = common.Big0
+	} else {
+		nonce, err = ws.bundler.AccountNonce(input.WalletAddress)
+		if err != nil {
+			log.Println(err)
+			return nil, nil, err
+		}
 	}
+
 	op, err := ws.bundler.CreateUnsignedUserOperation(input.WalletAddress, input.WalletAddress, initCode, callData, nonce, true, int64(input.Chain))
 	if err != nil {
 		log.Println(err)
