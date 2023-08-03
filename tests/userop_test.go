@@ -55,7 +55,7 @@ func TestSendUserOp(t *testing.T) {
 	// 1000000000000000000 = 1 ether
 	// 1000000000000000000 = 1 erc20Token
 	// 10000000000000000 = 0.01 erc20Token
-	amount := big.NewInt(6000000)
+	amount := big.NewInt(1000000)
 	data, err := erc4337.CreateTransferCallData(target, token, amount)
 	if !assert.NoError(t, err) {
 		t.FailNow()

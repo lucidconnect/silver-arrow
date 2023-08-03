@@ -111,6 +111,7 @@ func (ws *WalletService) AddSubscription(input model.NewSubscription) (*model.Va
 	nextChargeAt = time.Now().Add(interval)
 
 	isAccountDeployed := ws.isAccountDeployed(input.WalletAddress)
+	fmt.Println("Account deployed - ", isAccountDeployed)
 	if !isAccountDeployed {
 		initCode, err = ws.getContractInitCode(common.HexToAddress(input.OwnerAddress))
 		if err != nil {
@@ -123,6 +124,8 @@ func (ws *WalletService) AddSubscription(input model.NewSubscription) (*model.Va
 		err = errors.Wrap(err, "error creating validator data")
 		return nil, nil, err
 	}
+
+	fmt.Println("Account deployed - ", isAccountDeployed)
 	if !isAccountDeployed {
 		nonce = common.Big0
 	} else {
