@@ -28,8 +28,8 @@ func TestAddSubscription(t *testing.T) {
 	newSub := model.NewSubscription{
 		Chain:         80001,
 		NextChargeAt:  nil,
-		Token:         "MATIC",
-		Amount:        49,
+		Token:         "USDC",
+		Amount:        1,
 		Interval:      30,
 		MerchantID:    mId,
 		WalletAddress: "0x14De44b6100dE479655D752ECD2230D10F8fA061",
@@ -40,10 +40,14 @@ func TestAddSubscription(t *testing.T) {
 	assert.NoError(t, err)
 
 	fmt.Println(op)
-	sig, err := erc4337.SignUserOp(op, key, erc4337.SUDO_MODE,nil, 80001)
+	sig, err := erc4337.SignUserOp(op, key, erc4337.SUDO_MODE, nil, 80001)
 	assert.NoError(t, err)
 	op["signature"] = hexutil.Encode(sig)
-	data, _, err := ws.ValidateSubscription(op)
+	data, sKey, err := ws.ValidateSubscription(op)
+	assert.NoError(t, err)
+
+	target := "0xB77ce6ec08B85DcC468B94Cea7Cc539a3BbF9510"
+	err = ws.ExecuteCharge(newSub.WalletAddress, target, mId, "USDC", sKey, int64(newSub.Amount))
 	assert.NoError(t, err)
 
 	fmt.Println("Data", data)

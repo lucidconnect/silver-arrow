@@ -55,11 +55,12 @@ func TestSendUserOp(t *testing.T) {
 	// 1000000000000000000 = 1 ether
 	// 1000000000000000000 = 1 erc20Token
 	// 10000000000000000 = 0.01 erc20Token
-	amount := big.NewInt(6)
+	amount := big.NewInt(6000000)
 	data, err := erc4337.CreateTransferCallData(target, token, amount)
 	if !assert.NoError(t, err) {
 		t.FailNow()
 	}
+
 
 	nonce := ercBundler.AccountNonce(sender)
 	key := "0xcea5314e325233134348f39363151a5fff8051a5e48f8ac96b6dd9866bc2336b"

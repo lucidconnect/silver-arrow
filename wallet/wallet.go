@@ -6,6 +6,7 @@ import (
 	"log"
 	"math/big"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -55,19 +56,20 @@ func (ws *WalletService) ValidateSubscription(userop map[string]any) (*model.Sub
 	filter := bson.D{{Key: "userop_hash", Value: opHash}}
 	results, err := ws.repository.FindSubscriptionsByFilter(filter)
 	result := results[0]
-	a, _ := new(big.Int).SetString(result.Amount, 10)
+	// a, _ := new(big.Int).SetString(result.Amount, 10)
 	token := result.Token
-	var amount int64
-	if token == "USDC" {
-		amount = mWeiToAmount(a)
-	} else {
-		amount = weiToAmount(a)
-	}
+	// var amount int64
+	// if token == "USDC" {
+	// 	amount, _  = strconv.Atoi(result.Amount)
+	// } else {
+	// 	amount = weiToAmount(a)
+	// }
 
+	amount, _ := strconv.Atoi(result.Amount)
 	subData := &model.SubscriptionData{
 		ID:            result.SubscriptionId,
 		Token:         token,
-		Amount:        int(amount),
+		Amount:        amount,
 		Interval:      int(result.Interval),
 		MerchantID:    result.MerchantId,
 		WalletAddress: result.WalletAddress,
@@ -86,15 +88,15 @@ func (ws *WalletService) AddSubscription(input model.NewSubscription) (*model.Va
 		return nil, nil, err
 	}
 
-	// hard-coding matic just for PoC this should ideally consider or native tokens per network
-	if input.Token == "MATIC" {
-		amount, err = amountToWei(big.NewInt(int64(input.Amount)))
-		if err != nil {
-			return nil, nil, err
-		}
-	} else {
-		amount = big.NewInt(int64(input.Amount)) // This will cause a bug for amounts that are fractional
-	}
+	// hard-coding USDC just for PoC this should ideally consider or native tokens per network
+	// if input.Token == "USDC" {
+	// 	amount, err = amountToMwei(big.NewInt(int64(input.Amount)))
+	// 	if err != nil {
+	// 		return nil, nil, err
+	// 	}
+	// } else {
+	amount = big.NewInt(int64(input.Amount)) // This will cause a bug for amounts that are fractional
+	// }
 
 	// if input.NextChargeAt != nil {
 	// 	// check if the date is today and execute the charge
@@ -175,22 +177,24 @@ func amountToWei(amount any) (*big.Int, error) {
 	}
 }
 
-func amountToMwei(amount any) (*big.Int, error) {
+func amountToMwei(amount int64) (*big.Int, error) {
 	etherInMWei := new(big.Int)
 	etherInMWei.SetString("1000000", 10)
-
-	switch v := amount.(type) {
-	case *big.Int:
-		mWeiAmount := new(big.Int).Mul(v, etherInMWei)
-		return mWeiAmount, nil
-	case *big.Float:
-		mWeiAmount := new(big.Int)
-		mWeiAmountFloat := new(big.Float).Mul(v, big.NewFloat(1e6))
-		mWeiAmountFloat.Int(mWeiAmount)
-		return mWeiAmount, nil
-	default:
-		return nil, fmt.Errorf("unsupported input type: %T", amount)
-	}
+	v := big.NewInt(int64(amount))
+	mWeiAmount := new(big.Int).Mul(v, etherInMWei)
+	return mWeiAmount, nil
+	// switch v := amount.(type) {
+	// case *big.Int:
+	// 	mWeiAmount := new(big.Int).Mul(v, etherInMWei)
+	// 	return mWeiAmount, nil
+	// case *big.Float:
+	// 	mWeiAmount := new(big.Int)
+	// 	mWeiAmountFloat := new(big.Float).Mul(v, big.NewFloat(1e6))
+	// 	mWeiAmountFloat.Int(mWeiAmount)
+	// 	return mWeiAmount, nil
+	// default:
+	// 	return nil, fmt.Errorf("unsupported input type: %T", amount)
+	// }
 }
 
 func mWeiToAmount(amt *big.Int) int64 {
@@ -212,10 +216,15 @@ func weiToAmount(amt *big.Int) int64 {
 }
 
 func (ws *WalletService) ExecuteCharge(sender, target, mId, token, key string, amount int64) error {
-	if token != "USDC" {
-		//	should convert to wei
+	// if token != "USDC" {
+	// 	//	should convert to wei
+	// }
+
+	actualAmount, err := amountToMwei(amount)
+	if err != nil {
+		return err
 	}
-	data, err := erc4337.CreateTransferCallData(target, token, big.NewInt(amount))
+	data, err := erc4337.CreateTransferCallData(target, token, actualAmount)
 	if err != nil {
 		err = errors.Wrap(err, "CreateTransferCallData() - ")
 		return err
