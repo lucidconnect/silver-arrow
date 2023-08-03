@@ -347,11 +347,11 @@ input NewSubscription {
   chain: Int!
   nextChargeAt: Time
 	token: String!
-	amount: Float!
+	amount: Int!
 	interval: Int!
   merchantId: String!
 	walletAddress: String!
-  OwnerAddress: String!
+  ownerAddress: String!
 }
 
 input SubscriptionValidation {
@@ -366,7 +366,7 @@ type ValidationData {
 type SubscriptionData {
   id: ID!
 	token: String!
-  amount: Float!
+  amount: Int!
 	interval: Int!
   merchantId: String!
 	walletAddress: String!
@@ -1063,9 +1063,9 @@ func (ec *executionContext) _SubscriptionData_amount(ctx context.Context, field 
 		}
 		return graphql.Null
 	}
-	res := resTmp.(float64)
+	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SubscriptionData_amount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1075,7 +1075,7 @@ func (ec *executionContext) fieldContext_SubscriptionData_amount(ctx context.Con
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Float does not have child fields")
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -3128,7 +3128,7 @@ func (ec *executionContext) unmarshalInputNewSubscription(ctx context.Context, o
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"chain", "nextChargeAt", "token", "amount", "interval", "merchantId", "walletAddress", "OwnerAddress"}
+	fieldsInOrder := [...]string{"chain", "nextChargeAt", "token", "amount", "interval", "merchantId", "walletAddress", "ownerAddress"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -3166,7 +3166,7 @@ func (ec *executionContext) unmarshalInputNewSubscription(ctx context.Context, o
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("amount"))
-			data, err := ec.unmarshalNFloat2float64(ctx, v)
+			data, err := ec.unmarshalNInt2int(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -3198,10 +3198,10 @@ func (ec *executionContext) unmarshalInputNewSubscription(ctx context.Context, o
 				return it, err
 			}
 			it.WalletAddress = data
-		case "OwnerAddress":
+		case "ownerAddress":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("OwnerAddress"))
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerAddress"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
@@ -3853,21 +3853,6 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 		}
 	}
 	return res
-}
-
-func (ec *executionContext) unmarshalNFloat2float64(ctx context.Context, v interface{}) (float64, error) {
-	res, err := graphql.UnmarshalFloatContext(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNFloat2float64(ctx context.Context, sel ast.SelectionSet, v float64) graphql.Marshaler {
-	res := graphql.MarshalFloatContext(v)
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-	}
-	return graphql.WrapContextMarshaler(ctx, res)
 }
 
 func (ec *executionContext) unmarshalNID2string(ctx context.Context, v interface{}) (string, error) {

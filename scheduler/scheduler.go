@@ -46,11 +46,13 @@ func (s *Scheduler) ScheduleUserOp() {
 
 func (s *Scheduler) SendUserOp(sub models.Subscription) error {
 	token := sub.Token
-	amount := big.NewInt(sub.Amount)
+	amount, _ := new(big.Int).SetString(sub.Amount,10)
 	address, err := s.fetchMerchantAddress(sub.MerchantId)
 	if err != nil {
 		return err
 	}
+
+
 	data, err := erc4337.CreateTransferCallData(address, token, amount)
 	if err != nil {
 		return err

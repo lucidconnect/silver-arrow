@@ -29,21 +29,21 @@ func TestAddSubscription(t *testing.T) {
 		Chain:         80001,
 		NextChargeAt:  nil,
 		Token:         "MATIC",
-		Amount:        49.99,
+		Amount:        49,
 		Interval:      30,
 		MerchantID:    mId,
-		WalletAddress: "0x85fc2E4425d0DAba7426F50091a384ee05D37Cd2",
-		OwnerAddress:  owner,
+		WalletAddress: "0x14De44b6100dE479655D752ECD2230D10F8fA061",
+		OwnerAddress:  "0x85fc2E4425d0DAba7426F50091a384ee05D37Cd2",
 	}
 
 	_, op, err := ws.AddSubscription(newSub)
 	assert.NoError(t, err)
 
 	fmt.Println(op)
-	sig, err := erc4337.SignUserOp(op, key, 80001)
+	sig, err := erc4337.SignUserOp(op, key, erc4337.SUDO_MODE,nil, 80001)
 	assert.NoError(t, err)
 	op["signature"] = hexutil.Encode(sig)
-	data, err := ws.ValidateSubscription(op)
+	data, _, err := ws.ValidateSubscription(op)
 	assert.NoError(t, err)
 
 	fmt.Println("Data", data)
@@ -51,7 +51,7 @@ func TestAddSubscription(t *testing.T) {
 }
 
 func randKey() string {
-	key := make([]byte, 64)
+	key := make([]byte, 32)
 
 	_, err := rand.Read(key)
 	if err != nil {

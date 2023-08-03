@@ -7,8 +7,10 @@ import (
 	"math/big"
 	"os"
 
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
+	KernelStorage "github.com/helicarrierstudio/silver-arrow/abi/kernelStorage"
 	"github.com/pkg/errors"
 )
 
@@ -80,8 +82,17 @@ func (nc *Client) GetAccountCode(address common.Address) ([]byte, error) {
 	return nc.c.CodeAt(nc.ctx, address, nil)
 }
 
-func (nc *Client) GetAccountNonce(address common.Address) (uint64, error) {
-	return nc.c.NonceAt(nc.ctx, address, nil)
+func (nc *Client) GetAccountNonce(address common.Address) (*big.Int, error) {
+	k, err := KernelStorage.NewKernelStorage(address, nc.c)
+	if err != nil {
+		return nil, err
+	}
+	opts := &bind.CallOpts{
+		Pending: true,
+		Context: nil,
+	}
+
+	return k.GetNonce0(opts)
 }
 
 // SendUserOperation sends a user operation to an alt mempool

@@ -16,21 +16,21 @@ type NewSubscription struct {
 	Chain         int        `json:"chain"`
 	NextChargeAt  *time.Time `json:"nextChargeAt,omitempty"`
 	Token         string     `json:"token"`
-	Amount        float64    `json:"amount"`
+	Amount        int        `json:"amount"`
 	Interval      int        `json:"interval"`
 	MerchantID    string     `json:"merchantId"`
 	WalletAddress string     `json:"walletAddress"`
-	OwnerAddress  string     `json:"OwnerAddress"`
+	OwnerAddress  string     `json:"ownerAddress"`
 }
 
 type SubscriptionData struct {
-	ID              string  `json:"id"`
-	Token           string  `json:"token"`
-	Amount          float64 `json:"amount"`
-	Interval        int     `json:"interval"`
-	MerchantID      string  `json:"merchantId"`
-	WalletAddress   string  `json:"walletAddress"`
-	SubscriptionKey string  `json:"subscriptionKey"`
+	ID              string `json:"id"`
+	Token           string `json:"token"`
+	Amount          int    `json:"amount"`
+	Interval        int    `json:"interval"`
+	MerchantID      string `json:"merchantId"`
+	WalletAddress   string `json:"walletAddress"`
+	SubscriptionKey string `json:"subscriptionKey"`
 }
 
 type SubscriptionValidation struct {

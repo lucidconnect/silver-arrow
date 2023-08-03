@@ -25,11 +25,11 @@ input NewSubscription {
   chain: Int!
   nextChargeAt: Time
 	token: String!
-	amount: Float!
+	amount: Int!
 	interval: Int!
   merchantId: String!
 	walletAddress: String!
-  OwnerAddress: String!
+  ownerAddress: String!
 }
 
 input SubscriptionValidation {
@@ -44,7 +44,7 @@ type ValidationData {
 type SubscriptionData {
   id: ID!
 	token: String!
-  amount: Float!
+  amount: Int!
 	interval: Int!
   merchantId: String!
 	walletAddress: String!

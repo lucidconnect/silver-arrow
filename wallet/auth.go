@@ -16,6 +16,7 @@ func CreateAccessKey() (string, string, error) {
 
 	// encrypt and store the private key (not ideal)
 	// I plan to use hashicorp vault to manage the private keys, for now a database will do.
+	
 	pubKey := crypto.PubkeyToAddress(privateKey.PublicKey).Hex()
 	signer := hexutil.EncodeBig(privateKey.D)
 

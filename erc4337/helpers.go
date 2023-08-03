@@ -143,11 +143,14 @@ func GetSetExecutionFnData(accountABI, validator string, enableData []byte) ([]b
 		err = errors.Wrap(err, "invalid selector hex")
 		return nil, err
 	}
+	fnSelector := [4]byte{}
+	copy(fnSelector[:], selector)
 	executorAddress := common.BigToAddress(common.Big0)
 	validatorAddress := common.HexToAddress(validator)
 
-	payload, err := contractABI.Pack("setExecution", selector, executorAddress, validatorAddress, uint(99999999999), uint(0), enableData)
+	payload, err := contractABI.Pack("setExecution", fnSelector, executorAddress, validatorAddress, big.NewInt(99999999999), big.NewInt(0), enableData)
 	if err != nil {
+		err = errors.Wrap(err, "api.Pack() - ")
 		return nil, err
 	}
 	return payload, nil
@@ -161,7 +164,7 @@ func GetCreateAccountFnData(factoryAbi, validator string, enableData []byte) ([]
 	}
 	validatorAddress := common.HexToAddress(validator)
 
-	payload, err := contractABI.Pack("createAccount", validatorAddress, enableData, common.Big0)
+	payload, err := contractABI.Pack("createAccount", validatorAddress, enableData, common.Big1)
 	if err != nil {
 		return nil, err
 	}
@@ -271,7 +274,7 @@ func getMaxPriorityFeePerGas() *big.Int {
 func getSigningKey(privateKey string) (*ecdsa.PrivateKey, error) {
 	privKey, err := crypto.HexToECDSA(privateKey[2:])
 	if err != nil {
-		err = errors.Wrap(err, "private key parse failure")
+		err = errors.Wrapf(err, "private key parse failure, %v", privateKey)
 		return nil, err
 	}
 	return privKey, nil

@@ -7,6 +7,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/helicarrierstudio/silver-arrow/erc4337"
 	"github.com/helicarrierstudio/silver-arrow/repository"
 	"github.com/joho/godotenv"
@@ -45,31 +46,40 @@ func TestMain(m *testing.M) {
 func TestSendUserOp(t *testing.T) {
 	// sender := "0x6a6F07c5c32F5fb20393a2110B2Bf0925e59571b"
 	// target := "0x605F2a359EFbCf1aAF708153Ec0ED402d0746ACC"
-	sender := "0x85fc2E4425d0DAba7426F50091a384ee05D37Cd2"
+	sender := "0x14De44b6100dE479655D752ECD2230D10F8fA061"
 	target := "0xB77ce6ec08B85DcC468B94Cea7Cc539a3BbF9510"
-	token := "ETH"
+	token := "USDC"
 
 	ercBundler := erc4337.NewERCBundler(entrypointAddress, nodeClient)
 
 	// 1000000000000000000 = 1 ether
 	// 1000000000000000000 = 1 erc20Token
 	// 10000000000000000 = 0.01 erc20Token
-	amount := big.NewInt(6000000000000000)
+	amount := big.NewInt(6)
 	data, err := erc4337.CreateTransferCallData(target, token, amount)
 	if !assert.NoError(t, err) {
 		t.FailNow()
 	}
 
-	nonce := big.NewInt(8)
-	key := ""
-	chainId := 8001
-	op, err := ercBundler.CreateUserOperation(sender, target, data, nonce, amount, false, key, int64(chainId))
+	nonce := ercBundler.AccountNonce(sender)
+	key := "0xcea5314e325233134348f39363151a5fff8051a5e48f8ac96b6dd9866bc2336b"
+
+	mId, _ := hexutil.Decode("0x829f80a98190408d9c22d06ef11ecb213c3fde8a388e9b2052bc1eeee89f2fb7")
+	fmt.Println((mId))
+
+	chainId := 80001
+	op, err := ercBundler.CreateUnsignedUserOperation(sender, target, nil, data, nonce, true, int64(chainId))
 	assert.NoError(t, err)
 	if !assert.NoError(t, err) {
 		t.FailNow()
 	}
 	fmt.Println("user operation", op)
-
+	// signature := []byte{}
+	sig, _ := erc4337.SignUserOp(op, key, erc4337.VALIDATOR_MODE, mId, int64(chainId))
+	// signature = append(signature, mId...)
+	// signature = append(signature, sig...)
+	fmt.Println(sig)
+	op["signature"] = hexutil.Encode(sig)
 	// send user operation
 	opHash, err := ercBundler.SendUserOp(op)
 	if !assert.NoError(t, err) {

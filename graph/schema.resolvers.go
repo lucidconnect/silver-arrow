@@ -13,6 +13,7 @@ import (
 	"github.com/helicarrierstudio/silver-arrow/graph/generated"
 	"github.com/helicarrierstudio/silver-arrow/graph/model"
 	"github.com/helicarrierstudio/silver-arrow/wallet"
+	"github.com/pkg/errors"
 )
 
 // AddAccount is the resolver for the addAccount field.
@@ -54,8 +55,21 @@ func (r *mutationResolver) ValidateSubscription(ctx context.Context, input model
 	op, _ := opInterface.(map[string]any)
 	op["signature"] = input.SignedMessage
 	walletService := wallet.NewWalletService(r.WalletRepository, r.Bundler)
-	walletService.ValidateSubscription(op)
-	panic(fmt.Errorf("not implemented: ValidateSubscription - validateSubscription"))
+	subData, key, err := walletService.ValidateSubscription(op)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+	// x := int64(subData.Amount)
+	target := "0xB77ce6ec08B85DcC468B94Cea7Cc539a3BbF9510"
+
+	err = walletService.ExecuteCharge(subData.WalletAddress, target, subData.MerchantID, subData.Token, key, int64(subData.Amount))
+	if err != nil {
+		err = errors.Wrap(err, "error occurred during first time charge execution - ")
+		log.Println(err)
+		return subData, err
+	}
+	return subData, nil
 }
 
 // CancelSubscription is the resolver for the cancelSubscription field.

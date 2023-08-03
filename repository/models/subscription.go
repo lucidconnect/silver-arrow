@@ -1,10 +1,12 @@
 package models
 
-import "time"
+import (
+	"time"
+)
 
 type Subscription struct {
 	Token          string    `bson:"token"`  // really the token contract
-	Amount         int64     `bson:"amount"` // amount in wei
+	Amount         string    `bson:"amount"` // amount in wei
 	Active         bool      `bson:"active"`
 	Interval       int64     `bson:"interval"`
 	UserOpHash     string    `bson:"userop_hash"`
