@@ -320,8 +320,8 @@ func (ws *WalletService) isAccountDeployed(address string) bool {
 		fmt.Println("An error occured")
 		return false
 	}
-
-	if code == nil {
+	fmt.Println("Code ", code)
+	if len(code) == 0 {
 		fmt.Println("account not deployed, should be deployed first!")
 		return false
 	}
