@@ -315,8 +315,13 @@ func (ws *WalletService) getContractInitCode(accountAddress common.Address) ([]b
 }
 
 func (ws *WalletService) isAccountDeployed(address string) bool {
-	_, err := ws.bundler.GetClient().CodeAt(context.Background(), common.HexToAddress(address), nil)
+	code, err := ws.bundler.GetClient().CodeAt(context.Background(), common.HexToAddress(address), nil)
 	if err != nil {
+		fmt.Println("An error occured")
+		return false
+	}
+
+	if code == nil {
 		fmt.Println("account not deployed, should be deployed first!")
 		return false
 	}
