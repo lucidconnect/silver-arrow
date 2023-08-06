@@ -69,7 +69,7 @@ func TestSendUserOp(t *testing.T) {
 	fmt.Println((mId))
 
 	chainId := 80001
-	op, err := ercBundler.CreateUnsignedUserOperation(sender, target, nil, data, nonce, true, int64(chainId))
+	op, err := ercBundler.CreateUnsignedUserOperation(sender, target, nil, data, nonce, false, int64(chainId))
 	assert.NoError(t, err)
 	if !assert.NoError(t, err) {
 		t.FailNow()

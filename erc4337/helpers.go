@@ -264,11 +264,11 @@ func getPreVerificationGas() *big.Int {
 }
 
 func getMaxFeePerGas() *big.Int {
-	return big.NewInt(2640000080)
+	return big.NewInt(2640000180)
 }
 
 func getMaxPriorityFeePerGas() *big.Int {
-	return big.NewInt(2640000080)
+	return big.NewInt(2640000180)
 }
 
 func getSigningKey(privateKey string) (*ecdsa.PrivateKey, error) {
