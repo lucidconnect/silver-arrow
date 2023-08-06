@@ -136,7 +136,7 @@ func (ws *WalletService) AddSubscription(input model.NewSubscription) (*model.Va
 		}
 	}
 
-	op, err := ws.bundler.CreateUnsignedUserOperation(input.WalletAddress, input.WalletAddress, initCode, callData, nonce, false, int64(input.Chain))
+	op, err := ws.bundler.CreateUnsignedUserOperation(input.WalletAddress, input.WalletAddress, initCode, callData, nonce, true, int64(input.Chain))
 	if err != nil {
 		log.Println(err)
 		return nil, nil, err
