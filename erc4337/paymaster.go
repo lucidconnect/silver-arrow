@@ -15,7 +15,7 @@ type PaymasterResult struct {
 func (nc *Client) SponsorUserOperation(entryPoint string, userop, pc interface{}) (*PaymasterResult, error) {
 	result := &PaymasterResult{}
 
-	err := nc.p.Client().CallContext(nc.ctx, result, "pm_sponsorUserOperation", userop, entryPoint, pc)
+	err := nc.p.Client().CallContext(nc.ctx, result, "pm_sponsorUserOperation", userop, entryPoint)
 	if err != nil {
 		log.Printf("pm_sponsorUserOperation -  message: %v \n", err)
 		return nil, err
