@@ -136,7 +136,14 @@ func (ws *WalletService) AddSubscription(input model.NewSubscription) (*model.Va
 		}
 	}
 
-	op, err := ws.bundler.CreateUnsignedUserOperation(input.WalletAddress, input.WalletAddress, initCode, callData, nonce, false, int64(input.Chain))
+	var usePaymaster bool
+	switch os.Getenv("USE_PAYMASTER") {
+	case "TRUE":
+		usePaymaster = true
+	default:
+		usePaymaster = false
+	}
+	op, err := ws.bundler.CreateUnsignedUserOperation(input.WalletAddress, input.WalletAddress, initCode, callData, nonce, usePaymaster ,int64(input.Chain))
 	if err != nil {
 		log.Println(err)
 		return nil, nil, err
