@@ -164,7 +164,7 @@ func GetCreateAccountFnData(factoryAbi, validator string, enableData []byte) ([]
 	}
 	validatorAddress := common.HexToAddress(validator)
 
-	payload, err := contractABI.Pack("createAccount", validatorAddress, enableData, common.Big1)
+	payload, err := contractABI.Pack("createAccount", validatorAddress, enableData, common.Big0)
 	if err != nil {
 		return nil, err
 	}
