@@ -113,7 +113,7 @@ func (ws *WalletService) AddSubscription(input model.NewSubscription) (*model.Va
 	isAccountDeployed := ws.isAccountDeployed(input.WalletAddress)
 	fmt.Println("Account deployed - ", isAccountDeployed)
 	if !isAccountDeployed {
-		initCode, err = ws.getContractInitCode(common.HexToAddress(input.OwnerAddress))
+		initCode, err = getContractInitCode(common.HexToAddress(input.OwnerAddress))
 		if err != nil {
 			return nil, nil, err
 		}
@@ -296,10 +296,10 @@ func createValidatorEnableData(publicKey, merchantId string) ([]byte, error) {
 	return data, nil
 }
 
-func (ws *WalletService) getContractInitCode(accountAddress common.Address) ([]byte, error) {
+func getContractInitCode(accountAddress common.Address) ([]byte, error) {
 	initCode := []byte{}
 	factoryAddress := os.Getenv("KERNEL_FACTORY_ADDRESS")
-
+	fmt.Println("accountAddress ", accountAddress)
 	data := accountAddress.Bytes()
 	fmt.Println("enable data ", hexutil.Encode(data))
 	code, err := erc4337.CreateFactoryFnData(accountAddress.Bytes())
@@ -311,6 +311,7 @@ func (ws *WalletService) getContractInitCode(accountAddress common.Address) ([]b
 	initCode = append(initCode, code...)
 
 	fmt.Println("initcode: ", (initCode))
+	fmt.Println(hexutil.Encode(initCode))
 	return initCode, nil
 }
 
