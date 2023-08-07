@@ -256,11 +256,11 @@ func getCallGasLimit() *big.Int {
 }
 
 func getVerificationGasLimit() *big.Int {
-	return big.NewInt(80624)
+	return big.NewInt(40500)
 }
 
 func getPreVerificationGas() *big.Int {
-	return big.NewInt(69925)
+	return big.NewInt(43920)
 }
 
 func getMaxFeePerGas() *big.Int {

@@ -172,7 +172,6 @@ func (b *ERCBundler) CreateUnsignedUserOperation(sender, target string, initCode
 		// preVerificationGas = paymaster.PreVerificationGas
 		maxPriorityFeePerGas = paymaster.MaxPriorityFeePerGas
 		maxFeePerGas = paymaster.MaxFeePerGas
-
 	} else {
 		fmt.Println("not using paymaster")
 		o := map[string]any{
