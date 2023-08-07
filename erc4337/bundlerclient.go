@@ -165,16 +165,16 @@ func (nc *Client) EstimateUserOperationGas(entrypointAddress string, userop map[
 	sender, _ := userop["sender"].(string)
 	nonce, _ := userop["nonce"].(string)
 	initCode, _ := userop["initCode"].(string)
-	callGasLimit, _ := userop["callGasLimit"].(string)
-	verificationGasLimit, _ := userop["verificationGasLimit"].(string)
-	preVerificationGas, ok := userop["preVerificationGas"].(string)
-	if !ok {
-		log.Panic(userop["preVerificationGas"])
-	}
+	// callGasLimit, _ := userop["callGasLimit"].(string)
+	// verificationGasLimit, _ := userop["verificationGasLimit"].(string)
+	// preVerificationGas, ok := userop["preVerificationGas"].(string)
+	// if !ok {
+	// 	log.Panic(userop["preVerificationGas"])
+	// }
 
-	maxFeePerGas, _ := userop["maxFeePerGas"].(string)
-	maxPriorityFeePerGas, _ := userop["maxPriorityFeePerGas"].(string)
-	paymasterAndData, _ := userop["paymasterAndData"].(string)
+	// maxFeePerGas, _ := userop["maxFeePerGas"].(string)
+	// maxPriorityFeePerGas, _ := userop["maxPriorityFeePerGas"].(string)
+	// paymasterAndData, _ := userop["paymasterAndData"].(string)
 	signature, _ := userop["signature"].(string)
 	callData, _ := userop["callData"].(string)
 
@@ -182,12 +182,12 @@ func (nc *Client) EstimateUserOperationGas(entrypointAddress string, userop map[
 		Sender:               sender,
 		Nonce:                nonce,
 		InitCode:             initCode,
-		CallGasLimit:         callGasLimit,
-		VerificationGasLimit: verificationGasLimit,
-		PreVerificationGas:   preVerificationGas,
-		MaxFeePerGas:         maxFeePerGas,
-		MaxPriorityFeePerGas: maxPriorityFeePerGas,
-		PaymasterAndData:     paymasterAndData,
+		// CallGasLimit:         callGasLimit,
+		// VerificationGasLimit: verificationGasLimit,
+		// PreVerificationGas:   preVerificationGas,
+		// MaxFeePerGas:         maxFeePerGas,
+		// MaxPriorityFeePerGas: maxPriorityFeePerGas,
+		// PaymasterAndData:     paymasterAndData,
 		Signature:            signature,
 		CallData:             callData,
 	}

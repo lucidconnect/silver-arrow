@@ -175,6 +175,7 @@ func (b *ERCBundler) CreateUnsignedUserOperation(sender, target string, initCode
 
 	} else {
 		fmt.Println("not using paymaster")
+		o["signature"] = hexutil.Encode(tok)
 		result, err := b.client.EstimateUserOperationGas(b.EntryPoint, o)
 		if err != nil {
 			return nil, err
