@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/helicarrierstudio/silver-arrow/graph/generated"
@@ -47,6 +48,7 @@ func (r *mutationResolver) AddSubscription(ctx context.Context, input model.NewS
 
 // ValidateSubscription is the resolver for the validateSubscription field.
 func (r *mutationResolver) ValidateSubscription(ctx context.Context, input model.SubscriptionValidation) (*model.SubscriptionData, error) {
+	time.Sleep(time.Second)
 	opInterface, err := r.Cache.Get(input.UserOpHash)
 	if err != nil {
 		log.Println(err)
