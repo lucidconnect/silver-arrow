@@ -181,8 +181,8 @@ func (b *ERCBundler) CreateUnsignedUserOperation(sender, target string, initCode
 			"initCode":             hexutil.Encode(initCode),
 			"callData":             hexutil.Encode(callData),
 			"callGasLimit":         "0xec00",
-			"verificationGasLimit": "0x13af0",
-			"preVerificationGas":   "0x11125",
+			"verificationGasLimit": "0x9d5e",
+			"preVerificationGas":   "0xab90",
 			"maxFeePerGas":         hexutil.EncodeBig(getMaxFeePerGas()),
 			"maxPriorityFeePerGas": hexutil.EncodeBig(getMaxPriorityFeePerGas()),
 			"signature":            hexutil.Encode(tok),
@@ -194,6 +194,8 @@ func (b *ERCBundler) CreateUnsignedUserOperation(sender, target string, initCode
 			if err != nil {
 				return nil, err
 			}
+			fmt.Println("user op gas", result)
+			
 			callGasLimit = result.CallGasLimit
 		} else {
 			callGasLimit = "0xec00"
