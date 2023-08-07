@@ -134,7 +134,7 @@ func (b *ERCBundler) CreateUnsignedUserOperation(sender, target string, initCode
 	// var paymasterResult *PaymasterResult
 	var paymaster *AlchemyPaymasterResult
 	var err error
-	var callGasLimit, maxFeePerGas, maxPriorityFeePerGas string
+	var callGasLimit, maxFeePerGas, maxPriorityFeePerGas, verificationGas, preVerificationGas string
 
 	senderAddress := common.HexToAddress(sender)
 	tok := make([]byte, 65)
@@ -168,8 +168,8 @@ func (b *ERCBundler) CreateUnsignedUserOperation(sender, target string, initCode
 		}
 
 		callGasLimit = paymaster.CallGasLimit
-		// verificationGas = paymaster.VerificationGasLimit
-		// preVerificationGas = paymaster.PreVerificationGas
+		verificationGas = paymaster.VerificationGasLimit
+		preVerificationGas = paymaster.PreVerificationGas
 		maxPriorityFeePerGas = paymaster.MaxPriorityFeePerGas
 		maxFeePerGas = paymaster.MaxFeePerGas
 	} else {
@@ -194,14 +194,14 @@ func (b *ERCBundler) CreateUnsignedUserOperation(sender, target string, initCode
 				return nil, err
 			}
 			fmt.Println("user op gas", result)
-			
+
 			callGasLimit = result.CallGasLimit
 		} else {
 			callGasLimit = "0xec00"
 		}
 
-		// verificationGas = hexutil.EncodeUint64(uint64(result.VerificationGasLimit))
-		// preVerificationGas = hexutil.EncodeUint64(uint64(result.PreVerificationGas))
+		verificationGas = hexutil.EncodeBig(getVerificationGasLimit())
+		preVerificationGas = hexutil.EncodeBig(getPreVerificationGas())
 
 		maxPriorityFeePerGas = hexutil.EncodeBig(getMaxPriorityFeePerGas())
 		maxFeePerGas = hexutil.EncodeBig(getMaxFeePerGas())
@@ -209,8 +209,8 @@ func (b *ERCBundler) CreateUnsignedUserOperation(sender, target string, initCode
 
 	o["paymasterAndData"] = "0x"
 	o["callGasLimit"] = callGasLimit
-	o["verificationGasLimit"] = hexutil.EncodeBig(getVerificationGasLimit())
-	o["preVerificationGas"] = hexutil.EncodeBig(getPreVerificationGas())
+	o["verificationGasLimit"] = verificationGas
+	o["preVerificationGas"] = preVerificationGas
 	o["maxPriorityFeePerGas"] = maxPriorityFeePerGas
 	o["maxFeePerGas"] = maxFeePerGas
 	o["signature"] = hexutil.Encode(tok)

@@ -162,7 +162,7 @@ func (ws *WalletService) AddSubscription(input model.NewSubscription) (*model.Va
 		if err != nil {
 			return nil, nil, err
 		}
-		usePaymaster = false
+		// usePaymaster = false
 	}
 
 	callData, err := createValidatorEnableData(publicKey, input.MerchantID)
