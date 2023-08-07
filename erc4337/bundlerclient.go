@@ -20,9 +20,9 @@ type Client struct {
 }
 
 type GasEstimateResult struct {
-	PreVerificationGas   string `json:"PreVerificationGas"`
-	VerificationGasLimit string `json:"VerificationGasLimit"`
-	CallGasLimit         string `json:"CallGasLimit"`
+	PreVerificationGas   int `json:"preVerificationGas"`
+	VerificationGasLimit int `json:"verificationGasLimit"`
+	CallGasLimit         int `json:"callGasLimit"`
 }
 
 type UserOperation struct {
@@ -121,7 +121,7 @@ func (nc *Client) SendUserOperation(entryPoint string, userop map[string]any) (s
 	callGasLimit, _ := userop["callGasLimit"].(string)
 	verificationGasLimit, _ := userop["verificationGasLimit"].(string)
 	preVerificationGas, ok := userop["preVerificationGas"].(string)
-	if  !ok {
+	if !ok {
 		log.Panic(userop["preVerificationGas"])
 	}
 
@@ -159,10 +159,39 @@ func (nc *Client) SendUserOperation(entryPoint string, userop map[string]any) (s
 }
 
 // Estimate the gas parameters required for the user operation
-func (nc *Client) EstimateUserOperationGas(entrypointAddress string, userop interface{}) (*GasEstimateResult, error) {
+func (nc *Client) EstimateUserOperationGas(entrypointAddress string, userop map[string]any) (*GasEstimateResult, error) {
 	result := &GasEstimateResult{}
 
-	err := nc.c.Client().CallContext(nc.ctx, result, "eth_estimateUserOperationGas", userop, entrypointAddress)
+	sender, _ := userop["sender"].(string)
+	nonce, _ := userop["nonce"].(string)
+	initCode, _ := userop["initCode"].(string)
+	callGasLimit, _ := userop["callGasLimit"].(string)
+	verificationGasLimit, _ := userop["verificationGasLimit"].(string)
+	preVerificationGas, ok := userop["preVerificationGas"].(string)
+	if !ok {
+		log.Panic(userop["preVerificationGas"])
+	}
+
+	maxFeePerGas, _ := userop["maxFeePerGas"].(string)
+	maxPriorityFeePerGas, _ := userop["maxPriorityFeePerGas"].(string)
+	paymasterAndData, _ := userop["paymasterAndData"].(string)
+	signature, _ := userop["signature"].(string)
+	callData, _ := userop["callData"].(string)
+
+	request := UserOperation{
+		Sender:               sender,
+		Nonce:                nonce,
+		InitCode:             initCode,
+		CallGasLimit:         callGasLimit,
+		VerificationGasLimit: verificationGasLimit,
+		PreVerificationGas:   preVerificationGas,
+		MaxFeePerGas:         maxFeePerGas,
+		MaxPriorityFeePerGas: maxPriorityFeePerGas,
+		PaymasterAndData:     paymasterAndData,
+		Signature:            signature,
+		CallData:             callData,
+	}
+	err := nc.c.Client().CallContext(nc.ctx, result, "eth_estimateUserOperationGas", request, entrypointAddress)
 	if err != nil {
 		err = errors.Wrap(err, "eth_estimateUserOperationGas call error")
 		return nil, err

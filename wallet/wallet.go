@@ -148,12 +148,21 @@ func (ws *WalletService) AddSubscription(input model.NewSubscription) (*model.Va
 
 	nextChargeAt = time.Now().Add(interval)
 
+	var usePaymaster bool
+	switch os.Getenv("USE_PAYMASTER") {
+	case "TRUE":
+		usePaymaster = true
+	default:
+		usePaymaster = false
+	}
+
 	isAccountDeployed := ws.isAccountDeployed(input.WalletAddress)
 	if !isAccountDeployed {
 		initCode, err = getContractInitCode(common.HexToAddress(input.OwnerAddress))
 		if err != nil {
 			return nil, nil, err
 		}
+		usePaymaster = false
 	}
 
 	callData, err := createValidatorEnableData(publicKey, input.MerchantID)
@@ -172,13 +181,6 @@ func (ws *WalletService) AddSubscription(input model.NewSubscription) (*model.Va
 		}
 	}
 
-	var usePaymaster bool
-	switch os.Getenv("USE_PAYMASTER") {
-	case "TRUE":
-		usePaymaster = true
-	default:
-		usePaymaster = false
-	}
 	op, err := ws.bundler.CreateUnsignedUserOperation(input.WalletAddress, input.WalletAddress, initCode, callData, nonce, usePaymaster, int64(input.Chain))
 	if err != nil {
 		log.Println(err)

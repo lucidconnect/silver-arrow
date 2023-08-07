@@ -109,9 +109,9 @@ func (b *ERCBundler) CreateUserOperation(sender, target string, callData []byte,
 		if err != nil {
 			return nil, err
 		}
-		callGasLimit = result.CallGasLimit
-		verificationGas = result.VerificationGasLimit
-		preVerificationGas = result.PreVerificationGas
+		callGasLimit = hexutil.EncodeUint64(uint64(result.CallGasLimit))
+		verificationGas = hexutil.EncodeUint64(uint64(result.VerificationGasLimit))
+		preVerificationGas = hexutil.EncodeUint64(uint64(result.PreVerificationGas))
 	}
 
 	o["callGasLimit"] = callGasLimit
@@ -179,9 +179,14 @@ func (b *ERCBundler) CreateUnsignedUserOperation(sender, target string, initCode
 		if err != nil {
 			return nil, err
 		}
-		callGasLimit = result.CallGasLimit
-		// verificationGas = result.VerificationGasLimit
-		// preVerificationGas = result.PreVerificationGas
+
+		callGasLimit = hexutil.EncodeUint64(uint64(result.CallGasLimit))
+
+		// verificationGas = hexutil.EncodeUint64(uint64(result.VerificationGasLimit))
+		// preVerificationGas = hexutil.EncodeUint64(uint64(result.PreVerificationGas))
+
+		maxPriorityFeePerGas = hexutil.EncodeBig(getMaxPriorityFeePerGas())
+		maxFeePerGas = hexutil.EncodeBig(getMaxFeePerGas())
 	}
 
 	o["paymasterAndData"] = "0x"
