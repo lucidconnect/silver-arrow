@@ -189,7 +189,7 @@ func (b *ERCBundler) CreateUnsignedUserOperation(sender, target string, initCode
 			"paymasterAndData":     "0x",
 		}
 
-		if initCode != nil {
+		if initCode == nil {
 			result, err := b.client.EstimateUserOperationGas(b.EntryPoint, o)
 			if err != nil {
 				return nil, err
