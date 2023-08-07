@@ -110,7 +110,7 @@ func (b *ERCBundler) CreateUserOperation(sender, target string, callData []byte,
 			return nil, err
 		}
 		callGasLimit = result.CallGasLimit
-		verificationGas = result.VerificationGas
+		verificationGas = result.VerificationGasLimit
 		preVerificationGas = result.PreVerificationGas
 	}
 
@@ -190,7 +190,7 @@ func (b *ERCBundler) CreateUnsignedUserOperation(sender, target string, initCode
 			return nil, err
 		}
 		callGasLimit = result.CallGasLimit
-		verificationGas = result.VerificationGas
+		verificationGas = result.VerificationGasLimit
 		preVerificationGas = result.PreVerificationGas
 	}
 

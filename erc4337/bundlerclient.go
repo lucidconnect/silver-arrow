@@ -20,9 +20,9 @@ type Client struct {
 }
 
 type GasEstimateResult struct {
-	PreVerificationGas *big.Int `json:"PreVerificationGas"`
-	VerificationGas    *big.Int `json:"VerificationGas"`
-	CallGasLimit       *big.Int `json:"CallGasLimit"`
+	PreVerificationGas   *big.Int `json:"PreVerificationGas"`
+	VerificationGasLimit *big.Int `json:"VerificationGasLimit"`
+	CallGasLimit         *big.Int `json:"CallGasLimit"`
 }
 
 func InitialiseBundler() (*ERCBundler, error) {
