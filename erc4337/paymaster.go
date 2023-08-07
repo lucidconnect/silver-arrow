@@ -59,7 +59,7 @@ func (nc *Client) RequestGasAndPaymasterAndData(policyId, entryPoint, dummySigna
 		UserOperation:  userop,
 	}
 
-	time.Sleep(time.Second)
+	time.Sleep(3 * time.Second)
 	err := nc.p.Client().CallContext(nc.ctx, result, "alchemy_requestGasAndPaymasterAndData", request)
 	if err != nil {
 		log.Printf("alchemy_requestGasAndPaymasterAndData -  message: %v \n", err)
