@@ -57,6 +57,8 @@ func (r *mutationResolver) ValidateSubscription(ctx context.Context, input model
 	op, _ := opInterface.(map[string]any)
 	op["signature"] = input.SignedMessage
 	walletService := wallet.NewWalletService(r.WalletRepository, r.Bundler)
+
+	log.Println("User op", op)
 	subData, key, err := walletService.ValidateSubscription(op)
 	if err != nil {
 		log.Println(err)
