@@ -109,9 +109,9 @@ func (b *ERCBundler) CreateUserOperation(sender, target string, callData []byte,
 		if err != nil {
 			return nil, err
 		}
-		callGasLimit = hexutil.EncodeUint64(uint64(result.CallGasLimit))
-		verificationGas = hexutil.EncodeUint64(uint64(result.VerificationGasLimit))
-		preVerificationGas = hexutil.EncodeUint64(uint64(result.PreVerificationGas))
+		callGasLimit = result.CallGasLimit
+		verificationGas = result.VerificationGasLimit
+		preVerificationGas = result.PreVerificationGas
 	}
 
 	o["callGasLimit"] = callGasLimit
@@ -175,13 +175,26 @@ func (b *ERCBundler) CreateUnsignedUserOperation(sender, target string, initCode
 
 	} else {
 		fmt.Println("not using paymaster")
+		o := map[string]any{
+			"sender":               senderAddress.Hex(),
+			"nonce":                hexutil.EncodeBig(nonce),
+			"initCode":             "0x",
+			"callData":             hexutil.Encode(callData),
+			"callGasLimit":         "0xec00",
+			"verificationGasLimit": "0x13af0",
+			"preVerificationGas":   "0x11125",
+			"maxFeePerGas":         hexutil.EncodeBig(getMaxFeePerGas()),
+			"maxPriorityFeePerGas": hexutil.EncodeBig(getMaxPriorityFeePerGas()),
+			"signature":            hexutil.Encode(tok),
+			"paymasterAndData":     "0x",
+		}
 		o["signature"] = hexutil.Encode(tok)
 		result, err := b.client.EstimateUserOperationGas(b.EntryPoint, o)
 		if err != nil {
 			return nil, err
 		}
 
-		callGasLimit = hexutil.EncodeUint64(uint64(result.CallGasLimit))
+		callGasLimit = result.CallGasLimit
 
 		// verificationGas = hexutil.EncodeUint64(uint64(result.VerificationGasLimit))
 		// preVerificationGas = hexutil.EncodeUint64(uint64(result.PreVerificationGas))
