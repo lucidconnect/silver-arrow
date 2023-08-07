@@ -20,9 +20,23 @@ type Client struct {
 }
 
 type GasEstimateResult struct {
-	PreVerificationGas   *big.Int `json:"PreVerificationGas"`
-	VerificationGasLimit *big.Int `json:"VerificationGasLimit"`
-	CallGasLimit         *big.Int `json:"CallGasLimit"`
+	PreVerificationGas   string `json:"PreVerificationGas"`
+	VerificationGasLimit string `json:"VerificationGasLimit"`
+	CallGasLimit         string `json:"CallGasLimit"`
+}
+
+type UserOperation struct {
+	Sender               string `json:"sender"`
+	Nonce                string `json:"nonce"`
+	InitCode             string `json:"initCode"`
+	CallData             string `json:"callData"`
+	CallGasLimit         string `json:"callGasLimit"`
+	VerificationGasLimit string `json:"verificationGasLimit"`
+	PreVerificationGas   string `json:"preVerificationGas"`
+	MaxFeePerGas         string `json:"maxFeePerGas"`
+	MaxPriorityFeePerGas string `json:"maxPriorityFeePerGas"`
+	PaymasterAndData     string `json:"paymasterAndData"`
+	Signature            string `json:"signature"`
 }
 
 func InitialiseBundler() (*ERCBundler, error) {
@@ -96,10 +110,46 @@ func (nc *Client) GetAccountNonce(address common.Address) (*big.Int, error) {
 }
 
 // SendUserOperation sends a user operation to an alt mempool
-func (nc *Client) SendUserOperation(entryPoint string, userop interface{}) (string, error) {
+func (nc *Client) SendUserOperation(entryPoint string, userop map[string]any) (string, error) {
 	var result string
+	// fmt.Println("user op", userop)
+	// obj, _ := json.Marshal(userop)
 
-	err := nc.c.Client().CallContext(nc.ctx, &result, "eth_sendUserOperation", userop, entryPoint)
+	sender, _ := userop["sender"].(string)
+	nonce, _ := userop["nonce"].(string)
+	initCode, _ := userop["initCode"].(string)
+	callGasLimit, _ := userop["callGasLimit"].(string)
+	verificationGasLimit, _ := userop["verificationGasLimit"].(string)
+	preVerificationGas, ok := userop["preVerificationGas"].(string)
+	if  !ok {
+		log.Panic(userop["preVerificationGas"])
+	}
+
+	maxFeePerGas, _ := userop["maxFeePerGas"].(string)
+	maxPriorityFeePerGas, _ := userop["maxPriorityFeePerGas"].(string)
+	paymasterAndData, _ := userop["paymasterAndData"].(string)
+	signature, _ := userop["signature"].(string)
+	callData, _ := userop["callData"].(string)
+
+	// for k, v := range userop {
+	// 	v.(string)
+	// }
+
+	request := UserOperation{
+		Sender:               sender,
+		Nonce:                nonce,
+		InitCode:             initCode,
+		CallGasLimit:         callGasLimit,
+		VerificationGasLimit: verificationGasLimit,
+		PreVerificationGas:   preVerificationGas,
+		MaxFeePerGas:         maxFeePerGas,
+		MaxPriorityFeePerGas: maxPriorityFeePerGas,
+		PaymasterAndData:     paymasterAndData,
+		Signature:            signature,
+		CallData:             callData,
+	}
+	fmt.Println(request)
+	err := nc.c.Client().CallContext(nc.ctx, &result, "eth_sendUserOperation", request, entryPoint)
 	if err != nil {
 		err = errors.Wrap(err, "eth_sendUserOperation call error")
 		return result, err

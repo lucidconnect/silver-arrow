@@ -256,19 +256,19 @@ func getCallGasLimit() *big.Int {
 }
 
 func getVerificationGasLimit() *big.Int {
-	return big.NewInt(60624)
+	return big.NewInt(80624)
 }
 
 func getPreVerificationGas() *big.Int {
-	return big.NewInt(59925)
+	return big.NewInt(69925)
 }
 
 func getMaxFeePerGas() *big.Int {
-	return big.NewInt(2640000180)
+	return big.NewInt(2640000060)
 }
 
 func getMaxPriorityFeePerGas() *big.Int {
-	return big.NewInt(2640000180)
+	return big.NewInt(2640000060)
 }
 
 func getSigningKey(privateKey string) (*ecdsa.PrivateKey, error) {

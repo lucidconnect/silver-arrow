@@ -69,12 +69,12 @@ func TestSendUserOp(t *testing.T) {
 	fmt.Println((mId))
 
 	chainId := 80001
-	op, err := ercBundler.CreateUnsignedUserOperation(sender, target, nil, data, nonce, false, int64(chainId))
+	op, err := ercBundler.CreateUnsignedUserOperation(sender, target, nil, data, nonce, true, int64(chainId))
 	assert.NoError(t, err)
 	if !assert.NoError(t, err) {
 		t.FailNow()
 	}
-	fmt.Println("user operation", op)
+	// fmt.Println("user operation", op)
 	// signature := []byte{}
 	sig, _ := erc4337.SignUserOp(op, key, erc4337.VALIDATOR_MODE, mId, int64(chainId))
 	// signature = append(signature, mId...)

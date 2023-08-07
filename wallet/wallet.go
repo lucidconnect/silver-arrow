@@ -6,6 +6,7 @@ import (
 	"log"
 	"math/big"
 	"os"
+	"reflect"
 	"strconv"
 	"time"
 
@@ -46,15 +47,52 @@ func (ws *WalletService) AddAccount(input model.Account) error {
 	return nil
 }
 
+type userOp struct {
+	CallData             string `json:"callData"`
+	CallGasLimit         string `json:"callGasLimit"`
+	InitCode             string `json:"initCode"`
+	MaxFeePerGas         string `json:"maxFeePerGas"`
+	MaxPriorityFeePerGas string `json:"maxPriorityFeePerGas"`
+	Nonce                string `json:"nonce"`
+	PaymasterAndData     string `json:"paymasterAndData"`
+	PreVerificationGas   string `json:"preVerificationGas"`
+	Sender               string `json:"sender"`
+	Signature            string `json:"signature"`
+	VerificationGasLimit string `json:"verificationGasLimit"`
+}
+
+func convertMapToStruct(m map[string]interface{}, s interface{}) error {
+	stValue := reflect.ValueOf(s).Elem()
+	sType := stValue.Type()
+	for i := 0; i < sType.NumField(); i++ {
+		field := sType.Field(i)
+		if value, ok := m[field.Name]; ok {
+			stValue.Field(i).Set(reflect.ValueOf(value))
+		}
+	}
+	return nil
+}
+
 func (ws *WalletService) ValidateSubscription(userop map[string]any) (*model.SubscriptionData, string, error) {
 	// k, _ := Kernel.NewKernel(common.HexToAddress(input.WalletAddress), nil)
-	// // k.ValidateUserOp()
+	// k.ValidateUserOp()
+	// var opStruct userOp
+	// err := mapstructure.Decode(userop, &opStruct)
+	// if err != nil {
+	// 	fmt.Println(err)
+	// 	return nil, "", err
+	// }
+	// fmt.Println("user operation struct: ", opStruct)
 	opHash, err := ws.bundler.SendUserOp(userop)
 	if err != nil {
+		fmt.Println("userop hash ", opHash)
 		return nil, "", err
 	}
 	filter := bson.D{{Key: "userop_hash", Value: opHash}}
 	results, err := ws.repository.FindSubscriptionsByFilter(filter)
+	if err != nil {
+		return nil, "", err
+	}
 	result := results[0]
 	// a, _ := new(big.Int).SetString(result.Amount, 10)
 	token := result.Token
@@ -76,7 +114,7 @@ func (ws *WalletService) ValidateSubscription(userop map[string]any) (*model.Sub
 	}
 	fmt.Println("userop hash ", opHash)
 
-	return subData, result.SigningKey, err
+	return subData, result.SigningKey, nil
 }
 
 func (ws *WalletService) AddSubscription(input model.NewSubscription) (*model.ValidationData, map[string]any, error) {
@@ -111,7 +149,6 @@ func (ws *WalletService) AddSubscription(input model.NewSubscription) (*model.Va
 	nextChargeAt = time.Now().Add(interval)
 
 	isAccountDeployed := ws.isAccountDeployed(input.WalletAddress)
-	fmt.Println("Account deployed - ", isAccountDeployed)
 	if !isAccountDeployed {
 		initCode, err = getContractInitCode(common.HexToAddress(input.OwnerAddress))
 		if err != nil {
@@ -125,7 +162,6 @@ func (ws *WalletService) AddSubscription(input model.NewSubscription) (*model.Va
 		return nil, nil, err
 	}
 
-	fmt.Println("Account deployed - ", isAccountDeployed)
 	if !isAccountDeployed {
 		nonce = common.Big0
 	} else {
@@ -143,7 +179,7 @@ func (ws *WalletService) AddSubscription(input model.NewSubscription) (*model.Va
 	default:
 		usePaymaster = false
 	}
-	op, err := ws.bundler.CreateUnsignedUserOperation(input.WalletAddress, input.WalletAddress, initCode, callData, nonce, usePaymaster ,int64(input.Chain))
+	op, err := ws.bundler.CreateUnsignedUserOperation(input.WalletAddress, input.WalletAddress, initCode, callData, nonce, usePaymaster, int64(input.Chain))
 	if err != nil {
 		log.Println(err)
 		return nil, nil, err
@@ -263,7 +299,7 @@ func (ws *WalletService) ExecuteCharge(sender, target, mId, token, key string, a
 		err = errors.Wrap(err, "CreateUnsignedUserOperation() - ")
 		return err
 	}
-	fmt.Println("user operation", op)
+	// fmt.Println("user operation", op)
 
 	sig, _ := erc4337.SignUserOp(op, key, erc4337.VALIDATOR_MODE, merchant, int64(chainId))
 

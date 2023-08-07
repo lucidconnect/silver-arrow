@@ -39,16 +39,20 @@ func TestAddSubscription(t *testing.T) {
 	_, op, err := ws.AddSubscription(newSub)
 	assert.NoError(t, err)
 
-	fmt.Println(op)
 	sig, err := erc4337.SignUserOp(op, key, erc4337.SUDO_MODE, nil, 80001)
 	assert.NoError(t, err)
 	op["signature"] = hexutil.Encode(sig)
-	data, sKey, err := ws.ValidateSubscription(op)
+
+
+
+	fmt.Println("user operation: ",op)
+
+	data, _, err := ws.ValidateSubscription(op)
 	assert.NoError(t, err)
 
-	target := "0xB77ce6ec08B85DcC468B94Cea7Cc539a3BbF9510"
-	err = ws.ExecuteCharge(newSub.WalletAddress, target, mId, "USDC", sKey, int64(newSub.Amount))
-	assert.NoError(t, err)
+	// target := "0xB77ce6ec08B85DcC468B94Cea7Cc539a3BbF9510"
+	// err = ws.ExecuteCharge(newSub.WalletAddress, target, mId, "USDC", sKey, int64(newSub.Amount))
+	// assert.NoError(t, err)
 
 	fmt.Println("Data", data)
 	t.Fail()

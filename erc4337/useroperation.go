@@ -43,8 +43,8 @@ func (b *ERCBundler) AccountNonce(sender string) (*big.Int, error) {
 	if err != nil {
 		err = errors.Wrap(err, "AccountNonce() -")
 		return nil, err
-	}// pimlico
-	fmt.Println("nonce:", nonce)
+	} // pimlico
+	// fmt.Println("nonce:", nonce)
 	return nonce, nil
 }
 
@@ -53,26 +53,26 @@ func (b *ERCBundler) AccountNonce(sender string) (*big.Int, error) {
 func (b *ERCBundler) CreateUserOperation(sender, target string, callData []byte, nonce, amount *big.Int, sponsored bool, key string, chain int64) (map[string]any, error) {
 	var paymasterResult *PaymasterResult
 	var err error
-	var callGasLimit, verificationGas, preVerificationGas *big.Int
+	var callGasLimit, verificationGas, preVerificationGas string
 
 	senderAddress := common.HexToAddress(sender)
 	tok := make([]byte, 65)
 	rand.Read(tok)
 
 	o := map[string]any{
-		"sender":               senderAddress,
-		"nonce":                nonce,
+		"sender":               senderAddress.Hex(),
+		"nonce":                hexutil.EncodeBig(nonce),
 		"initCode":             "0x",
 		"callData":             hexutil.Encode(callData),
-		"callGasLimit":         big.NewInt(0),
-		"verificationGasLimit": big.NewInt(0),
-		"preVerificationGas":   big.NewInt(0),
-		"maxFeePerGas":         getMaxFeePerGas(),
-		"maxPriorityFeePerGas": getMaxPriorityFeePerGas(),
+		"callGasLimit":         hexutil.EncodeBig(big.NewInt(0)),
+		"verificationGasLimit": hexutil.EncodeBig(big.NewInt(0)),
+		"preVerificationGas":   hexutil.EncodeBig(big.NewInt(0)),
+		"maxFeePerGas":         getMaxFeePerGas().String(),
+		"maxPriorityFeePerGas": getMaxPriorityFeePerGas().String(),
 		"signature":            hexutil.Encode(tok),
 		"paymasterAndData":     "0x",
 	}
-
+	fmt.Println(o)
 	paymasterContext := map[string]any{
 		"type": "payg",
 	}
@@ -84,23 +84,23 @@ func (b *ERCBundler) CreateUserOperation(sender, target string, callData []byte,
 			return nil, err
 		}
 
-		callGasLimit, err = hexutil.DecodeBig(paymasterResult.CallGasLimit)
-		if err != nil {
-			err = errors.Wrapf(err, "decoding gas limit - %v failed", paymasterResult.CallGasLimit)
-			return nil, err
-		}
+		// callGasLimit, err = hexutil.DecodeBig(paymasterResult.CallGasLimit)
+		// if err != nil {
+		// 	err = errors.Wrapf(err, "decoding gas limit - %v failed", paymasterResult.CallGasLimit)
+		// 	return nil, err
+		// }
 
-		verificationGas, err = hexutil.DecodeBig(paymasterResult.VerificationGasLimit)
-		if err != nil {
-			err = errors.Wrapf(err, "decoding verification gas limit - %v failed", paymasterResult.VerificationGasLimit)
-			return nil, err
-		}
+		// verificationGas, err = hexutil.DecodeBig(paymasterResult.VerificationGasLimit)
+		// if err != nil {
+		// 	err = errors.Wrapf(err, "decoding verification gas limit - %v failed", paymasterResult.VerificationGasLimit)
+		// 	return nil, err
+		// }
 
-		preVerificationGas, err = hexutil.DecodeBig(paymasterResult.PreVerificationGas)
-		if err != nil {
-			err = errors.Wrapf(err, "decoding pre verification gas limit - %v failed", paymasterResult.PreVerificationGas)
-			return nil, err
-		}
+		// preVerificationGas, err = hexutil.DecodeBig(paymasterResult.PreVerificationGas)
+		// if err != nil {
+		// 	err = errors.Wrapf(err, "decoding pre verification gas limit - %v failed", paymasterResult.PreVerificationGas)
+		// 	return nil, err
+		// }
 
 		o["paymasterAndData"] = paymasterResult.PaymasterAndData
 	} else {
@@ -131,58 +131,48 @@ func (b *ERCBundler) CreateUserOperation(sender, target string, callData []byte,
 }
 
 func (b *ERCBundler) CreateUnsignedUserOperation(sender, target string, initCode, callData []byte, nonce *big.Int, sponsored bool, chain int64) (map[string]any, error) {
-	var paymasterResult *PaymasterResult
+	// var paymasterResult *PaymasterResult
+	var paymaster *AlchemyPaymasterResult
 	var err error
-	var callGasLimit, verificationGas, preVerificationGas *big.Int
+	var callGasLimit, maxFeePerGas, maxPriorityFeePerGas string
 
 	senderAddress := common.HexToAddress(sender)
 	tok := make([]byte, 65)
 	rand.Read(tok)
 	fmt.Println("senderAddress", senderAddress)
 	o := map[string]any{
-		"sender":               senderAddress,
-		"nonce":                nonce,
-		"initCode":             hexutil.Encode(initCode),
-		"callData":             hexutil.Encode(callData),
-		"callGasLimit":         getCallGasLimit(),
-		"verificationGasLimit": getVerificationGasLimit(),
-		"preVerificationGas":   getPreVerificationGas(),
-		"maxFeePerGas":         getMaxFeePerGas(),
-		"maxPriorityFeePerGas": getMaxPriorityFeePerGas(),
-		"signature":            hexutil.Encode(tok),
-		"paymasterAndData":     "0x",
+		"sender":   senderAddress.Hex(),
+		"nonce":    hexutil.EncodeBig(nonce),
+		"initCode": "0x",
+		"callData": hexutil.Encode(callData),
+		// "callGasLimit":         hexutil.EncodeBig(big.NewInt(0)),
+		// "verificationGasLimit": hexutil.EncodeBig(big.NewInt(0)),
+		// "preVerificationGas":   hexutil.EncodeBig(big.NewInt(0)),
+		// "maxFeePerGas":         hexutil.EncodeBig(getMaxFeePerGas()),
+		// "maxPriorityFeePerGas": hexutil.EncodeBig(getMaxPriorityFeePerGas()),
+		// "signature":            hexutil.Encode(tok),
+		// "paymasterAndData":     "0x",
 	}
+	fmt.Println(o)
 
-	paymasterContext := map[string]any{
-		"type": "payg",
-	}
+	// paymasterContext := map[string]any{
+	// 	"type": "payg",
+	// }
 
 	if sponsored {
-		paymasterResult, err = b.client.SponsorUserOperation(b.EntryPoint, o, paymasterContext)
+		policyId := "2e865ced-98e5-4265-a20e-b46c695a28bd"
+		paymaster, err = b.client.RequestGasAndPaymasterAndData(policyId, b.EntryPoint, hexutil.Encode(tok), o)
 		if err != nil {
 			err = errors.Wrap(err, "call to sponsor user op failed")
 			return nil, err
 		}
 
-		callGasLimit, err = hexutil.DecodeBig(paymasterResult.CallGasLimit)
-		if err != nil {
-			err = errors.Wrapf(err, "decoding gas limit - %v failed", paymasterResult.CallGasLimit)
-			return nil, err
-		}
+		callGasLimit = paymaster.CallGasLimit
+		// verificationGas = paymaster.VerificationGasLimit
+		// preVerificationGas = paymaster.PreVerificationGas
+		maxPriorityFeePerGas = paymaster.MaxPriorityFeePerGas
+		maxFeePerGas = paymaster.MaxFeePerGas
 
-		verificationGas, err = hexutil.DecodeBig(paymasterResult.VerificationGasLimit)
-		if err != nil {
-			err = errors.Wrapf(err, "decoding verification gas limit - %v failed", paymasterResult.VerificationGasLimit)
-			return nil, err
-		}
-
-		preVerificationGas, err = hexutil.DecodeBig(paymasterResult.PreVerificationGas)
-		if err != nil {
-			err = errors.Wrapf(err, "decoding pre verification gas limit - %v failed", paymasterResult.PreVerificationGas)
-			return nil, err
-		}
-
-		o["paymasterAndData"] = paymasterResult.PaymasterAndData
 	} else {
 		fmt.Println("not using paymaster")
 		result, err := b.client.EstimateUserOperationGas(b.EntryPoint, o)
@@ -190,21 +180,24 @@ func (b *ERCBundler) CreateUnsignedUserOperation(sender, target string, initCode
 			return nil, err
 		}
 		callGasLimit = result.CallGasLimit
-		verificationGas = result.VerificationGasLimit
-		preVerificationGas = result.PreVerificationGas
+		// verificationGas = result.VerificationGasLimit
+		// preVerificationGas = result.PreVerificationGas
 	}
 
+	o["paymasterAndData"] = "0x"
 	o["callGasLimit"] = callGasLimit
-	o["verificationGasLimit"] = verificationGas
-	o["preVerificationGas"] = preVerificationGas
-
-	operation, err := userop.New(o)
-	if err != nil {
-		return nil, err
-	}
-	entrypoint := GetEntryPointAddress()
-	opHash := operation.GetUserOpHash(entrypoint, big.NewInt(chain))
-	opHash.Hex()
+	o["verificationGasLimit"] = hexutil.EncodeBig(getVerificationGasLimit())
+	o["preVerificationGas"] = hexutil.EncodeBig(getPreVerificationGas())
+	o["maxPriorityFeePerGas"] = maxPriorityFeePerGas
+	o["maxFeePerGas"] = maxFeePerGas
+	o["signature"] = hexutil.Encode(tok)
+	// operation, err := userop.New(o)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// entrypoint := GetEntryPointAddress()
+	// opHash := operation.GetUserOpHash(entrypoint, big.NewInt(chain))
+	// opHash.Hex()
 	// sig, err := signUserOp(o, key, chain)
 	// if err != nil {
 	// 	err = errors.Wrap(err, "call to sign user op failed")
