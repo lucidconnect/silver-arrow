@@ -125,25 +125,8 @@ func (ws *WalletService) AddSubscription(input model.NewSubscription) (*model.Va
 	if err != nil {
 		return nil, nil, err
 	}
-
-	// hard-coding USDC just for PoC this should ideally consider or native tokens per network
-	// if input.Token == "USDC" {
-	// 	amount, err = amountToMwei(big.NewInt(int64(input.Amount)))
-	// 	if err != nil {
-	// 		return nil, nil, err
-	// 	}
-	// } else {
 	amount = big.NewInt(int64(input.Amount)) // This will cause a bug for amounts that are fractional
-	// }
 
-	// if input.NextChargeAt != nil {
-	// 	// check if the date is today and execute the charge
-	// 	nextCharge := input.NextChargeAt.Format(time.DateOnly)
-	// 	if nextCharge == time.Now().Format(time.DateOnly) {
-	// 		// execute first
-	// 		// set the next charge date
-	// 	}
-	// }
 	interval := daysToNanoSeconds(int64(input.Interval))
 
 	nextChargeAt = time.Now().Add(interval)
@@ -329,8 +312,11 @@ func createValidatorEnableData(publicKey, merchantId string) ([]byte, error) {
 		err = errors.Wrap(err, "failed to decode public key hex")
 		return nil, err
 	}
+
 	m := []byte(merchantId)
-	enableData = append(enableData, m...)
+	mid := common.LeftPadBytes(m, 32)
+	fmt.Println("length of merchant id", mid)
+	enableData = append(enableData, mid...)
 
 	data, err := erc4337.CreateSetExecutionCallData(enableData)
 	if err != nil {
