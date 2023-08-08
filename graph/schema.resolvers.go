@@ -40,6 +40,7 @@ func (r *mutationResolver) AddSubscription(ctx context.Context, input model.NewS
 		log.Println(err)
 		return nil, err
 	}
+	fmt.Println("Userop hash", validationData.UserOpHash)
 	err = r.Cache.Set(validationData.UserOpHash, userOp)
 	if err != nil {
 		log.Println(err)
