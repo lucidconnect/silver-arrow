@@ -11,6 +11,8 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/helicarrierstudio/silver-arrow/erc4337"
 	"github.com/helicarrierstudio/silver-arrow/graph/generated"
 	"github.com/helicarrierstudio/silver-arrow/graph/model"
 	"github.com/helicarrierstudio/silver-arrow/wallet"
@@ -55,7 +57,18 @@ func (r *mutationResolver) ValidateSubscription(ctx context.Context, input model
 		return nil, err
 	}
 	op, _ := opInterface.(map[string]any)
-	op["signature"] = input.SignedMessage
+	sig, err := hexutil.Decode(erc4337.SUDO_MODE)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+	partialSig, err := hexutil.Decode(input.SignedMessage)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+	sig = append(sig, partialSig...)
+	op["signature"] = hexutil.Encode(sig)
 	walletService := wallet.NewWalletService(r.WalletRepository, r.Bundler)
 
 	log.Println("User op", op)
