@@ -1,7 +1,6 @@
 package erc4337_test
 
 import (
-	"fmt"
 	"math/big"
 	"strings"
 	"testing"
@@ -41,7 +40,6 @@ func TestTransferFnData(t *testing.T) {
 	to := "0x0aDfe6188b916F25062b689E070Aa49bdbe8d161"
 	data, err := erc4337.GetTransferFnData(partialERC20TokenABI, to, amount)
 	assert.NoError(t, err)
-	fmt.Println(hexutil.Encode(data))
 	methodId := data[:4]
 	encodedToAddress := common.TrimLeftZeroes(data[4:36])
 	encodedAmount := common.TrimLeftZeroes(data[36:])

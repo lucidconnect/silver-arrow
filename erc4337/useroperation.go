@@ -3,14 +3,16 @@ package erc4337
 import (
 	"crypto/rand"
 	"fmt"
+	"log"
 	"math/big"
 	"os"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/pkg/errors"
+	"github.com/rmanzoku/ethutils/ecrecover"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
 
@@ -39,12 +41,14 @@ func (b *ERCBundler) GetClient() *ethclient.Client {
 func (b *ERCBundler) AccountNonce(sender string) (*big.Int, error) {
 	senderAddress := common.HexToAddress(sender)
 
-	nonce, err := b.client.GetAccountNonce(senderAddress)
+	nonce, err := b.client.GetAccountNonce(common.HexToAddress(b.EntryPoint), senderAddress)
 	if err != nil {
+		if err.Error() == "no contract code at given address" {
+			return common.Big0, nil
+		}
 		err = errors.Wrap(err, "AccountNonce() -")
 		return nil, err
-	} // pimlico
-	// fmt.Println("nonce:", nonce)
+	}
 	return nonce, nil
 }
 
@@ -72,7 +76,7 @@ func (b *ERCBundler) CreateUserOperation(sender, target string, callData []byte,
 		"signature":            hexutil.Encode(tok),
 		"paymasterAndData":     "0x",
 	}
-	fmt.Println(o)
+	// fmt.Println(o)
 	paymasterContext := map[string]any{
 		"type": "payg",
 	}
@@ -104,7 +108,7 @@ func (b *ERCBundler) CreateUserOperation(sender, target string, callData []byte,
 
 		o["paymasterAndData"] = paymasterResult.PaymasterAndData
 	} else {
-		fmt.Println("not using paymaster")
+		// fmt.Println("not using paymaster")
 		result, err := b.client.EstimateUserOperationGas(b.EntryPoint, o)
 		if err != nil {
 			return nil, err
@@ -119,38 +123,33 @@ func (b *ERCBundler) CreateUserOperation(sender, target string, callData []byte,
 	o["preVerificationGas"] = preVerificationGas
 
 	// TODO: Do I need a merchantId here?
-	sig, err := SignUserOp(o, key, SUDO_MODE, nil, chain)
+	sig, _, err := SignUserOp(o, key, SUDO_MODE, nil, chain)
 	if err != nil {
-		err = errors.Wrap(err, "call to sign user op failed")
+		err = errors.Wrap(err, "CreateUserOperation() call to sign user op failed")
 		return nil, err
 	}
 
 	o["signature"] = hexutil.Encode(sig)
-	fmt.Println(o)
+	// fmt.Println(o)
 	return o, nil
 }
 
-func (b *ERCBundler) CreateUnsignedUserOperation(sender, target string, initCode, callData []byte, nonce *big.Int, sponsored bool, chain int64) (map[string]any, error) {
+func (b *ERCBundler) CreateUnsignedUserOperation(sender string, initCode, callData []byte, nonce *big.Int, sponsored bool, chain int64) (map[string]any, error) {
 	// var paymasterResult *PaymasterResult
 	var paymaster *AlchemyPaymasterResult
+	var gasEstimate *GasEstimateResult
 	var err error
-	var callGasLimit, maxFeePerGas, maxPriorityFeePerGas, verificationGas, preVerificationGas string
-
+	var paymasterAndData, callGasLimit, maxFeePerGas, maxPriorityFeePerGas, verificationGas, preVerificationGas string
 	senderAddress := common.HexToAddress(sender)
 	tok := make([]byte, 65)
 	rand.Read(tok)
-	fmt.Println("senderAddress", senderAddress)
+	// fmt.Println("senderAddress", senderAddress)
 	o := map[string]any{
 		"sender":   senderAddress.Hex(),
 		"nonce":    hexutil.EncodeBig(nonce),
 		"initCode": hexutil.Encode(initCode),
 		"callData": hexutil.Encode(callData),
 	}
-	fmt.Println(o)
-
-	// paymasterContext := map[string]any{
-	// 	"type": "payg",
-	// }
 
 	if sponsored {
 		policyId := "2e865ced-98e5-4265-a20e-b46c695a28bd"
@@ -161,44 +160,36 @@ func (b *ERCBundler) CreateUnsignedUserOperation(sender, target string, initCode
 		}
 
 		callGasLimit = paymaster.CallGasLimit
+		// verificationGas = hexutil.EncodeBig(getVerificationGasLimit())
 		verificationGas = paymaster.VerificationGasLimit
-		preVerificationGas = paymaster.PreVerificationGas
+		// preVerificationGas = hexutil.EncodeBig(getPreVerificationGas())
 		maxPriorityFeePerGas = paymaster.MaxPriorityFeePerGas
+		preVerificationGas = paymaster.PreVerificationGas
 		maxFeePerGas = paymaster.MaxFeePerGas
-		o["paymasterAndData"] = paymaster.PaymasterAndData
+		paymasterAndData = paymaster.PaymasterAndData
 	} else {
 		fmt.Println("not using paymaster")
-		o := map[string]any{
-			"sender":               senderAddress.Hex(),
-			"nonce":                hexutil.EncodeBig(nonce),
-			"initCode":             hexutil.Encode(initCode),
-			"callData":             hexutil.Encode(callData),
-			"callGasLimit":         "0xec00",
-			"verificationGasLimit": "0x9d5e",
-			"preVerificationGas":   "0xab90",
-			"maxFeePerGas":         hexutil.EncodeBig(getMaxFeePerGas()),
-			"maxPriorityFeePerGas": hexutil.EncodeBig(getMaxPriorityFeePerGas()),
-			"signature":            hexutil.Encode(tok),
-			"paymasterAndData":     "0x",
-		}
-
-		if initCode == nil {
-			result, err := b.client.EstimateUserOperationGas(b.EntryPoint, o)
-			if err != nil {
-				return nil, err
-			}
-			fmt.Println("user op gas", result)
-
-			callGasLimit = result.CallGasLimit
+		o["callGasLimit"] = "0xec00"
+		o["verificationGasLimit"] = hexutil.EncodeBig(getVerificationGasLimit())
+		o["preVerificationGas"] = hexutil.EncodeBig(getVerificationGasLimit())
+		o["maxPriorityFeePerGas"] = hexutil.EncodeBig(getMaxPriorityFeePerGas())
+		o["maxFeePerGas"] = hexutil.EncodeBig(getMaxFeePerGas())
+		o["signature"] = hexutil.Encode(tok)
+		o["paymasterAndData"] = "0x"
+		// if initCode == nil {
+		gasEstimate, err = b.client.EstimateUserOperationGas(b.EntryPoint, o)
+		if err != nil {
+			return nil, err
 		} else {
-			callGasLimit = "0xec00"
+			callGasLimit = "0x16710"
 		}
-
+		paymasterAndData = "0x"
 		verificationGas = hexutil.EncodeBig(getVerificationGasLimit())
-		preVerificationGas = hexutil.EncodeBig(getPreVerificationGas())
+		// preVerificationGas = hexutil.EncodeBig(getVerificationGasLimit())
 
 		maxPriorityFeePerGas = hexutil.EncodeBig(getMaxPriorityFeePerGas())
 		maxFeePerGas = hexutil.EncodeBig(getMaxFeePerGas())
+		preVerificationGas = gasEstimate.PreVerificationGas
 	}
 
 	o["callGasLimit"] = callGasLimit
@@ -207,7 +198,7 @@ func (b *ERCBundler) CreateUnsignedUserOperation(sender, target string, initCode
 	o["maxPriorityFeePerGas"] = maxPriorityFeePerGas
 	o["maxFeePerGas"] = maxFeePerGas
 	o["signature"] = hexutil.Encode(tok)
-	o["paymasterAndData"] = "0x"
+	o["paymasterAndData"] = paymasterAndData
 
 	return o, nil
 }
@@ -227,50 +218,61 @@ func (b *ERCBundler) GetUserOp(userophash string) (map[string]any, error) {
 	return b.client.GetUserOperationByHash(userophash)
 }
 
-func SignUserOp(op map[string]any, key, mode string, merchantId []byte, chain int64) ([]byte, error) {
+func SignUserOp(op map[string]any, key, mode string, merchantId []byte, chain int64) ([]byte, []byte, error) {
 	chainId := big.NewInt(chain)
 	entrypoint := GetEntryPointAddress()
 
 	operation, err := userop.New(op)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	opHash := operation.GetUserOpHash(entrypoint, chainId)
+	hash := opHash.Bytes()
 
-	fmt.Println("userop hash - ", opHash)
-	fmt.Println("userop hash bytes - ", opHash.Bytes())
-	// privKey, err := getSigningKey(key)
-	// if err != nil {
-	// 	fmt.Println(err)
-	// 	return nil, err
-	// }
-	kb, _ := hexutil.Decode(key)
-	privKey, err := crypto.ToECDSA(kb)
+	kb, err := hexutil.Decode(key)
 	if err != nil {
-		fmt.Println("key err", err)
-		return nil, err
+		log.Println("SignUserOp() - ", err)
+		err = errors.Wrap(err, "SignUserOp() - ")
+		return nil, nil, err
 	}
+	fmt.Println("kb", kb)
+	common.FromHex(key)
+	
 	// Kernel has a specific convention for encoding signatures in order to determing the mode see (https://github.com/stackup-wallet/userop.js/blob/main/src/preset/builder/kernel.ts#L114-L123)
-	sig, _ := hexutil.Decode(mode)
+	signature, _ := hexutil.Decode(mode)
 
-	if merchantId != nil {
-		sig = append(sig, merchantId...)
-	}
+	// if merchantId != nil {
+	// 	fmt.Println("merchant id - ", merchantId)
+	// 	signature = append(signature, merchantId...)
+	// }
 
-	signatureBytes, err := crypto.Sign(opHash[:], privKey)
+	sig, err := secp256k1.Sign(ecrecover.ToEthSignedMessageHash(hash), kb)
 	if err != nil {
-		err = errors.Wrap(err, "signUserOp() failure - ")
-		return nil, err
+		err = errors.Wrap(err, "generating signature failed.")
+		return nil, nil, err
 	}
-	signatureBytes[64] += 27
-	sig = append(sig, signatureBytes...)
-	signature := hexutil.Encode(sig)
+	sig[64] += 27
+	// signatureBytes, err := crypto.Sign(opHash[:], privKey)
+	// if err != nil {
+	// 	err = errors.Wrap(err, "signUserOp() failure - ")
+	// 	return nil, nil, err
+	// }
 
-	fmt.Println("signature length - ", len(signatureBytes))
-	fmt.Println("signature - ", hexutil.Encode(signatureBytes))
-	fmt.Println("signature - ", signature)
-	return sig, nil
+	signature = append(signature, sig...)
+	// signatureBytes[64] += 27
+
+	// fmt.Println("signing address - ", crypto.PubkeyToAddress(privKey.PublicKey).Hex())
+	// fmt.Println("hash - ", hexutil.Encode(opHash[:]))
+	fmt.Println("raw sig - ", hexutil.Encode(sig))
+	fmt.Println("hash - ", hexutil.Encode(opHash[:]))
+	// sig = append(sig, signatureBytes...)
+	// signature := hexutil.Encode(sig)
+
+	// fmt.Println("signature length - ", len(sig))
+	// fmt.Println("signature - ", sig)
+	// fmt.Println("signature - ", signature)
+	return signature, ecrecover.ToEthSignedMessageHash(hash), nil
 }
 
 /*
@@ -278,6 +280,7 @@ There are two possible scenerios here:
 1. The call data is for an erc20 token transfer
 2. The call data is for an Eth transfer
 */
+// TODO: Create a Token type
 func CreateTransferCallData(toAddress, token string, amount *big.Int) ([]byte, error) {
 	accountABI := getAccountABI()
 
@@ -287,7 +290,7 @@ func CreateTransferCallData(toAddress, token string, amount *big.Int) ([]byte, e
 			err = errors.Wrap(err, "CreateTransferCallData(): failed to create final call data")
 			return nil, err
 		}
-		fmt.Println("call data ", hexutil.Encode(callData))
+		// fmt.Println("call data ", hexutil.Encode(callData))
 		return callData, nil
 	}
 
@@ -299,7 +302,7 @@ func CreateTransferCallData(toAddress, token string, amount *big.Int) ([]byte, e
 		return nil, err
 	}
 
-	tokenAddress := getTokenAddres(token)
+	tokenAddress := GetTokenAddres(token)
 	callData, err := GetExecuteFnData(accountABI, tokenAddress, common.Big0, erc20TransferData)
 	if err != nil {
 		err = errors.Wrap(err, "CreateTransferCallData(): failed to create final call data")
@@ -309,10 +312,10 @@ func CreateTransferCallData(toAddress, token string, amount *big.Int) ([]byte, e
 	return callData, nil
 }
 
-func CreateSetExecutionCallData(enableData []byte) ([]byte, error) {
+func CreateSetExecutionCallData(enableData []byte, kernel string) ([]byte, error) {
 	kernelAbi := getKernelStorageAbi()
 	lucidValidator := os.Getenv("LUCID_VALIDATOR")
-	callData, err := GetSetExecutionFnData(kernelAbi, lucidValidator, enableData)
+	callData, err := GetSetExecutionFnData(kernelAbi, lucidValidator, kernel, enableData)
 	if err != nil {
 		err = errors.Wrap(err, "CreateSetExecutionCallData(): failed to create final call data")
 		return nil, err
@@ -321,10 +324,10 @@ func CreateSetExecutionCallData(enableData []byte) ([]byte, error) {
 	return callData, nil
 }
 
-func CreateFactoryFnData(enableData []byte) ([]byte, error) {
+func CreateFactoryFnData(enableData []byte, index *big.Int) ([]byte, error) {
 	factoryAbi := getAccountFactoryAbi()
 	defaultValidatorAddress := os.Getenv("DEFAULT_VALIDATOR")
-	callData, err := GetCreateAccountFnData(factoryAbi, defaultValidatorAddress, enableData)
+	callData, err := GetCreateAccountFnData(factoryAbi, defaultValidatorAddress, enableData, index)
 	if err != nil {
 		err = errors.Wrap(err, "CreateFactoryFnData(): failed to create final call data")
 		return nil, err
@@ -333,6 +336,6 @@ func CreateFactoryFnData(enableData []byte) ([]byte, error) {
 	return callData, nil
 }
 
-func getTokenAddres(token string) string {
+func GetTokenAddres(token string) string {
 	return "0x0fa8781a83e46826621b3bc094ea2a0212e71b23"
 }

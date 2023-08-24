@@ -11,6 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
+	Kernel "github.com/helicarrierstudio/silver-arrow/abi/kernel"
 	"github.com/pkg/errors"
 )
 
@@ -116,7 +117,8 @@ func GetTransferFnData(erc20TokenABI string, to string, amount *big.Int) ([]byte
 func GetExecuteFnData(accountABI, to string, amount *big.Int, callData []byte) ([]byte, error) {
 	dest := common.HexToAddress(to)
 
-	contractABI, err := abi.JSON(strings.NewReader(accountABI))
+	contractABI, err := Kernel.KernelMetaData.GetAbi()
+	// contractABI, err := abi.JSON(strings.NewReader(accountABI))
 	if err != nil {
 		err = errors.Wrap(err, "abi.JSON() unable to read contract abi")
 		return nil, err
@@ -130,7 +132,7 @@ func GetExecuteFnData(accountABI, to string, amount *big.Int, callData []byte) (
 	return payload, nil
 }
 
-func GetSetExecutionFnData(accountABI, validator string, enableData []byte) ([]byte, error) {
+func GetSetExecutionFnData(accountABI, validator, kernel string, enableData []byte) ([]byte, error) {
 	contractABI, err := abi.JSON(strings.NewReader(accountABI))
 	if err != nil {
 		err = errors.Wrap(err, "abi.JSON() unable to read contract abi")
@@ -145,18 +147,19 @@ func GetSetExecutionFnData(accountABI, validator string, enableData []byte) ([]b
 	}
 	fnSelector := [4]byte{}
 	copy(fnSelector[:], selector)
-	executorAddress := common.BigToAddress(common.Big0)
+	executorAddress := common.HexToAddress(kernel)
 	validatorAddress := common.HexToAddress(validator)
 
+	fmt.Println("enable data -", hexutil.Encode(enableData))
 	payload, err := contractABI.Pack("setExecution", fnSelector, executorAddress, validatorAddress, big.NewInt(99999999999), big.NewInt(0), enableData)
 	if err != nil {
-		err = errors.Wrap(err, "api.Pack() - ")
+		err = errors.Wrap(err, "abi.Pack() - ")
 		return nil, err
 	}
 	return payload, nil
 }
 
-func GetCreateAccountFnData(factoryAbi, validator string, enableData []byte) ([]byte, error) {
+func GetCreateAccountFnData(factoryAbi, validator string, enableData []byte, index *big.Int) ([]byte, error) {
 	contractABI, err := abi.JSON(strings.NewReader(factoryAbi))
 	if err != nil {
 		err = errors.Wrap(err, "abi.JSON() unable to read contract abi")
@@ -164,7 +167,7 @@ func GetCreateAccountFnData(factoryAbi, validator string, enableData []byte) ([]
 	}
 	validatorAddress := common.HexToAddress(validator)
 
-	payload, err := contractABI.Pack("createAccount", validatorAddress, enableData, common.Big0)
+	payload, err := contractABI.Pack("createAccount", validatorAddress, enableData, index)
 	if err != nil {
 		return nil, err
 	}
@@ -252,23 +255,23 @@ func (b *ERCBundler) getContractInitCode(address common.Address) []byte {
 }
 
 func getCallGasLimit() *big.Int {
-	return big.NewInt(60000)
+	return big.NewInt(70000)
 }
 
 func getVerificationGasLimit() *big.Int {
-	return big.NewInt(81000)
+	return big.NewInt(1573715)
 }
 
 func getPreVerificationGas() *big.Int {
-	return big.NewInt(69925)
+	return big.NewInt(89925)
 }
 
 func getMaxFeePerGas() *big.Int {
-	return big.NewInt(2640000060)
+	return big.NewInt(1500000096)
 }
 
 func getMaxPriorityFeePerGas() *big.Int {
-	return big.NewInt(2640000060)
+	return big.NewInt(1500000096)
 }
 
 func getSigningKey(privateKey string) (*ecdsa.PrivateKey, error) {
