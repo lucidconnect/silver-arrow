@@ -6,6 +6,7 @@ import (
 	"log"
 	"math/big"
 	"os"
+	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -155,6 +156,10 @@ func (nc *Client) SendUserOperation(entryPoint string, userop map[string]any) (s
 		Signature:            signature,
 		CallData:             callData,
 	}
+
+	// add a 3s delay (not ideal should implement a more elegant way to prevent rate limiting)
+
+	time.Sleep(3 * time.Second)
 	// fmt.Println("payload",request)
 	err := nc.c.Client().CallContext(nc.ctx, &result, "eth_sendUserOperation", request, entryPoint)
 	if err != nil {
