@@ -10,7 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
-	KernelStorage "github.com/helicarrierstudio/silver-arrow/abi/kernelStorage"
+	"github.com/helicarrierstudio/silver-arrow/abi/EntryPoint"
 	"github.com/pkg/errors"
 )
 
@@ -96,17 +96,24 @@ func (nc *Client) GetAccountCode(address common.Address) ([]byte, error) {
 	return nc.c.CodeAt(nc.ctx, address, nil)
 }
 
-func (nc *Client) GetAccountNonce(address common.Address) (*big.Int, error) {
-	k, err := KernelStorage.NewKernelStorage(address, nc.c)
+func (nc *Client) GetAccountNonce(entryPoint, address common.Address) (*big.Int, error) {
+	e, err := EntryPoint.NewEntryPoint(entryPoint, nc.c)
 	if err != nil {
+		err = errors.Wrap(err, "error initialising entrypoint instance")
 		return nil, err
 	}
 	opts := &bind.CallOpts{
-		Pending: true,
+		Pending: false,
 		Context: nil,
+		From:    address,
 	}
 
-	return k.GetNonce0(opts)
+	nonce, err := e.GetNonce(opts, address, common.Big0)
+	if err != nil {
+		return nil, err
+	}
+
+	return nonce, nil
 }
 
 // SendUserOperation sends a user operation to an alt mempool
@@ -148,9 +155,13 @@ func (nc *Client) SendUserOperation(entryPoint string, userop map[string]any) (s
 		Signature:            signature,
 		CallData:             callData,
 	}
-	fmt.Println(request)
+	// fmt.Println("payload",request)
 	err := nc.c.Client().CallContext(nc.ctx, &result, "eth_sendUserOperation", request, entryPoint)
 	if err != nil {
+		if err.Error() == "AA13 initCode failed or OOG" {
+			// increase verification gas limit
+
+		}
 		err = errors.Wrap(err, "eth_sendUserOperation call error")
 		return result, err
 	}
@@ -197,6 +208,7 @@ func (nc *Client) EstimateUserOperationGas(entrypointAddress string, userop map[
 		return nil, err
 	}
 
+	fmt.Println("eth_estimateUserOperationGas - ", result)
 	return result, nil
 }
 
@@ -215,7 +227,7 @@ func (nc *Client) GetUserOperationByHash(userophash string) (map[string]any, err
 		return nil, err
 	}
 
-	fmt.Println("user operation - ", result)
+	// fmt.Println("user operation - ", result)
 	return result, nil
 }
 

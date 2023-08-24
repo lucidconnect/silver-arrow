@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -35,7 +36,14 @@ func (r *mutationResolver) AddAccount(ctx context.Context, input model.Account) 
 // AddSubscription is the resolver for the addSubscription field.
 func (r *mutationResolver) AddSubscription(ctx context.Context, input model.NewSubscription) (*model.ValidationData, error) {
 	walletService := wallet.NewWalletService(r.WalletRepository, r.Bundler)
-	validationData, userOp, err := walletService.AddSubscription(input)
+	var usePaymaster bool
+	switch os.Getenv("USE_PAYMASTER") {
+	case "TRUE":
+		usePaymaster = true
+	default:
+		usePaymaster = false
+	}
+	validationData, userOp, err := walletService.AddSubscription(input, usePaymaster, common.Big0)
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -51,7 +59,17 @@ func (r *mutationResolver) AddSubscription(ctx context.Context, input model.NewS
 
 // ValidateSubscription is the resolver for the validateSubscription field.
 func (r *mutationResolver) ValidateSubscription(ctx context.Context, input model.SubscriptionValidation) (*model.SubscriptionData, error) {
+	walletService := wallet.NewWalletService(r.WalletRepository, r.Bundler)
+
 	time.Sleep(time.Second)
+	var usePaymaster bool
+	switch os.Getenv("USE_PAYMASTER") {
+	case "TRUE":
+		usePaymaster = true
+	default:
+		usePaymaster = false
+	}
+
 	opInterface, err := r.Cache.Get(input.UserOpHash)
 	if err != nil {
 		log.Println(err)
@@ -70,7 +88,6 @@ func (r *mutationResolver) ValidateSubscription(ctx context.Context, input model
 	}
 	sig = append(sig, partialSig...)
 	op["signature"] = hexutil.Encode(sig)
-	walletService := wallet.NewWalletService(r.WalletRepository, r.Bundler)
 
 	log.Println("User op", op)
 	subData, key, err := walletService.ValidateSubscription(op)
@@ -81,9 +98,9 @@ func (r *mutationResolver) ValidateSubscription(ctx context.Context, input model
 	// x := int64(subData.Amount)
 	target := "0x1BB271879576fD79324156F539DD760756C9D061"
 
-	err = walletService.ExecuteCharge(subData.WalletAddress, target, subData.MerchantID, subData.Token, key, int64(subData.Amount))
+	err = walletService.ExecuteCharge(subData.WalletAddress, target, subData.MerchantID, subData.Token, key, int64(subData.Amount), usePaymaster)
 	if err != nil {
-		err = errors.Wrap(err, "error occurred during first time charge execution - ")
+		err = errors.Wrap(err, "ExecuteCharge() - error occurred during first time charge execution - ")
 		log.Println(err)
 		return subData, err
 	}

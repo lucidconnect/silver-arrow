@@ -17,10 +17,10 @@ func CreateAccessKey() (string, string, error) {
 	// encrypt and store the private key (not ideal)
 	// I plan to use hashicorp vault to manage the private keys, for now a database will do.
 	
-	pubKey := crypto.PubkeyToAddress(privateKey.PublicKey).Hex()
+	address := crypto.PubkeyToAddress(privateKey.PublicKey).Hex()
 	signer := hexutil.EncodeBig(privateKey.D)
 
-	return pubKey, signer, nil
+	return address, signer, nil
 }
 
 // should return a byte array consisting of the publicKey, merchantid

@@ -7,9 +7,11 @@ import (
 	"os"
 	"testing"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/helicarrierstudio/silver-arrow/erc4337"
 	"github.com/helicarrierstudio/silver-arrow/repository"
+	"github.com/helicarrierstudio/silver-arrow/wallet"
 	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -46,7 +48,8 @@ func TestMain(m *testing.M) {
 func TestSendUserOp(t *testing.T) {
 	// sender := "0x6a6F07c5c32F5fb20393a2110B2Bf0925e59571b"
 	// target := "0x605F2a359EFbCf1aAF708153Ec0ED402d0746ACC"
-	sender := "0x14De44b6100dE479655D752ECD2230D10F8fA061"
+	// sender := "0x14De44b6100dE479655D752ECD2230D10F8fA061"
+	sender := "0x3D073632A7a29b2AdcbF12D2712fA3E72fABc3dD"
 	target := "0xB77ce6ec08B85DcC468B94Cea7Cc539a3BbF9510"
 	token := "USDC"
 
@@ -61,32 +64,34 @@ func TestSendUserOp(t *testing.T) {
 		t.FailNow()
 	}
 
+	nonce, err := ercBundler.AccountNonce(sender)
+	if !assert.NoError(t, err) {
+		t.FailNow()
+	}
+	key := "0x63bd080e6f50b44427514368f88cfbc6c1ade31f5af761997f03862460a0d52c"
+	// key := "0xc1fce60cfb4b32bf4584e577904d806f8c5af28104d34e9923466eb8ca6faeff"
+	initCode, err := wallet.GetContractInitCode(common.HexToAddress("0xB77ce6ec08B85DcC468B94Cea7Cc539a3BbF9510"), big.NewInt(2))
+	if !assert.NoError(t, err) {
+		t.FailNow()
+	}
 
-	nonce, _ := ercBundler.AccountNonce(sender)
-	key := "0xcea5314e325233134348f39363151a5fff8051a5e48f8ac96b6dd9866bc2336b"
-
-	mId, _ := hexutil.Decode("0x829f80a98190408d9c22d06ef11ecb213c3fde8a388e9b2052bc1eeee89f2fb7")
-	fmt.Println((mId))
-
+	fmt.Println(hexutil.Encode(initCode))
 	chainId := 80001
-	op, err := ercBundler.CreateUnsignedUserOperation(sender, target, nil, data, nonce, true, int64(chainId))
+	op, err := ercBundler.CreateUnsignedUserOperation(sender, nil, data, nonce, false, int64(chainId))
 	assert.NoError(t, err)
 	if !assert.NoError(t, err) {
 		t.FailNow()
 	}
-	// fmt.Println("user operation", op)
-	// signature := []byte{}
-	sig, _ := erc4337.SignUserOp(op, key, erc4337.VALIDATOR_MODE, mId, int64(chainId))
-	// signature = append(signature, mId...)
-	// signature = append(signature, sig...)
-	fmt.Println(sig)
+
+	sig, _, err := erc4337.SignUserOp(op, key, erc4337.SUDO_MODE, nil, int64(chainId))
+	assert.NoError(t, err)
 	op["signature"] = hexutil.Encode(sig)
 	// send user operation
 	opHash, err := ercBundler.SendUserOp(op)
 	if !assert.NoError(t, err) {
 		t.FailNow()
 	}
-	fmt.Println("user operation hash -", opHash) // 0x28b45cf378c23fbdbbcb4f4c4d085791eb6d660214ff4a2402e40fd1c73751c6 0xfcd3b481cc3ba345fcf24c777463baf60dbb1f7475ca297b9259d020044565be
+	fmt.Println("user operation hash -", opHash)
 
 	t.Fail()
 }
@@ -117,3 +122,102 @@ curl --location 'https://api.stackup.sh/v1/node/fc4b8aee3102327ddd59941bfa616d63
 }
 '
 */
+
+func TestValidator(t *testing.T) {
+	sender := "0x3D073632A7a29b2AdcbF12D2712fA3E72fABc3dD"
+	key := "0x63bd080e6f50b44427514368f88cfbc6c1ade31f5af761997f03862460a0d52c"
+	sessionKey := "0x6574f281AAaA788cf89e5269E9c842E50c5713fe"
+	privKey := "0xc1fce60cfb4b32bf4584e577904d806f8c5af28104d34e9923466eb8ca6faeff"
+	validatorAddress := "0x40ACEE1113697bdeE3077493896Fa759d1b3e255"
+	mode := erc4337.ENABLE_MODE
+	chainId := 80001
+
+	ercBundler := erc4337.NewERCBundler(entrypointAddress, nodeClient)
+
+	nonce, err := ercBundler.AccountNonce(sender)
+	if !assert.NoError(t, err) {
+		t.FailNow()
+	}
+
+	validator, err := erc4337.InitialiseValidator(validatorAddress, sessionKey, privKey, mode, int64(chainId))
+	if !assert.NoError(t, err) {
+		t.FailNow()
+	}
+	enableData, err := validator.GetEnableData()
+	if !assert.NoError(t, err) {
+		t.FailNow()
+	}
+
+	callData, err := validator.SetExecution(enableData, sender)
+	if !assert.NoError(t, err) {
+		t.FailNow()
+	}
+
+	op, err := ercBundler.CreateUnsignedUserOperation(sender, nil, callData, nonce, false, int64(chainId))
+	assert.NoError(t, err)
+	if !assert.NoError(t, err) {
+		t.FailNow()
+	}
+
+	sig, _, err := erc4337.SignUserOp(op, key, erc4337.SUDO_MODE, nil, int64(chainId))
+	if !assert.NoError(t, err) {
+		t.FailNow()
+	}
+
+	op["signature"] = hexutil.Encode(sig)
+
+	opHash, err := ercBundler.SendUserOp(op)
+	fmt.Println("user operation hash -", opHash)
+	if !assert.NoError(t, err) {
+		t.FailNow()
+	}
+
+	t.Fail()
+}
+
+
+func TestTokenAction(t *testing.T) {
+
+	sender := "0x3D073632A7a29b2AdcbF12D2712fA3E72fABc3dD"
+	target := common.HexToAddress("0xB77ce6ec08B85DcC468B94Cea7Cc539a3BbF9510")
+	token := "USDC"
+
+	ercBundler := erc4337.NewERCBundler(entrypointAddress, nodeClient)
+
+	// 1000000000000000000 = 1 ether
+	// 1000000000000000000 = 1 erc20Token
+	// 10000000000000000 = 0.01 erc20Token
+	amount := big.NewInt(1000000)
+	erc20Token := erc4337.GetTokenAddres(token)
+	tokenAddress := common.HexToAddress(erc20Token)
+
+	data, err := erc4337.TransferErc20Action(tokenAddress, target, amount)
+	if !assert.NoError(t, err) {
+		t.FailNow()
+	}
+
+	nonce, err := ercBundler.AccountNonce(sender)
+	if !assert.NoError(t, err) {
+		t.FailNow()
+	}
+	key := "0xc1fce60cfb4b32bf4584e577904d806f8c5af28104d34e9923466eb8ca6faeff"
+	// key := "0xc1fce60cfb4b32bf4584e577904d806f8c5af28104d34e9923466eb8ca6faeff"
+
+	// fmt.Println(hexutil.Encode(initCode))
+	chainId := 80001
+	op, err := ercBundler.CreateUnsignedUserOperation(sender, nil, data, nonce, false, int64(chainId))
+	assert.NoError(t, err)
+	if !assert.NoError(t, err) {
+		t.FailNow()
+	}
+
+	sig, _, err := erc4337.SignUserOp(op, key, erc4337.VALIDATOR_MODE, nil, int64(chainId))
+	assert.NoError(t, err)
+	op["signature"] = hexutil.Encode(sig)
+	// send user operation
+	opHash, err := ercBundler.SendUserOp(op)
+	if !assert.NoError(t, err) {
+		t.FailNow()
+	}
+	fmt.Println("user operation hash -", opHash)
+}
