@@ -253,25 +253,11 @@ func SignUserOp(op map[string]any, key, mode string, merchantId []byte, chain in
 		return nil, nil, err
 	}
 	sig[64] += 27
-	// signatureBytes, err := crypto.Sign(opHash[:], privKey)
-	// if err != nil {
-	// 	err = errors.Wrap(err, "signUserOp() failure - ")
-	// 	return nil, nil, err
-	// }
-
 	signature = append(signature, sig...)
-	// signatureBytes[64] += 27
 
-	// fmt.Println("signing address - ", crypto.PubkeyToAddress(privKey.PublicKey).Hex())
-	// fmt.Println("hash - ", hexutil.Encode(opHash[:]))
 	fmt.Println("raw sig - ", hexutil.Encode(sig))
 	fmt.Println("hash - ", hexutil.Encode(opHash[:]))
-	// sig = append(sig, signatureBytes...)
-	// signature := hexutil.Encode(sig)
 
-	// fmt.Println("signature length - ", len(sig))
-	// fmt.Println("signature - ", sig)
-	// fmt.Println("signature - ", signature)
 	return signature, ecrecover.ToEthSignedMessageHash(hash), nil
 }
 

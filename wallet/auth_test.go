@@ -16,7 +16,6 @@ func TestCreateAccessKey(t *testing.T) {
 	assert.NoError(t, err)
 	fmt.Println(pubKey)
 	fmt.Println(privKey)
-	t.Fail()
 }
 
 func TestAccessKeyConsistency(t *testing.T) {

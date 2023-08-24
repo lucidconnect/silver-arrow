@@ -82,6 +82,7 @@ func (ws *WalletService) ValidateSubscription(userop map[string]any) (*model.Sub
 		err = errors.Wrap(err, "SendUserOp()")
 		return nil, "", err
 	}
+	fmt.Println("validating subscription with userop hash -", opHash)
 	filter := bson.D{{Key: "userop_hash", Value: opHash}}
 	results, err := ws.repository.FindSubscriptionsByFilter(filter)
 	if err != nil {
@@ -89,14 +90,7 @@ func (ws *WalletService) ValidateSubscription(userop map[string]any) (*model.Sub
 		return nil, "", err
 	}
 	result := results[0]
-	// a, _ := new(big.Int).SetString(result.Amount, 10)
 	token := result.Token
-	// var amount int64
-	// if token == "USDC" {
-	// 	amount, _  = strconv.Atoi(result.Amount)
-	// } else {
-	// 	amount = weiToAmount(a)
-	// }
 
 	amount, _ := strconv.Atoi(result.Amount)
 	subData := &model.SubscriptionData{
@@ -107,8 +101,7 @@ func (ws *WalletService) ValidateSubscription(userop map[string]any) (*model.Sub
 		MerchantID:    result.MerchantId,
 		WalletAddress: result.WalletAddress,
 	}
-	// fmt.Println("userop hash ", opHash)
-	// fmt.Println("result - ", result)
+	fmt.Println("subscription result - ", result)
 	return subData, result.SigningKey, nil
 }
 
@@ -268,6 +261,7 @@ func (ws *WalletService) ExecuteCharge(sender, target, mId, token, key string, a
 	}
 	// fmt.Println("user operation", op)
 
+	fmt.Println("Signing user op with key - ", key)
 	sig, _, err := erc4337.SignUserOp(op, key, erc4337.VALIDATOR_MODE, nil, int64(chainId))
 	if err != nil {
 		err = errors.Wrap(err, "SignUserOp() - ")
