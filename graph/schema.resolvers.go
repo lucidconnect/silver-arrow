@@ -86,13 +86,14 @@ func (r *mutationResolver) ValidateSubscription(ctx context.Context, input model
 		log.Println(err)
 		return nil, err
 	}
+	fmt.Println("partial signature - ", partialSig)
 	sig = append(sig, partialSig...)
 	op["signature"] = hexutil.Encode(sig)
 
 	log.Println("User op", op)
 	subData, key, err := walletService.ValidateSubscription(op)
 	if err != nil {
-		log.Println(err)
+		log.Println("walletService.ValidateSubscription()", err)
 		return nil, err
 	}
 	// x := int64(subData.Amount)

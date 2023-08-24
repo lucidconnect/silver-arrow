@@ -10,7 +10,6 @@ import (
 	LucidMerchant "github.com/helicarrierstudio/silver-arrow/abi/LucidMerchant"
 	"github.com/helicarrierstudio/silver-arrow/erc4337"
 	"github.com/helicarrierstudio/silver-arrow/repository"
-	"github.com/helicarrierstudio/silver-arrow/repository/models"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -44,32 +43,31 @@ func (s *Scheduler) ScheduleUserOp() {
 	}
 }
 
-func (s *Scheduler) SendUserOp(sub models.Subscription) error {
-	token := sub.Token
-	amount, _ := new(big.Int).SetString(sub.Amount,10)
-	address, err := s.fetchMerchantAddress(sub.MerchantId)
-	if err != nil {
-		return err
-	}
+// func (s *Scheduler) SendUserOp(sub models.Subscription) error {
+// 	token := sub.Token
+// 	amount, _ := new(big.Int).SetString(sub.Amount,10)
+// 	address, err := s.fetchMerchantAddress(sub.MerchantId)
+// 	if err != nil {
+// 		return err
+// 	}
 
+// 	data, err := erc4337.CreateTransferCallData(address, token, amount)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	nonce := getAccountNonce(sub.WalletAddress)
+// 	signingKey := sub.SigningKey
+// 	op, err := s.bundler.CreateUserOperation(sub.WalletAddress, address, data, nonce, amount, true, signingKey, 0)
+// 	if err != nil {
+// 		return err
+// 	}
 
-	data, err := erc4337.CreateTransferCallData(address, token, amount)
-	if err != nil {
-		return err
-	}
-	nonce := getAccountNonce(sub.WalletAddress)
-	signingKey := sub.SigningKey
-	op, err := s.bundler.CreateUserOperation(sub.WalletAddress, address, data, nonce, amount, true, signingKey, 0)
-	if err != nil {
-		return err
-	}
-
-	_, err = s.bundler.SendUserOp(op)
-	if err != nil {
-		return err
-	}
-	return nil
-}
+// 	_, err = s.bundler.SendUserOp(op)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	return nil
+// }
 
 func getAccountNonce(address string) *big.Int {
 	return big.NewInt(0)
