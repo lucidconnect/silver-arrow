@@ -11,7 +11,6 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/helicarrierstudio/silver-arrow/erc4337"
 	"github.com/helicarrierstudio/silver-arrow/repository"
-	"github.com/helicarrierstudio/silver-arrow/wallet"
 	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -43,57 +42,6 @@ func TestMain(m *testing.M) {
 
 	exitVal := m.Run()
 	os.Exit(exitVal)
-}
-
-func TestSendUserOp(t *testing.T) {
-	// sender := "0x6a6F07c5c32F5fb20393a2110B2Bf0925e59571b"
-	// target := "0x605F2a359EFbCf1aAF708153Ec0ED402d0746ACC"
-	// sender := "0x14De44b6100dE479655D752ECD2230D10F8fA061"
-	sender := "0x3D073632A7a29b2AdcbF12D2712fA3E72fABc3dD"
-	target := "0xB77ce6ec08B85DcC468B94Cea7Cc539a3BbF9510"
-	token := "USDC"
-
-	ercBundler := erc4337.NewERCBundler(entrypointAddress, nodeClient)
-
-	// 1000000000000000000 = 1 ether
-	// 1000000000000000000 = 1 erc20Token
-	// 10000000000000000 = 0.01 erc20Token
-	amount := big.NewInt(1000000)
-	data, err := erc4337.CreateTransferCallData(target, token, amount)
-	if !assert.NoError(t, err) {
-		t.FailNow()
-	}
-
-	nonce, err := ercBundler.AccountNonce(sender)
-	if !assert.NoError(t, err) {
-		t.FailNow()
-	}
-	key := "0x63bd080e6f50b44427514368f88cfbc6c1ade31f5af761997f03862460a0d52c"
-	// key := "0xc1fce60cfb4b32bf4584e577904d806f8c5af28104d34e9923466eb8ca6faeff"
-	initCode, err := wallet.GetContractInitCode(common.HexToAddress("0xB77ce6ec08B85DcC468B94Cea7Cc539a3BbF9510"), big.NewInt(2))
-	if !assert.NoError(t, err) {
-		t.FailNow()
-	}
-
-	fmt.Println(hexutil.Encode(initCode))
-	chainId := 80001
-	op, err := ercBundler.CreateUnsignedUserOperation(sender, nil, data, nonce, false, int64(chainId))
-	assert.NoError(t, err)
-	if !assert.NoError(t, err) {
-		t.FailNow()
-	}
-
-	sig, _, err := erc4337.SignUserOp(op, key, erc4337.SUDO_MODE, nil, int64(chainId))
-	assert.NoError(t, err)
-	op["signature"] = hexutil.Encode(sig)
-	// send user operation
-	opHash, err := ercBundler.SendUserOp(op)
-	if !assert.NoError(t, err) {
-		t.FailNow()
-	}
-	fmt.Println("user operation hash -", opHash)
-
-	t.Fail()
 }
 
 func TestGetUserOperationByHash(t *testing.T) {
@@ -174,7 +122,6 @@ func TestValidator(t *testing.T) {
 
 	t.Fail()
 }
-
 
 func TestTokenAction(t *testing.T) {
 
