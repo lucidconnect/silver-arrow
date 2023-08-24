@@ -99,6 +99,8 @@ func (r *mutationResolver) ValidateSubscription(ctx context.Context, input model
 	// x := int64(subData.Amount)
 	target := "0x1BB271879576fD79324156F539DD760756C9D061"
 
+	// Delay for a few seconds to allow the changes to be propagated onchain
+	time.Sleep(15 * time.Second)
 	err = walletService.ExecuteCharge(subData.WalletAddress, target, subData.MerchantID, subData.Token, key, int64(subData.Amount), usePaymaster)
 	if err != nil {
 		err = errors.Wrap(err, "ExecuteCharge() - error occurred during first time charge execution - ")
