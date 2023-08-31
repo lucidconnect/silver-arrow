@@ -18,7 +18,6 @@ import (
 	"github.com/helicarrierstudio/silver-arrow/repository/models"
 	"github.com/pkg/errors"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
-	"go.mongodb.org/mongo-driver/bson"
 )
 
 type WalletService struct {
@@ -83,18 +82,16 @@ func (ws *WalletService) ValidateSubscription(userop map[string]any) (*model.Sub
 		return nil, "", err
 	}
 	fmt.Println("validating subscription with userop hash -", opHash)
-	filter := bson.D{{Key: "userop_hash", Value: opHash}}
-	results, err := ws.repository.FindSubscriptionsByFilter(filter)
+	result, err := ws.repository.FindSubscriptionByHash(opHash)
 	if err != nil {
-		err = errors.Wrap(err, "FindSubscriptionsByFilter() - ")
+		err = errors.Wrap(err, "FindSubscriptionByHash() - ")
 		return nil, "", err
 	}
-	result := results[0]
 	token := result.Token
 
 	amount, _ := strconv.Atoi(result.Amount)
 	subData := &model.SubscriptionData{
-		ID:            result.SubscriptionId,
+		ID:            result.SubscriptionKey,
 		Token:         token,
 		Amount:        amount,
 		Interval:      int(result.Interval),
@@ -102,7 +99,14 @@ func (ws *WalletService) ValidateSubscription(userop map[string]any) (*model.Sub
 		WalletAddress: result.WalletAddress,
 	}
 	fmt.Println("subscription result - ", result)
-	return subData, result.SigningKey, nil
+
+	// get the signing key
+	signingKey, err := ws.repository.GetSecretKey(result.SubscriptionKey)
+	if err != nil {
+		err = errors.Wrap(err, "FindSubscriptionsByFilter() - ")
+		return nil, "", err
+	}
+	return subData, signingKey, nil
 }
 
 func (ws *WalletService) AddSubscription(input model.NewSubscription, usePaymaster bool, index *big.Int) (*model.ValidationData, map[string]any, error) {
@@ -152,18 +156,18 @@ func (ws *WalletService) AddSubscription(input model.NewSubscription, usePaymast
 	opHash := operation.GetUserOpHash(entrypoint, big.NewInt(int64(input.Chain)))
 
 	sub := models.Subscription{
-		Token:          input.Token,
-		Amount:         amount.String(),
-		Active:         false,
-		Interval:       interval.Nanoseconds(),
-		UserOpHash:     opHash.Hex(),
-		SigningKey:     signingKey,
-		MerchantId:     input.MerchantID,
-		NextChargeAt:   nextChargeAt,
-		WalletAddress:  input.WalletAddress,
-		SubscriptionId: sessionKey,
+		Token:           input.Token,
+		Amount:          amount.String(),
+		Active:          false,
+		Interval:        interval.Nanoseconds(),
+		UserOpHash:      opHash.Hex(),
+		MerchantId:      input.MerchantID,
+		NextChargeAt:    nextChargeAt,
+		ExpiresAt:       nextChargeAt,
+		WalletAddress:   input.WalletAddress,
+		SubscriptionKey: sessionKey,
 	}
-	_, err = ws.repository.AddSubscription(sub)
+	err = ws.repository.AddSubscription(sub)
 	if err != nil {
 		log.Println(err)
 		return nil, nil, err
@@ -251,7 +255,7 @@ func (ws *WalletService) ExecuteCharge(sender, target, mId, token, key string, a
 		log.Println(err)
 		return err
 	}
-	
+
 	chainId := int64(80001)
 
 	op, err := ws.bundler.CreateUnsignedUserOperation(sender, nil, data, nonce, sponsored, chainId)

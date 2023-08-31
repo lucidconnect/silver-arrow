@@ -25,16 +25,12 @@ func main() {
 	if port == "" {
 		port = defaultPort
 	}
-
-	mongoClient, err := repository.SetupMongoDatabase()
-	if err != nil {
-		log.Panic(err)
-	}
+	db, err := repository.SetupDatabase(nil)
 
 	router := chi.NewRouter()
 	loadCORS(router)
 
-	walletRepo := repository.NewMongoDb(mongoClient)
+	walletRepo := repository.NewPostgresDb(db)
 	bundler, err := erc4337.InitialiseBundler()
 	if err != nil {
 		err = errors.Wrap(err, "failed to initialise bundler")

@@ -13,12 +13,12 @@ import (
 	"github.com/helicarrierstudio/silver-arrow/repository"
 	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/assert"
-	"go.mongodb.org/mongo-driver/mongo"
+	"gorm.io/gorm"
 )
 
 var (
 	nodeUrl, entrypointAddress, paymasterUrl string
-	mongoClient                              *mongo.Client
+	db                              *gorm.DB
 	nodeClient                               *erc4337.Client
 )
 
@@ -27,7 +27,7 @@ func TestMain(m *testing.M) {
 	if err = godotenv.Load("../.env.test"); err != nil {
 		log.Fatal(err)
 	}
-	mongoClient, err = repository.SetupMongoDatabase()
+	db, err = repository.SetupDatabase(nil)
 	if err != nil {
 		log.Fatal(err)
 	}

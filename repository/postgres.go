@@ -2,15 +2,19 @@ package repository
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
+	"os"
+	"time"
 
 	"github.com/helicarrierstudio/silver-arrow/repository/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
-func SetupDatabase(dsn string, dbconn *sql.DB) (*gorm.DB, error) {
+func SetupDatabase(dbconn *sql.DB) (*gorm.DB, error) {
 	// ...
+	dsn := os.Getenv("DATABASE_URL")
 	fmt.Println("Connecting to database")
 	dialector := postgres.New(postgres.Config{
 		DSN:        dsn,
@@ -36,17 +40,23 @@ type PostgresDb struct {
 	Db *gorm.DB
 }
 
-func (p *PostgresDb) SetAddress(addressData interface{}) error {
+func NewPostgresDb(db *gorm.DB) *PostgresDb {
+	return &PostgresDb{
+		Db: db,
+	}
+}
+
+func (p *PostgresDb) SetAddress(addressData models.Wallet) error {
 	return p.Db.Create(addressData).Error
 }
 
-func (p *PostgresDb) AddSubscription(subscriptionData interface{}) error {
+func (p *PostgresDb) AddSubscription(subscriptionData models.Subscription) error {
 	return p.Db.Create(subscriptionData).Error
 }
 
-func (p *PostgresDb) ListSubscriptions(address string) ([]models.Subscription, error) {
+func (p *PostgresDb) FetchWalletSubscriptions(address string) ([]models.Subscription, error) {
 	var subscriptions []models.Subscription
-	err := p.Db.Where("account_address = ?", address).Find(&subscriptions).Error
+	err := p.Db.Where("wallet_address = ?", address).Find(&subscriptions).Error
 	if err != nil {
 		return nil, err
 	}
@@ -54,8 +64,47 @@ func (p *PostgresDb) ListSubscriptions(address string) ([]models.Subscription, e
 	return subscriptions, nil
 }
 
-func (p *PostgresDb) RemoveSubscription(id uint64) error {
+func (p *PostgresDb) DeactivateSubscription(id uint) error {
 	return p.Db.Where("id = ?", id).UpdateColumn("active", false).Error
+}
+
+func (p *PostgresDb) UpdateSubscription(id uint) error {
+	return errors.New("unimplemented")
+}
+
+func (p *PostgresDb) FetchDueSubscriptions(days int) ([]models.Subscription, error) {
+	var subscriptions []models.Subscription
+
+	startInterval := time.Now().Add(time.Duration(days) * 24 * time.Hour)
+	endInterval := startInterval.Add(24 * time.Hour)
+
+	err := p.Db.Where("expires_at >= ? AND expires_at <= ?", startInterval, endInterval).Find(&subscriptions).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return subscriptions, nil
+}
+
+func (p *PostgresDb) SetKey(key models.Key) error {
+	return p.Db.Create(key).Error
+}
+
+func (p *PostgresDb) GetSecretKey(publicKey string) (string, error) {
+	var key *models.Key
+	if err := p.Db.Where("subscription_key = ?", publicKey).Find(&key).Error; err != nil {
+		return "", err
+	}
+
+	return key.SecretKey, nil
+}
+
+func (p *PostgresDb) FindSubscriptionByHash(hash string) (*models.Subscription, error) {
+	var subscription *models.Subscription
+	if err := p.Db.Where("user_op_hash = ?", hash).Find(&subscription).Error; err != nil {
+		return nil, err
+	}
+	return subscription, nil
 }
 
 func createForeignKeyIfNotExistsQuery(fromTable, targetTable, fromCol, targetCol string) string {

@@ -17,7 +17,7 @@ import (
 )
 
 func TestAddSubscription(t *testing.T) {
-	r := repository.NewMongoDb(mongoClient)
+	r := repository.NewPostgresDb(db)
 	ercBundler := erc4337.NewERCBundler(entrypointAddress, nodeClient)
 
 	ws := wallet.NewWalletService(r, ercBundler)
