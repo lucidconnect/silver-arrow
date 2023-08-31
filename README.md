@@ -8,12 +8,15 @@ ERC-4337 is an account abstraction proposal which completely avoids the need for
 
 By leveraging this pseudo-transaction object, user intents can be originated offchain and validated by the wallet itself onchain. This allows us to be able to implement pull payments in the smart contract wallet, inherently enabling subscriptions.
 
-## Run locally 
+## Run locally
 
 - Pull the latest changes from git
 - run ```go get```
 - set the environment variables
 - run ```APP_ENV=development go run cmd/server.go```
+
+## Data relationship
+ 
 
 ## Modules/Packages
 
@@ -44,3 +47,48 @@ Graphql related code
 ### repository
 
 The data handling layer and model lives here
+
+![Alt text](image.png)
+
+```sql
+Subscriptions
+CREATE TABLE "Subscriptions" (
+  "Id" uint64,
+  "Token" string,
+  "Amount" int64,
+  "Interval" int64,
+  "UserOpHash" string,
+  "Interval" int64,
+  "Active" bool,
+  "MerchantId" string,
+  "ExpiresAt" DateTime,
+  "NextChargeAt" DateTime,
+  "AccountAddress" string,
+  "SubscriptionKey" string,
+  "AccountID" uint64,
+  PRIMARY KEY ("Id")
+);
+
+CREATE INDEX "Index" ON  "Subscriptions" ("UserOpHash", "Active", "MerchantId", "ExpiresAt", "NextChargeAt", "AccountAddress");
+
+CREATE INDEX "Key" ON  "Subscriptions" ("Interval");
+
+/* Accounts */
+CREATE TABLE "Accounts" (
+  "Id" uint64,
+  "Email" string,
+  "SignerAddress" string,
+  "AccountAddress" string,
+  "SubscriptionId" Type,
+  PRIMARY KEY ("Id")
+);
+
+CREATE INDEX "Index" ON  "Accounts" ("Email", "SignerAddress", "AccountAddress");
+
+Keys
+CREATE TABLE "Keys" (
+  "SubscriptionKey" string,
+  "SecretKey" string,
+  PRIMARY KEY ("SubscriptionKey")
+);
+```

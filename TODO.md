@@ -6,8 +6,9 @@
 [] Play around with zerodev
     [x] Deploy a smart account
     [x] Interact with the account contract
-    [] Add another signer to the deployed account
-    [] Deploy the smart contract account when a new smart wallet address is added
+    [x] Add another signer to the deployed account
+    [x] Deploy the smart contract account when a new smart wallet address is added
+[] Encryption/decryption for the signing keys generated
 
 ## Less Priority
 
