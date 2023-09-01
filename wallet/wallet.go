@@ -7,7 +7,6 @@ import (
 	"math/big"
 	"os"
 	"reflect"
-	"strconv"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -89,7 +88,7 @@ func (ws *WalletService) ValidateSubscription(userop map[string]any) (*model.Sub
 	}
 	token := result.Token
 
-	amount, _ := strconv.Atoi(result.Amount)
+	amount := int(result.Amount)
 	subData := &model.SubscriptionData{
 		ID:            result.SubscriptionKey,
 		Token:         token,
@@ -117,7 +116,8 @@ func (ws *WalletService) AddSubscription(input model.NewSubscription, usePaymast
 	if err != nil {
 		return nil, nil, err
 	}
-	amount = big.NewInt(int64(input.Amount)) // This will cause a bug for amounts that are fractional
+	// supported token is still USDC, so minor factor is 1000000
+	amount = big.NewInt(int64(input.Amount * 1000000)) // This will cause a bug for amounts that are fractional
 
 	interval := daysToNanoSeconds(int64(input.Interval))
 
@@ -157,7 +157,7 @@ func (ws *WalletService) AddSubscription(input model.NewSubscription, usePaymast
 
 	sub := models.Subscription{
 		Token:           input.Token,
-		Amount:          amount.String(),
+		Amount:          amount.Int64(),
 		Active:          false,
 		Interval:        interval.Nanoseconds(),
 		UserOpHash:      opHash.Hex(),

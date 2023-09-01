@@ -11,7 +11,7 @@ import (
 type Subscription struct {
 	gorm.Model
 	Token           string    `gorm:"not null"` // really the token contract
-	Amount          string    `gorm:"not null"` // amount in wei
+	Amount          int64     `gorm:"not null"` // amount in decimal precision
 	Active          bool      `gorm:"not null"`
 	Interval        int64     `gorm:"not null"`
 	UserOpHash      string    `gorm:"index"`
