@@ -192,12 +192,14 @@ require (
 )
 
 require (
+	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/OrlovEvgeny/go-mcache v0.0.0-20200121124330-1a8195b34f3a
 	github.com/agnivade/levenshtein v1.1.1 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/go-chi/chi v1.5.4
 	github.com/joho/godotenv v1.5.1
 	github.com/libp2p/go-libp2p v0.30.0
+	github.com/robfig/cron/v3 v3.0.1
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/stretchr/testify v1.8.4
 	github.com/urfave/cli/v2 v2.25.7 // indirect

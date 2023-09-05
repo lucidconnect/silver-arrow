@@ -10,7 +10,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
-	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/pkg/errors"
 	"github.com/rmanzoku/ethutils/ecrecover"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
@@ -34,8 +33,8 @@ func NewERCBundler(entrypoint string, client *Client) *ERCBundler {
 	}
 }
 
-func (b *ERCBundler) GetClient() *ethclient.Client {
-	return b.client.GetEthClient()
+func (b *ERCBundler) GetClient() *Client {
+	return b.client
 }
 
 func (b *ERCBundler) AccountNonce(sender string) (*big.Int, error) {
@@ -238,7 +237,7 @@ func SignUserOp(op map[string]any, key, mode string, merchantId []byte, chain in
 	}
 	fmt.Println("kb", kb)
 	common.FromHex(key)
-	
+
 	// Kernel has a specific convention for encoding signatures in order to determing the mode see (https://github.com/stackup-wallet/userop.js/blob/main/src/preset/builder/kernel.ts#L114-L123)
 	signature, _ := hexutil.Decode(mode)
 

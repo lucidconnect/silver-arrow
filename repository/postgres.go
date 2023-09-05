@@ -36,25 +36,25 @@ func SetupDatabase(dbconn *sql.DB) (*gorm.DB, error) {
 	return db, nil
 }
 
-type PostgresDb struct {
+type walletRepo struct {
 	Db *gorm.DB
 }
 
-func NewPostgresDb(db *gorm.DB) *PostgresDb {
-	return &PostgresDb{
+func NewWalletRepo(db *gorm.DB) WalletRepository {
+	return &walletRepo{
 		Db: db,
 	}
 }
 
-func (p *PostgresDb) SetAddress(addressData models.Wallet) error {
+func (p *walletRepo) SetAddress(addressData models.Wallet) error {
 	return p.Db.Create(addressData).Error
 }
 
-func (p *PostgresDb) AddSubscription(subscriptionData models.Subscription) error {
+func (p *walletRepo) AddSubscription(subscriptionData models.Subscription) error {
 	return p.Db.Create(subscriptionData).Error
 }
 
-func (p *PostgresDb) FetchWalletSubscriptions(address string) ([]models.Subscription, error) {
+func (p *walletRepo) FetchWalletSubscriptions(address string) ([]models.Subscription, error) {
 	var subscriptions []models.Subscription
 	err := p.Db.Where("wallet_address = ?", address).Find(&subscriptions).Error
 	if err != nil {
@@ -64,15 +64,15 @@ func (p *PostgresDb) FetchWalletSubscriptions(address string) ([]models.Subscrip
 	return subscriptions, nil
 }
 
-func (p *PostgresDb) DeactivateSubscription(id uint) error {
+func (p *walletRepo) DeactivateSubscription(id uint) error {
 	return p.Db.Where("id = ?", id).UpdateColumn("active", false).Error
 }
 
-func (p *PostgresDb) UpdateSubscription(id uint) error {
+func (p *walletRepo) UpdateSubscription(id uint) error {
 	return errors.New("unimplemented")
 }
 
-func (p *PostgresDb) FetchDueSubscriptions(days int) ([]models.Subscription, error) {
+func (p *walletRepo) FetchDueSubscriptions(days int) ([]models.Subscription, error) {
 	var subscriptions []models.Subscription
 
 	startInterval := time.Now().Add(time.Duration(days) * 24 * time.Hour)
@@ -86,11 +86,11 @@ func (p *PostgresDb) FetchDueSubscriptions(days int) ([]models.Subscription, err
 	return subscriptions, nil
 }
 
-func (p *PostgresDb) SetKey(key models.Key) error {
+func (p *walletRepo) SetKey(key models.Key) error {
 	return p.Db.Create(key).Error
 }
 
-func (p *PostgresDb) GetSecretKey(publicKey string) (string, error) {
+func (p *walletRepo) GetSecretKey(publicKey string) (string, error) {
 	var key *models.Key
 	if err := p.Db.Where("subscription_key = ?", publicKey).Find(&key).Error; err != nil {
 		return "", err
@@ -99,7 +99,7 @@ func (p *PostgresDb) GetSecretKey(publicKey string) (string, error) {
 	return key.SecretKey, nil
 }
 
-func (p *PostgresDb) FindSubscriptionByHash(hash string) (*models.Subscription, error) {
+func (p *walletRepo) FindSubscriptionByHash(hash string) (*models.Subscription, error) {
 	var subscription *models.Subscription
 	if err := p.Db.Where("user_op_hash = ?", hash).Find(&subscription).Error; err != nil {
 		return nil, err

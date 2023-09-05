@@ -17,14 +17,14 @@ type SchedulerRepository interface{}
 type WalletRepository interface {
 	KeyManager
 	AddressBook
-	SubscriptionsRepo
+	Subscriptions
 }
 
 type AddressBook interface {
 	SetAddress(models.Wallet) error
 }
 
-type SubscriptionsRepo interface {
+type Subscriptions interface {
 	AddSubscription(models.Subscription) error
 	FetchWalletSubscriptions(address string) ([]models.Subscription, error)
 	FetchDueSubscriptions(days int) ([]models.Subscription, error)

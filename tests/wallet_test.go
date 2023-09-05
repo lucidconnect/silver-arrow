@@ -17,7 +17,7 @@ import (
 )
 
 func TestAddSubscription(t *testing.T) {
-	r := repository.NewPostgresDb(db)
+	r := repository.NewWalletRepo(db)
 	ercBundler := erc4337.NewERCBundler(entrypointAddress, nodeClient)
 
 	ws := wallet.NewWalletService(r, ercBundler)

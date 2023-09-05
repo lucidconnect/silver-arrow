@@ -12,6 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/helicarrierstudio/silver-arrow/abi/EntryPoint"
+	"github.com/helicarrierstudio/silver-arrow/abi/erc20"
 	"github.com/pkg/errors"
 )
 
@@ -105,7 +106,7 @@ func (nc *Client) GetAccountNonce(entryPoint, address common.Address) (*big.Int,
 	}
 	opts := &bind.CallOpts{
 		Pending: false,
-		Context: nil,
+		Context: nc.ctx,
 		From:    address,
 	}
 
@@ -115,6 +116,27 @@ func (nc *Client) GetAccountNonce(entryPoint, address common.Address) (*big.Int,
 	}
 
 	return nonce, nil
+}
+
+func (nc *Client) GetErc20TokenBalance(tokenAddress, walletAddress common.Address) (*big.Int, error) {
+	ercToken, err := erc20.NewErc20(tokenAddress, nc.c)
+	if err != nil {
+		err = errors.Wrap(err, "error initialising erc20 token instance")
+		return nil, err
+	}
+
+	opts := &bind.CallOpts{
+		Pending: true,
+		Context: nc.ctx,
+	}
+
+	balance, err := ercToken.BalanceOf(opts, walletAddress)
+	if err != nil {
+		err = errors.Wrapf(err, "error occured fetchin erc20 token balance for wallet at %v", walletAddress.Hex())
+		return nil, err
+	}
+
+	return balance, nil
 }
 
 // SendUserOperation sends a user operation to an alt mempool

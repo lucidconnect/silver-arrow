@@ -1,7 +1,6 @@
 package wallet
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"math/big"
@@ -350,7 +349,7 @@ func GetContractInitCode(owner common.Address, index *big.Int) ([]byte, error) {
 }
 
 func (ws *WalletService) isAccountDeployed(address string) bool {
-	code, err := ws.bundler.GetClient().CodeAt(context.Background(), common.HexToAddress(address), nil)
+	code, err := ws.bundler.GetClient().GetAccountCode(common.HexToAddress(address))
 	if err != nil {
 		fmt.Println("An error occured")
 		return false
