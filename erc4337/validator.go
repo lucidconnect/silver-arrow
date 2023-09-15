@@ -12,11 +12,10 @@ import (
 	KernelStorage "github.com/helicarrierstudio/silver-arrow/abi/kernelStorage"
 	"github.com/holiman/uint256"
 	"github.com/pkg/errors"
-	"github.com/rmanzoku/ethutils/ecrecover"
-	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
 
-/**
+/*
+*
 - The enableData will be appended to the userop signature
 - signature[56:88] contains the enableData
 */
@@ -58,36 +57,36 @@ func newSessionKeyOwnedValidator(validator, executor, sessionKey common.Address,
 	}
 }
 
-func (v *SessionKeyOwnedValidator) Sign(op map[string]any) (sig, hash []byte, err error) {
-	entrypoint := GetEntryPointAddress()
+// func (v *SessionKeyOwnedValidator) Sign(op map[string]any) (sig, hash []byte, err error) {
+// 	entrypoint := GetEntryPointAddress()
 
-	// userOpSignature := []byte{}
+// 	// userOpSignature := []byte{}
 
-	operation, err := userop.New(op)
-	if err != nil {
-		return nil, nil, err
-	}
+// 	operation, err := userop.New(op)
+// 	if err != nil {
+// 		return nil, nil, err
+// 	}
 
-	opHash := operation.GetUserOpHash(entrypoint, v.Chain)
-	fmt.Println("opHash", opHash)
-	hash = opHash.Bytes()
+// 	opHash := operation.GetUserOpHash(entrypoint, v.Chain)
+// 	fmt.Println("opHash", opHash)
+// 	hash = opHash.Bytes()
 
-	pk, err := crypto.HexToECDSA(v.privatekey)
-	if err != nil {
-		return nil, nil, err
-	}
-	sig, err = crypto.Sign(ecrecover.ToEthSignedMessageHash(hash), pk)
-	if err != nil {
-		err = errors.Wrap(err, "generating signature failed.")
-		return nil, nil, err
-	}
-	sig[64] += 27
+// 	pk, err := crypto.HexToECDSA(v.privatekey)
+// 	if err != nil {
+// 		return nil, nil, err
+// 	}
+// 	sig, err = crypto.Sign(ecrecover.ToEthSignedMessageHash(hash), pk)
+// 	if err != nil {
+// 		err = errors.Wrap(err, "generating signature failed.")
+// 		return nil, nil, err
+// 	}
+// 	sig[64] += 27
 
-	// userOpSignature = append(userOpSignature, v.Mode...)
-	// userOpSignature = append(userOpSignature, sig...)
+// 	// userOpSignature = append(userOpSignature, v.Mode...)
+// 	// userOpSignature = append(userOpSignature, sig...)
 
-	return sig, ecrecover.ToEthSignedMessageHash(hash), nil
-}
+// 	return sig, ecrecover.ToEthSignedMessageHash(hash), nil
+// }
 
 /**
 op.signature = abi.encodePacked(
