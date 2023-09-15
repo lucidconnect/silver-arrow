@@ -13,6 +13,7 @@ import (
 	"github.com/helicarrierstudio/silver-arrow/graph/generated"
 	"github.com/helicarrierstudio/silver-arrow/repository"
 	"github.com/helicarrierstudio/silver-arrow/scheduler"
+	"github.com/helicarrierstudio/silver-arrow/turnkey"
 	"github.com/helicarrierstudio/silver-arrow/wallet"
 	"github.com/joho/godotenv"
 	"github.com/pkg/errors"
@@ -29,7 +30,9 @@ func main() {
 		port = defaultPort
 	}
 	db, err := repository.SetupDatabase(nil)
-
+	if err != nil {
+		log.Println(err)
+	}
 	router := chi.NewRouter()
 	loadCORS(router)
 
@@ -39,7 +42,8 @@ func main() {
 		err = errors.Wrap(err, "failed to initialise bundler")
 		log.Println(err)
 	}
-	walletService := wallet.NewWalletService(walletRepo, bundler)
+	tunkeyService := turnkey.NewTurnKeyService()
+	walletService := wallet.NewWalletService(walletRepo, bundler, tunkeyService)
 
 	jobRunner := scheduler.NewScheduler(walletRepo, bundler, walletService)
 	setupJobs(jobRunner)
@@ -47,6 +51,7 @@ func main() {
 		WalletRepository: walletRepo,
 		Bundler:          bundler,
 		Cache:            repository.NewMCache(),
+		Turnkey:          tunkeyService,
 	}}))
 	router.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	router.Handle("/query", walletSrv)

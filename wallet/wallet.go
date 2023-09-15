@@ -14,6 +14,7 @@ import (
 	"github.com/helicarrierstudio/silver-arrow/graph/model"
 	"github.com/helicarrierstudio/silver-arrow/repository"
 	"github.com/helicarrierstudio/silver-arrow/repository/models"
+	"github.com/helicarrierstudio/silver-arrow/turnkey"
 	"github.com/pkg/errors"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
@@ -21,25 +22,46 @@ import (
 type WalletService struct {
 	repository       repository.WalletRepository
 	bundler          *erc4337.ERCBundler
+	turnkey          *turnkey.TurnkeyService
 	validatorAddress string
 }
 
-func NewWalletService(r repository.WalletRepository, b *erc4337.ERCBundler) *WalletService {
+func NewWalletService(r repository.WalletRepository, b *erc4337.ERCBundler, t *turnkey.TurnkeyService) *WalletService {
 	validatorAddress := os.Getenv("VALIDATOR_ADDRESS")
 	return &WalletService{
 		repository:       r,
 		bundler:          b,
 		validatorAddress: validatorAddress,
+		turnkey:          t,
 	}
 }
 
 func (ws *WalletService) AddAccount(input model.Account) error {
 	walletAddress := input.Address
-	// email := input.Email
-	wallet := models.Wallet{
-		AccountAddress: walletAddress,
+
+	// create turnkey sub organization
+	activityId, err := ws.turnkey.CreateSubOrganization("", walletAddress)
+	if err != nil {
+		log.Println(err)
+		return err
 	}
-	err := ws.repository.SetAddress(wallet)
+
+	result, err := ws.turnkey.GetActivity("", activityId)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	orgId := turnkey.ExtractSubOrganizationIdFromResult(result)
+	wallet := &models.Wallet{
+		WalletAddress:     walletAddress,
+		SignerAddress:     *input.Signer,
+		Email:             *input.Email,
+		TurnkeySubOrgID:   orgId,
+		TurnkeySubOrgName: walletAddress,
+	}
+
+	err = ws.repository.AddAccount(wallet)
 	if err != nil {
 		log.Println(err)
 		return err
@@ -89,7 +111,7 @@ func (ws *WalletService) ValidateSubscription(userop map[string]any) (*model.Sub
 
 	amount := int(result.Amount)
 	subData := &model.SubscriptionData{
-		ID:            result.SubscriptionKey,
+		ID:            result.Key.PublicKey,
 		Token:         token,
 		Amount:        amount,
 		Interval:      int(result.Interval),
@@ -99,7 +121,7 @@ func (ws *WalletService) ValidateSubscription(userop map[string]any) (*model.Sub
 	fmt.Println("subscription result - ", result)
 
 	// get the signing key
-	signingKey, err := ws.repository.GetSecretKey(result.SubscriptionKey)
+	signingKey, err := ws.repository.GetSubscriptionKey(result.Key.PublicKey)
 	if err != nil {
 		err = errors.Wrap(err, "FindSubscriptionsByFilter() - ")
 		return nil, "", err
@@ -116,7 +138,7 @@ func (ws *WalletService) AddSubscription(input model.NewSubscription, usePaymast
 		return nil, nil, err
 	}
 	// supported token is still USDC, so minor factor is 1000000
-	amount = big.NewInt(int64(input.Amount * 1000000)) // This will cause a bug for amounts that are fractional
+	amount = big.NewInt(int64(input.Amount)) // This will cause a bug for amounts that are fractional
 
 	interval := daysToNanoSeconds(int64(input.Interval))
 
@@ -154,19 +176,24 @@ func (ws *WalletService) AddSubscription(input model.NewSubscription, usePaymast
 	}
 	opHash := operation.GetUserOpHash(entrypoint, big.NewInt(int64(input.Chain)))
 
-	sub := models.Subscription{
-		Token:           input.Token,
-		Amount:          amount.Int64(),
-		Active:          false,
-		Interval:        interval.Nanoseconds(),
-		UserOpHash:      opHash.Hex(),
-		MerchantId:      input.MerchantID,
-		NextChargeAt:    nextChargeAt,
-		ExpiresAt:       nextChargeAt,
-		WalletAddress:   input.WalletAddress,
-		SubscriptionKey: sessionKey,
+	sub := &models.Subscription{
+		Token:        input.Token,
+		Amount:       amount.Int64(),
+		Active:       false,
+		Interval:     interval.Nanoseconds(),
+		UserOpHash:   opHash.Hex(),
+		MerchantId:   input.MerchantID,
+		NextChargeAt: nextChargeAt,
+		ExpiresAt:    nextChargeAt,
+		// PublicKey:     sessionKey,
+		WalletAddress: input.WalletAddress,
 	}
-	err = ws.repository.AddSubscription(sub)
+
+	key := &models.Key{
+		PublicKey:    sessionKey,
+		PrivateKeyId: signingKey,
+	}
+	err = ws.repository.AddSubscription(sub, key)
 	if err != nil {
 		log.Println(err)
 		return nil, nil, err
