@@ -22,10 +22,9 @@ type Scheduler struct {
 	walletService *wallet.WalletService
 }
 
-func NewScheduler(data repository.WalletRepository, bundler *erc4337.ERCBundler, wallet *wallet.WalletService) *Scheduler {
+func NewScheduler(data repository.WalletRepository, wallet *wallet.WalletService) *Scheduler {
 	queue := repository.NewDeque()
 	return &Scheduler{
-		bundler:       bundler,
 		queue:         queue,
 		datastore:     data,
 		walletService: wallet,
@@ -46,7 +45,7 @@ func (s *Scheduler) SubscriptionJob() {
 	if err != nil {
 		log.Println(err)
 	}
-	
+
 	dueToday, err := s.datastore.FetchDueSubscriptions(0)
 	if err != nil {
 		log.Println(err)
@@ -79,6 +78,7 @@ func (s *Scheduler) SubscriptionJob() {
 		amount := big.NewInt(sub.Amount)
 		wallet := common.HexToAddress(sub.WalletAddress)
 		token := common.HexToAddress(sub.TokenAddress)
+		chain := sub.Chain
 
 		balance, err := client.GetErc20TokenBalance(token, wallet)
 		if err != nil {
@@ -93,7 +93,9 @@ func (s *Scheduler) SubscriptionJob() {
 		} else {
 			// initiate user operation
 			time.Sleep(15 * time.Second)
-			err = s.walletService.ExecuteCharge(sub.WalletAddress, sub.MerchantDepositAddress, sub.MerchantId, sub.Token, sub.Key.SecretKey, sub.Amount, usePaymaster)
+			// get the account
+
+			err = s.walletService.ExecuteCharge(sub.WalletAddress, sub.MerchantDepositAddress, sub.MerchantId, sub.Token, sub.Key.PrivateKeyId, sub.Amount, chain, usePaymaster)
 			if err != nil {
 				err = errors.Wrapf(err, "ExecuteCharge() - error occurred during charge execution for subscription %v - ", sub.ID)
 				log.Println(err)

@@ -23,7 +23,7 @@ import (
 // AddAccount is the resolver for the addAccount field.
 func (r *mutationResolver) AddAccount(ctx context.Context, input model.Account) (string, error) {
 	address := common.HexToAddress(input.Address)
-	walletService := wallet.NewWalletService(r.WalletRepository, r.Bundler, r.Turnkey)
+	walletService := wallet.NewWalletService(r.WalletRepository, r.Turnkey)
 	// should check if the account is deployed
 	// deploy if not deployed
 	err := walletService.AddAccount(input)
@@ -35,7 +35,7 @@ func (r *mutationResolver) AddAccount(ctx context.Context, input model.Account) 
 
 // AddSubscription is the resolver for the addSubscription field.
 func (r *mutationResolver) AddSubscription(ctx context.Context, input model.NewSubscription) (*model.ValidationData, error) {
-	walletService := wallet.NewWalletService(r.WalletRepository, r.Bundler, r.Turnkey)
+	walletService := wallet.NewWalletService(r.WalletRepository, r.Turnkey)
 	var usePaymaster bool
 	switch os.Getenv("USE_PAYMASTER") {
 	case "TRUE":
@@ -43,7 +43,7 @@ func (r *mutationResolver) AddSubscription(ctx context.Context, input model.NewS
 	default:
 		usePaymaster = false
 	}
-	validationData, userOp, err := walletService.AddSubscription(input, usePaymaster, common.Big0)
+	validationData, userOp, err := walletService.AddSubscription(input, usePaymaster, common.Big0, int64(input.Chain))
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -59,7 +59,7 @@ func (r *mutationResolver) AddSubscription(ctx context.Context, input model.NewS
 
 // ValidateSubscription is the resolver for the validateSubscription field.
 func (r *mutationResolver) ValidateSubscription(ctx context.Context, input model.SubscriptionValidation) (*model.SubscriptionData, error) {
-	walletService := wallet.NewWalletService(r.WalletRepository, r.Bundler, r.Turnkey)
+	walletService := wallet.NewWalletService(r.WalletRepository, r.Turnkey)
 
 	time.Sleep(time.Second)
 	var usePaymaster bool
@@ -90,8 +90,9 @@ func (r *mutationResolver) ValidateSubscription(ctx context.Context, input model
 	sig = append(sig, partialSig...)
 	op["signature"] = hexutil.Encode(sig)
 
+	chain := int64(input.Chain)
 	log.Println("User op", op)
-	subData, key, err := walletService.ValidateSubscription(op)
+	subData, key, err := walletService.ValidateSubscription(op, chain)
 	if err != nil {
 		log.Println("walletService.ValidateSubscription()", err)
 		return nil, err
@@ -101,7 +102,7 @@ func (r *mutationResolver) ValidateSubscription(ctx context.Context, input model
 
 	// Delay for a few seconds to allow the changes to be propagated onchain
 	time.Sleep(15 * time.Second)
-	err = walletService.ExecuteCharge(subData.WalletAddress, target, subData.MerchantID, subData.Token, key, int64(subData.Amount), usePaymaster)
+	err = walletService.ExecuteCharge(subData.WalletAddress, target, subData.MerchantID, subData.Token, key, int64(subData.Amount), chain, usePaymaster)
 	if err != nil {
 		err = errors.Wrap(err, "ExecuteCharge() - error occurred during first time charge execution - ")
 		log.Println(err)
@@ -117,7 +118,7 @@ func (r *mutationResolver) CancelSubscription(ctx context.Context, id string) (s
 
 // FetchSubscriptions is the resolver for the fetchSubscriptions field.
 func (r *queryResolver) FetchSubscriptions(ctx context.Context, account string) ([]*model.SubscriptionData, error) {
-	_ = wallet.NewWalletService(r.WalletRepository, r.Bundler, r.Turnkey)
+	_ = wallet.NewWalletService(r.WalletRepository, r.Turnkey)
 	panic(fmt.Errorf("not implemented: FetchSubscriptions - fetchSubscriptions"))
 }
 

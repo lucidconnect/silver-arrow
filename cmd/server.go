@@ -8,7 +8,6 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/go-chi/chi"
-	"github.com/helicarrierstudio/silver-arrow/erc4337"
 	"github.com/helicarrierstudio/silver-arrow/graph"
 	"github.com/helicarrierstudio/silver-arrow/graph/generated"
 	"github.com/helicarrierstudio/silver-arrow/repository"
@@ -16,7 +15,6 @@ import (
 	"github.com/helicarrierstudio/silver-arrow/turnkey"
 	"github.com/helicarrierstudio/silver-arrow/wallet"
 	"github.com/joho/godotenv"
-	"github.com/pkg/errors"
 	"github.com/robfig/cron/v3"
 	"github.com/rs/cors"
 )
@@ -37,19 +35,14 @@ func main() {
 	loadCORS(router)
 
 	walletRepo := repository.NewWalletRepo(db)
-	bundler, err := erc4337.InitialiseBundler()
-	if err != nil {
-		err = errors.Wrap(err, "failed to initialise bundler")
-		log.Println(err)
-	}
-	tunkeyService := turnkey.NewTurnKeyService()
-	walletService := wallet.NewWalletService(walletRepo, bundler, tunkeyService)
 
-	jobRunner := scheduler.NewScheduler(walletRepo, bundler, walletService)
+	tunkeyService := turnkey.NewTurnKeyService()
+	walletService := wallet.NewWalletService(walletRepo, tunkeyService)
+
+	jobRunner := scheduler.NewScheduler(walletRepo, walletService)
 	setupJobs(jobRunner)
 	walletSrv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{
 		WalletRepository: walletRepo,
-		Bundler:          bundler,
 		Cache:            repository.NewMCache(),
 		Turnkey:          tunkeyService,
 	}}))

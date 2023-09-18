@@ -6,6 +6,7 @@ import (
 
 type WalletRepository interface {
 	AddAccount(*models.Wallet) error
+	FetchAccountByAddress(address string) (*models.Wallet, error)
 	AddSubscription(*models.Subscription, *models.Key) error
 	FetchWalletSubscriptions(address string) ([]models.Subscription, error)
 	FetchDueSubscriptions(days int) ([]models.Subscription, error)

@@ -1,7 +1,6 @@
 package graph
 
 import (
-	"github.com/helicarrierstudio/silver-arrow/erc4337"
 	"github.com/helicarrierstudio/silver-arrow/repository"
 	"github.com/helicarrierstudio/silver-arrow/turnkey"
 )
@@ -14,7 +13,6 @@ import (
 
 type Resolver struct {
 	WalletRepository repository.WalletRepository
-	Bundler          *erc4337.ERCBundler
 	Cache            repository.CacheWizard
 	Turnkey          *turnkey.TurnkeyService
 }

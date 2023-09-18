@@ -49,6 +49,16 @@ func (p *walletRepo) AddAccount(addressData *models.Wallet) error {
 	return p.Db.Create(addressData).Error
 }
 
+func (p *walletRepo) FetchAccountByAddress(address string) (*models.Wallet, error) {
+	var wallet *models.Wallet
+	err := p.Db.Where("wallet_address = ?", address).Find(&wallet).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return wallet, nil
+}
+
 func (p *walletRepo) AddSubscription(subscriptionData *models.Subscription, key *models.Key) error {
 	tx := p.Db.Begin()
 	subscriptionData.Key = *key

@@ -6,6 +6,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/helicarrierstudio/silver-arrow/erc4337"
 	"github.com/helicarrierstudio/silver-arrow/turnkey"
 	"github.com/rmanzoku/ethutils/ecrecover"
 	"github.com/stretchr/testify/assert"
@@ -90,14 +91,12 @@ func TestSignMessage(t *testing.T) {
 	if !assert.NotEmpty(t, tk) {
 		t.FailNow()
 	}
-
 	orgId := "0714b26b-dfab-4de9-be01-0c2908025916"
 	privateKeyId := "001547ac-6758-419b-944b-cb8f94e7792e"
 	address := "0xEED4276D700B776DC315496109ac2b1b483CaCa9"
 	message := []byte("hello")
 	messageHash := hexutil.Encode(crypto.Keccak256(message))
-
-	activityId, err := tk.SignMessage(orgId, messageHash, privateKeyId)
+	activityId, err := tk.SignMessage(orgId, privateKeyId, messageHash)
 	if !assert.NoError(t, err) {
 		t.FailNow()
 	}
@@ -113,7 +112,7 @@ func TestSignMessage(t *testing.T) {
 		t.FailNow()
 	}
 
-	signature := sig.ParseSignature()
+	signature := sig.ParseSignature(erc4337.VALIDATOR_MODE)
 	fmt.Printf("Signature - %v", signature)
 
 	recoveredAddress, err := ecrecover.Recover(crypto.Keccak256(message), hexutil.MustDecode(signature))

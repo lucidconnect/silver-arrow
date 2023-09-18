@@ -41,8 +41,12 @@ type UserOperation struct {
 	Signature            string `json:"signature"`
 }
 
-func InitialiseBundler() (*ERCBundler, error) {
-	rpc := os.Getenv("NODE_URL")
+func InitialiseBundler(chain int64) (*ERCBundler, error) {
+	network, err := getNetwork(chain)
+	if err != nil {
+		return nil, err
+	}
+	rpc := os.Getenv(fmt.Sprintf("%s_NODE_URL", network))
 	paymaster := os.Getenv("PAYMASTER_URL")
 	entryPoint := os.Getenv("ENTRY_POINT")
 
@@ -259,3 +263,22 @@ func (nc *Client) GetUserOperationByHash(userophash string) (map[string]any, err
 }
 
 // eth_getUserOperationReciept
+
+func getNetwork(chainId int64) (string, error) {
+	switch chainId {
+	case 1:
+		return ETHEREUM, nil
+	case 5:
+		return GOERLI, nil
+	case 137:
+		return POLYGON, nil
+	case 84531:
+		return BASE_GOERLI, nil
+	case 8453:
+		return BASE, nil
+	case 80001:
+		return MUMBAI, nil
+	default:
+		return "NOT SUPPORTED", errors.New("Unsupported chain")
+	}
+}

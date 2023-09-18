@@ -34,6 +34,7 @@ type SubscriptionData struct {
 }
 
 type SubscriptionValidation struct {
+	Chain         int    `json:"chain"`
 	UserOpHash    string `json:"userOpHash"`
 	SignedMessage string `json:"signedMessage"`
 }

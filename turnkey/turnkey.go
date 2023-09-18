@@ -161,7 +161,7 @@ func (tk *TurnkeyService) CreateSubOrganization(orgId, subOrgName string) (strin
 	return response.Activity.Id, nil
 }
 
-func (tk *TurnkeyService) SignMessage(orgId, message, privateKeyId string) (string, error) {
+func (tk *TurnkeyService) SignMessage(orgId, privateKeyId, message string) (string, error) {
 	if orgId == "" {
 		orgId = *tk.TurnkeyClient.DefaultOrganization()
 	}

@@ -225,7 +225,8 @@ type TurnkeySignature struct {
 	V string `json:"v"`
 }
 
-func (sig *TurnkeySignature) ParseSignature() string {
+func (sig *TurnkeySignature) ParseSignature(mode string) string {
+	signature, _ := hexutil.Decode(mode)
 
 	signatureBytes := hexutil.MustDecode(sig.R)
 	fmt.Println(len(signatureBytes))
@@ -233,6 +234,7 @@ func (sig *TurnkeySignature) ParseSignature() string {
 	signatureBytes = append(signatureBytes, hexutil.MustDecode(sig.V)...)
 	fmt.Println(len(signatureBytes))
 	signatureBytes[64] += 27
+	signature = append(signature, signatureBytes...)
 
-	return hexutil.Encode(signatureBytes)
+	return hexutil.Encode(signature)
 }

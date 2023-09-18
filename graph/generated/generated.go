@@ -355,6 +355,7 @@ input NewSubscription {
 }
 
 input SubscriptionValidation {
+  chain: Int!
   userOpHash: String!
   signedMessage: String!
 }
@@ -3220,13 +3221,22 @@ func (ec *executionContext) unmarshalInputSubscriptionValidation(ctx context.Con
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"userOpHash", "signedMessage"}
+	fieldsInOrder := [...]string{"chain", "userOpHash", "signedMessage"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
+		case "chain":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chain"))
+			data, err := ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Chain = data
 		case "userOpHash":
 			var err error
 

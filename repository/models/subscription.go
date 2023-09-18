@@ -23,4 +23,5 @@ type Subscription struct {
 	TokenAddress           string
 	WalletID               uint
 	Key                    Key `gorm:"foreignKey:SubscriptionID"`
+	Chain                  int64
 }
