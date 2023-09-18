@@ -1,8 +1,10 @@
 package models
 
+import "gorm.io/gorm"
+
 type Key struct {
-	ID              uint `gorm:"primarykey"`
-	SubscriptionKey string `gorm:"index"`
-	SecretKey       string `gorm:"not null"`
-	SubscriptionID  uint
+	gorm.Model
+	PublicKey      string `gorm:"not null"`
+	PrivateKeyId   string `gorm:"not null"`
+	SubscriptionID uint
 }

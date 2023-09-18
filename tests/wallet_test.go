@@ -20,7 +20,7 @@ func TestAddSubscription(t *testing.T) {
 	r := repository.NewWalletRepo(db)
 	ercBundler := erc4337.NewERCBundler(entrypointAddress, nodeClient)
 
-	ws := wallet.NewWalletService(r, ercBundler)
+	ws := wallet.NewWalletService(r, ercBundler, nil)
 	// mId := randKey()
 	mId := "3838hr8hud9dijh3j"
 	key := "0xe81f9f7146470e1e728cc44d22089098de6be6ebe3ca39f21b7b092f09b10cf5"
@@ -48,7 +48,9 @@ func TestAddSubscription(t *testing.T) {
 	}
 
 	_, op, err := ws.AddSubscription(newSub, usePaymaster, big.NewInt(0))
-	assert.NoError(t, err)
+	if !assert.NoError(t, err) {
+		t.FailNow()
+	}
 
 	sig, _, err := erc4337.SignUserOp(op, key, erc4337.SUDO_MODE, nil, 80001)
 	assert.NotEmpty(t, sig)
@@ -71,8 +73,8 @@ func TestAddSubscription(t *testing.T) {
 	// t.Fail()
 }
 
-func randKey() string {
-	key := make([]byte, 32)
+func randKey(length int) string {
+	key := make([]byte, length)
 
 	_, err := rand.Read(key)
 	if err != nil {

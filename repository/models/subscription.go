@@ -21,8 +21,6 @@ type Subscription struct {
 	NextChargeAt           time.Time `gorm:"index;type:timestamptz"`
 	WalletAddress          string    `gorm:"index"`
 	TokenAddress           string
-	SubscriptionKey        string `gorm:"unique;index"`
-	AccountID              uint
-	Wallet                 Wallet `gorm:"foreignKey:WalletID"`
-	Key                    Key    `gorm:"foreignKey:SubscriptionID"`
+	WalletID               uint
+	Key                    Key `gorm:"foreignKey:SubscriptionID"`
 }

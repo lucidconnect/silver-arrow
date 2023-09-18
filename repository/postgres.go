@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"time"
 
@@ -16,11 +17,7 @@ func SetupDatabase(dbconn *sql.DB) (*gorm.DB, error) {
 	// ...
 	dsn := os.Getenv("DATABASE_URL")
 	fmt.Println("Connecting to database")
-	dialector := postgres.New(postgres.Config{
-		DSN:        dsn,
-		DriverName: "postgres",
-		Conn:       dbconn,
-	})
+	dialector := postgres.Open(dsn)
 
 	db, err := gorm.Open(dialector, &gorm.Config{})
 	if err != nil {
@@ -29,9 +26,11 @@ func SetupDatabase(dbconn *sql.DB) (*gorm.DB, error) {
 	}
 
 	// ...
-
-	db.Model(&models.Subscription{}).
-		Exec(createForeignKeyIfNotExistsQuery("subscriptions", "accounts", "account_address", "account_address"))
+	if err = db.AutoMigrate(models.Wallet{}, models.Key{}, models.Subscription{}); err != nil {
+		log.Fatal("Error migrating database models")
+	}
+	// db.Model(&models.Subscription{}).
+	// 	Exec(createForeignKeyIfNotExistsQuery("subscriptions", "wallets", "wallet_address", "wallet_address"))
 
 	return db, nil
 }
@@ -46,17 +45,34 @@ func NewWalletRepo(db *gorm.DB) WalletRepository {
 	}
 }
 
-func (p *walletRepo) SetAddress(addressData models.Wallet) error {
+func (p *walletRepo) AddAccount(addressData *models.Wallet) error {
 	return p.Db.Create(addressData).Error
 }
 
-func (p *walletRepo) AddSubscription(subscriptionData models.Subscription) error {
-	return p.Db.Create(subscriptionData).Error
+func (p *walletRepo) AddSubscription(subscriptionData *models.Subscription, key *models.Key) error {
+	tx := p.Db.Begin()
+	subscriptionData.Key = *key
+	if err := tx.Create(subscriptionData).Error; err != nil {
+		fmt.Println(err)
+		tx.Rollback()
+		return err
+	}
+
+	// if err := tx.Create(key).Error; err != nil {
+	// 	fmt.Println(err)
+	// 	tx.Rollback()
+	// 	return err
+	// }
+
+	if err := tx.Commit().Error; err != nil {
+		return err
+	}
+	return nil
 }
 
 func (p *walletRepo) FetchWalletSubscriptions(address string) ([]models.Subscription, error) {
 	var subscriptions []models.Subscription
-	err := p.Db.Where("wallet_address = ?", address).Find(&subscriptions).Error
+	err := p.Db.Where("wallet_address = ?", address).Preload("Key").Find(&subscriptions).Error
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +94,7 @@ func (p *walletRepo) FetchDueSubscriptions(days int) ([]models.Subscription, err
 	startInterval := time.Now().Add(time.Duration(days) * 24 * time.Hour)
 	endInterval := startInterval.Add(24 * time.Hour)
 
-	err := p.Db.Where("expires_at >= ? AND expires_at <= ?", startInterval, endInterval).Find(&subscriptions).Error
+	err := p.Db.Where("expires_at >= ? AND expires_at <= ?", startInterval, endInterval).Preload("Key").Find(&subscriptions).Error
 	if err != nil {
 		return nil, err
 	}
@@ -86,25 +102,31 @@ func (p *walletRepo) FetchDueSubscriptions(days int) ([]models.Subscription, err
 	return subscriptions, nil
 }
 
-func (p *walletRepo) SetKey(key models.Key) error {
+func (p *walletRepo) AddSubscriptionKey(key *models.Key) error {
 	return p.Db.Create(key).Error
 }
 
 func (p *walletRepo) GetSecretKey(publicKey string) (string, error) {
 	var key *models.Key
-	if err := p.Db.Where("subscription_key = ?", publicKey).Find(&key).Error; err != nil {
+	if err := p.Db.Where("private_key_id = ?", publicKey).Find(&key).Error; err != nil {
 		return "", err
 	}
 
-	return key.SecretKey, nil
+	return key.PrivateKeyId, nil
 }
 
 func (p *walletRepo) FindSubscriptionByHash(hash string) (*models.Subscription, error) {
 	var subscription *models.Subscription
-	if err := p.Db.Where("user_op_hash = ?", hash).Find(&subscription).Error; err != nil {
+	if err := p.Db.Where("user_op_hash = ?", hash).Preload("Key").Find(&subscription).Error; err != nil {
 		return nil, err
 	}
 	return subscription, nil
+}
+
+// returns the private key ID
+func (p *walletRepo) GetSubscriptionKey(publicKey string) (string, error) {
+
+	return "", nil
 }
 
 func createForeignKeyIfNotExistsQuery(fromTable, targetTable, fromCol, targetCol string) string {
