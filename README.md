@@ -91,4 +91,7 @@ CREATE TABLE "Keys" (
   "SecretKey" string,
   PRIMARY KEY ("SubscriptionKey")
 );
+
+0xF0309DDDe30c75A6211565774E48c3733bf87F84
+Mumbai
 ```

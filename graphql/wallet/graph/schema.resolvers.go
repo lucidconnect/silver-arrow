@@ -14,8 +14,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/helicarrierstudio/silver-arrow/erc4337"
-	"github.com/helicarrierstudio/silver-arrow/graph/generated"
-	"github.com/helicarrierstudio/silver-arrow/graph/model"
+	"github.com/helicarrierstudio/silver-arrow/graphql/wallet/graph/generated"
+	"github.com/helicarrierstudio/silver-arrow/graphql/wallet/graph/model"
 	"github.com/helicarrierstudio/silver-arrow/wallet"
 	"github.com/pkg/errors"
 )

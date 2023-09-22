@@ -8,8 +8,9 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/go-chi/chi"
-	"github.com/helicarrierstudio/silver-arrow/graph"
-	"github.com/helicarrierstudio/silver-arrow/graph/generated"
+
+	"github.com/helicarrierstudio/silver-arrow/graphql/wallet/graph"
+	"github.com/helicarrierstudio/silver-arrow/graphql/wallet/graph/generated"
 	"github.com/helicarrierstudio/silver-arrow/repository"
 	"github.com/helicarrierstudio/silver-arrow/scheduler"
 	"github.com/helicarrierstudio/silver-arrow/turnkey"
@@ -34,7 +35,7 @@ func main() {
 	router := chi.NewRouter()
 	loadCORS(router)
 
-	walletRepo := repository.NewWalletRepo(db)
+	walletRepo := repository.NewDB(db)
 
 	tunkeyService := turnkey.NewTurnKeyService()
 	walletService := wallet.NewWalletService(walletRepo, tunkeyService)

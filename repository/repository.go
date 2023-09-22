@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"github.com/google/uuid"
 	"github.com/helicarrierstudio/silver-arrow/repository/models"
 )
 
@@ -15,6 +16,13 @@ type WalletRepository interface {
 	DeactivateSubscription(id uint) error
 	AddSubscriptionKey(*models.Key) error
 	GetSubscriptionKey(publicKey string) (string, error)
+}
+
+type MerchantRepository interface {
+	CreateMerchant(*models.Merchant) error
+	FetchMerchant(uuid.UUID) (*models.Merchant, error)
+	FetchMerchanstByOwner(string) ([]models.Merchant, error)
+	FindSubscriptionByMerchant(string) ([]models.Subscription, error)
 }
 
 type Queuer interface {

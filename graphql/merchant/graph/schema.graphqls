@@ -1,0 +1,47 @@
+# GraphQL schema example
+#
+# https://gqlgen.com/getting-started/
+
+type Query {
+  fetchOneMerchant(id: String!): Merchant!
+  fetchMerchants(owner: String!): [Merchant!]!
+}
+
+type Mutation {
+  addMerchant(input: NewMerchant!): Merchant!
+  updateAccount(input: MerchantUpdate!): Merchant!
+}
+
+input NewMerchant {
+  name: String!
+  owner: String!
+  chain: Int!
+  Token: String!
+  receivingAddress: String!
+}
+
+input MerchantUpdate {
+  name: String
+  receivingAddress: String
+}
+
+type Sub {
+  Chain: Int! 
+  token: String!
+  amount: Int!
+  active: Boolean!
+  interval: String!
+  walletAddress: String!
+}
+
+type Merchant {
+  name: String!
+  owner: String!
+  chain: Int!
+  Token: String!
+  merchantId: String!
+  receivingAddress: String!
+  subscriptions: [Sub!]
+}
+
+scalar Time

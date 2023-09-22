@@ -8,6 +8,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/helicarrierstudio/silver-arrow/repository/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -35,21 +36,21 @@ func SetupDatabase(dbconn *sql.DB) (*gorm.DB, error) {
 	return db, nil
 }
 
-type walletRepo struct {
+type DB struct {
 	Db *gorm.DB
 }
 
-func NewWalletRepo(db *gorm.DB) WalletRepository {
-	return &walletRepo{
+func NewDB(db *gorm.DB) *DB {
+	return &DB{
 		Db: db,
 	}
 }
 
-func (p *walletRepo) AddAccount(addressData *models.Wallet) error {
+func (p *DB) AddAccount(addressData *models.Wallet) error {
 	return p.Db.Create(addressData).Error
 }
 
-func (p *walletRepo) FetchAccountByAddress(address string) (*models.Wallet, error) {
+func (p *DB) FetchAccountByAddress(address string) (*models.Wallet, error) {
 	var wallet *models.Wallet
 	err := p.Db.Where("wallet_address = ?", address).Find(&wallet).Error
 	if err != nil {
@@ -59,7 +60,7 @@ func (p *walletRepo) FetchAccountByAddress(address string) (*models.Wallet, erro
 	return wallet, nil
 }
 
-func (p *walletRepo) AddSubscription(subscriptionData *models.Subscription, key *models.Key) error {
+func (p *DB) AddSubscription(subscriptionData *models.Subscription, key *models.Key) error {
 	tx := p.Db.Begin()
 	subscriptionData.Key = *key
 	if err := tx.Create(subscriptionData).Error; err != nil {
@@ -80,7 +81,7 @@ func (p *walletRepo) AddSubscription(subscriptionData *models.Subscription, key 
 	return nil
 }
 
-func (p *walletRepo) FetchWalletSubscriptions(address string) ([]models.Subscription, error) {
+func (p *DB) FetchWalletSubscriptions(address string) ([]models.Subscription, error) {
 	var subscriptions []models.Subscription
 	err := p.Db.Where("wallet_address = ?", address).Preload("Key").Find(&subscriptions).Error
 	if err != nil {
@@ -90,15 +91,15 @@ func (p *walletRepo) FetchWalletSubscriptions(address string) ([]models.Subscrip
 	return subscriptions, nil
 }
 
-func (p *walletRepo) DeactivateSubscription(id uint) error {
+func (p *DB) DeactivateSubscription(id uint) error {
 	return p.Db.Where("id = ?", id).UpdateColumn("active", false).Error
 }
 
-func (p *walletRepo) UpdateSubscription(id uint) error {
+func (p *DB) UpdateSubscription(id uint) error {
 	return errors.New("unimplemented")
 }
 
-func (p *walletRepo) FetchDueSubscriptions(days int) ([]models.Subscription, error) {
+func (p *DB) FetchDueSubscriptions(days int) ([]models.Subscription, error) {
 	var subscriptions []models.Subscription
 
 	startInterval := time.Now().Add(time.Duration(days) * 24 * time.Hour)
@@ -112,11 +113,11 @@ func (p *walletRepo) FetchDueSubscriptions(days int) ([]models.Subscription, err
 	return subscriptions, nil
 }
 
-func (p *walletRepo) AddSubscriptionKey(key *models.Key) error {
+func (p *DB) AddSubscriptionKey(key *models.Key) error {
 	return p.Db.Create(key).Error
 }
 
-func (p *walletRepo) GetSecretKey(publicKey string) (string, error) {
+func (p *DB) GetSecretKey(publicKey string) (string, error) {
 	var key *models.Key
 	if err := p.Db.Where("private_key_id = ?", publicKey).Find(&key).Error; err != nil {
 		return "", err
@@ -125,7 +126,7 @@ func (p *walletRepo) GetSecretKey(publicKey string) (string, error) {
 	return key.PrivateKeyId, nil
 }
 
-func (p *walletRepo) FindSubscriptionByHash(hash string) (*models.Subscription, error) {
+func (p *DB) FindSubscriptionByHash(hash string) (*models.Subscription, error) {
 	var subscription *models.Subscription
 	if err := p.Db.Where("user_op_hash = ?", hash).Preload("Key").Find(&subscription).Error; err != nil {
 		return nil, err
@@ -134,9 +135,38 @@ func (p *walletRepo) FindSubscriptionByHash(hash string) (*models.Subscription, 
 }
 
 // returns the private key ID
-func (p *walletRepo) GetSubscriptionKey(publicKey string) (string, error) {
+func (p *DB) GetSubscriptionKey(publicKey string) (string, error) {
 
 	return "", nil
+}
+
+func (p *DB) CreateMerchant(m *models.Merchant) error {
+	return p.Db.Create(m).Error
+}
+
+func (p *DB) FetchMerchant(id uuid.UUID) (*models.Merchant, error) {
+	var merchant *models.Merchant
+	if err := p.Db.Where("id = ?", id).Find(&merchant).Error; err != nil {
+		return nil, err
+	}
+	return merchant, nil
+}
+
+func (p *DB) FetchMerchanstByOwner(owner string) ([]models.Merchant, error) {
+	var merchants []models.Merchant
+	if err := p.Db.Where("owner = ?", owner).Find(&merchants).Error; err != nil {
+		return nil, err
+	}
+	return merchants, nil
+}
+
+func (p *DB) FindSubscriptionByMerchant(merchantId string) ([]models.Subscription, error) {
+	var subscriptions []models.Subscription
+
+	if err := p.Db.Where("merchant_id = ?", merchantId).Find(&subscriptions).Error; err != nil {
+		return nil, err
+	}
+	return subscriptions, nil
 }
 
 func createForeignKeyIfNotExistsQuery(fromTable, targetTable, fromCol, targetCol string) string {

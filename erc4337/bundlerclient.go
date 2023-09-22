@@ -42,7 +42,7 @@ type UserOperation struct {
 }
 
 func InitialiseBundler(chain int64) (*ERCBundler, error) {
-	network, err := getNetwork(chain)
+	network, err := GetNetwork(chain)
 	if err != nil {
 		return nil, err
 	}
@@ -264,7 +264,7 @@ func (nc *Client) GetUserOperationByHash(userophash string) (map[string]any, err
 
 // eth_getUserOperationReciept
 
-func getNetwork(chainId int64) (string, error) {
+func GetNetwork(chainId int64) (string, error) {
 	switch chainId {
 	case 1:
 		return ETHEREUM, nil
