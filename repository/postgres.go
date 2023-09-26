@@ -27,7 +27,7 @@ func SetupDatabase(dbconn *sql.DB) (*gorm.DB, error) {
 	}
 
 	// ...
-	if err = db.AutoMigrate(models.Wallet{}, models.Key{}, models.Subscription{}); err != nil {
+	if err = db.AutoMigrate(models.Wallet{}, models.Key{}, models.Subscription{}, models.Merchant{}); err != nil {
 		log.Fatal("Error migrating database models")
 	}
 	// db.Model(&models.Subscription{}).

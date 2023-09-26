@@ -13,6 +13,7 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/helicarrierstudio/silver-arrow/erc4337"
 	"github.com/helicarrierstudio/silver-arrow/graphql/wallet/graph/model"
+	"github.com/helicarrierstudio/silver-arrow/merchant"
 	"github.com/helicarrierstudio/silver-arrow/repository"
 	"github.com/helicarrierstudio/silver-arrow/repository/models"
 	"github.com/helicarrierstudio/silver-arrow/turnkey"
@@ -222,7 +223,7 @@ func (ws *WalletService) AddSubscription(input model.NewSubscription, usePaymast
 	key := &models.Key{
 		PublicKey:    sessionKey,
 		PrivateKeyId: privateKeyID,
-		WalletID: walletID,
+		WalletID:     walletID,
 	}
 
 	sub := &models.Subscription{
@@ -231,11 +232,10 @@ func (ws *WalletService) AddSubscription(input model.NewSubscription, usePaymast
 		Active:       false,
 		Interval:     interval.Nanoseconds(),
 		UserOpHash:   opHash.Hex(),
-		MerchantId:   input.MerchantID,
+		MerchantId:   merchant.ParseMerchantIdtoUUID(input.MerchantID).String(),
 		NextChargeAt: nextChargeAt,
 		ExpiresAt:    nextChargeAt,
 		WalletID:     walletID,
-		// PublicKey:     sessionKey,
 		WalletAddress: input.WalletAddress,
 		Chain:         chain,
 		Key:           *key,

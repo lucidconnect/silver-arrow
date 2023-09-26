@@ -11,7 +11,7 @@ import (
 func TestIdParser(t *testing.T) {
 	uid := uuid.New()
 	fmt.Println(uid)
-	encodedId, err := encodeUUIDToMerchantId(uid)
+	encodedId, err := EncodeUUIDToMerchantId(uid)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, encodedId)
 	fmt.Println(encodedId)

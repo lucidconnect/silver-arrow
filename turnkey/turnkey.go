@@ -55,7 +55,7 @@ func NewTurnKeyService() *TurnkeyService {
 
 func initTurnkeyClient() (*tk.Client, error) {
 	keyPath := os.Getenv("TK_PRIVATE_KEY")
-	fmt.Println(keyPath)
+	fmt.Println("path ", keyPath)
 	client, err := tk.New(keyPath)
 	if err != nil {
 		err = errors.Wrap(err, "tk.New()")

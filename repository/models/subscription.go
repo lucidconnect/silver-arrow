@@ -10,7 +10,6 @@ import (
 // `Subscription` belongs to `Wallet`, `WalletID` is the foreign key
 // `Subscription` has one Key, `SubscriptionID` is the foreign key
 type Subscription struct {
-	gorm.Model
 	ID                     uuid.UUID
 	Token                  string `gorm:"not null"` // really the token contract
 	Amount                 int64  `gorm:"not null"` // amount in decimal precision

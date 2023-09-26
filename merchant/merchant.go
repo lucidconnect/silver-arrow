@@ -43,7 +43,7 @@ func (m *MerchantService) CreateMerchant(input model.NewMerchant) (*model.Mercha
 	if err := m.repository.CreateMerchant(merchant); err != nil {
 		return nil, err
 	}
-	merchantId, _ := encodeUUIDToMerchantId(id)
+	merchantId, _ := EncodeUUIDToMerchantId(id)
 
 	merchantObj := &model.Merchant{
 		Name:             input.Name,
@@ -66,7 +66,7 @@ func (m *MerchantService) FetchMerchantsByOwner(owner string) ([]*model.Merchant
 	}
 
 	for _, v := range ms {
-		merchantId, _ := encodeUUIDToMerchantId(v.ID)
+		merchantId, _ := EncodeUUIDToMerchantId(v.ID)
 		subscriptions, err := fetchMerchantSubscriptions(m.repository, merchantId)
 		if err != nil {
 			log.Println(err)
@@ -107,7 +107,7 @@ func fetchMerchantSubscriptions(repo repository.Database, merchant string) ([]*m
 }
 
 func (m *MerchantService) FetchMerchant(mid string) (*model.Merchant, error) {
-	id := parseMerchantIdtoUUID(mid)
+	id := ParseMerchantIdtoUUID(mid)
 	v, _ := m.repository.FetchMerchant(id)
 
 	merchant := &model.Merchant{
@@ -121,7 +121,7 @@ func (m *MerchantService) FetchMerchant(mid string) (*model.Merchant, error) {
 	return merchant, nil
 }
 
-func encodeUUIDToMerchantId(id uuid.UUID) (string, error) {
+func EncodeUUIDToMerchantId(id uuid.UUID) (string, error) {
 	b, err := id.MarshalBinary()
 	if err != nil {
 		return "", err
@@ -129,7 +129,7 @@ func encodeUUIDToMerchantId(id uuid.UUID) (string, error) {
 	return base64.RawURLEncoding.EncodeToString(b), nil
 }
 
-func parseMerchantIdtoUUID(mid string) uuid.UUID {
+func ParseMerchantIdtoUUID(mid string) uuid.UUID {
 	b, _ := base64.RawStdEncoding.DecodeString(mid)
 	id, _ := uuid.FromBytes(b)
 	return id
