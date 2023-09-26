@@ -12,6 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/helicarrierstudio/silver-arrow/abi/EntryPoint"
+	"github.com/helicarrierstudio/silver-arrow/abi/erc20"
 	"github.com/pkg/errors"
 )
 
@@ -40,8 +41,12 @@ type UserOperation struct {
 	Signature            string `json:"signature"`
 }
 
-func InitialiseBundler() (*ERCBundler, error) {
-	rpc := os.Getenv("NODE_URL")
+func InitialiseBundler(chain int64) (*ERCBundler, error) {
+	network, err := GetNetwork(chain)
+	if err != nil {
+		return nil, err
+	}
+	rpc := os.Getenv(fmt.Sprintf("%s_NODE_URL", network))
 	paymaster := os.Getenv("PAYMASTER_URL")
 	entryPoint := os.Getenv("ENTRY_POINT")
 
@@ -105,7 +110,7 @@ func (nc *Client) GetAccountNonce(entryPoint, address common.Address) (*big.Int,
 	}
 	opts := &bind.CallOpts{
 		Pending: false,
-		Context: nil,
+		Context: nc.ctx,
 		From:    address,
 	}
 
@@ -115,6 +120,27 @@ func (nc *Client) GetAccountNonce(entryPoint, address common.Address) (*big.Int,
 	}
 
 	return nonce, nil
+}
+
+func (nc *Client) GetErc20TokenBalance(tokenAddress, walletAddress common.Address) (*big.Int, error) {
+	ercToken, err := erc20.NewErc20(tokenAddress, nc.c)
+	if err != nil {
+		err = errors.Wrap(err, "error initialising erc20 token instance")
+		return nil, err
+	}
+
+	opts := &bind.CallOpts{
+		Pending: true,
+		Context: nc.ctx,
+	}
+
+	balance, err := ercToken.BalanceOf(opts, walletAddress)
+	if err != nil {
+		err = errors.Wrapf(err, "error occured fetchin erc20 token balance for wallet at %v", walletAddress.Hex())
+		return nil, err
+	}
+
+	return balance, nil
 }
 
 // SendUserOperation sends a user operation to an alt mempool
@@ -237,3 +263,22 @@ func (nc *Client) GetUserOperationByHash(userophash string) (map[string]any, err
 }
 
 // eth_getUserOperationReciept
+
+func GetNetwork(chainId int64) (string, error) {
+	switch chainId {
+	case 1:
+		return ETHEREUM, nil
+	case 5:
+		return GOERLI, nil
+	case 137:
+		return POLYGON, nil
+	case 84531:
+		return BASE_GOERLI, nil
+	case 8453:
+		return BASE, nil
+	case 80001:
+		return MUMBAI, nil
+	default:
+		return "NOT SUPPORTED", errors.New("Unsupported chain")
+	}
+}

@@ -12,16 +12,15 @@ import (
 	KernelStorage "github.com/helicarrierstudio/silver-arrow/abi/kernelStorage"
 	"github.com/holiman/uint256"
 	"github.com/pkg/errors"
-	"github.com/rmanzoku/ethutils/ecrecover"
-	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
 
-/**
+/*
+*
 - The enableData will be appended to the userop signature
 - signature[56:88] contains the enableData
 */
 type SessionKeyOwnedValidator struct {
-	privatekey       string
+	// privatekey       string
 	Mode             []byte
 	Chain            *big.Int
 	ValidUntil       []byte
@@ -31,7 +30,7 @@ type SessionKeyOwnedValidator struct {
 	ValidatorAddress common.Address
 }
 
-func InitialiseValidator(validatorAddress, sessionKey, privKey, mode string, chainId int64) (*SessionKeyOwnedValidator, error) {
+func InitialiseValidator(validatorAddress, sessionKey, mode string, chainId int64) (*SessionKeyOwnedValidator, error) {
 	validator := common.HexToAddress(validatorAddress)
 	executor := common.HexToAddress("0x")
 	session := common.HexToAddress(sessionKey)
@@ -40,10 +39,10 @@ func InitialiseValidator(validatorAddress, sessionKey, privKey, mode string, cha
 		return nil, err
 	}
 
-	return newSessionKeyOwnedValidator(validator, executor, session, md, privKey, big.NewInt(chainId)), nil
+	return newSessionKeyOwnedValidator(validator, executor, session, md, big.NewInt(chainId)), nil
 }
 
-func newSessionKeyOwnedValidator(validator, executor, sessionKey common.Address, mode []byte, privateKey string, chain *big.Int) *SessionKeyOwnedValidator {
+func newSessionKeyOwnedValidator(validator, executor, sessionKey common.Address, mode []byte, chain *big.Int) *SessionKeyOwnedValidator {
 	validUntil, _ := parseUint48(uint64(math.Pow(2, 48)) - 1)
 	validAfter, _ := parseUint48(0)
 	return &SessionKeyOwnedValidator{
@@ -54,40 +53,40 @@ func newSessionKeyOwnedValidator(validator, executor, sessionKey common.Address,
 		SessionKey:       sessionKey,
 		ExecutorAddress:  executor,
 		ValidatorAddress: validator,
-		privatekey:       privateKey[2:],
+		// privatekey:       privateKey[2:],
 	}
 }
 
-func (v *SessionKeyOwnedValidator) Sign(op map[string]any) (sig, hash []byte, err error) {
-	entrypoint := GetEntryPointAddress()
+// func (v *SessionKeyOwnedValidator) Sign(op map[string]any) (sig, hash []byte, err error) {
+// 	entrypoint := GetEntryPointAddress()
 
-	// userOpSignature := []byte{}
+// 	// userOpSignature := []byte{}
 
-	operation, err := userop.New(op)
-	if err != nil {
-		return nil, nil, err
-	}
+// 	operation, err := userop.New(op)
+// 	if err != nil {
+// 		return nil, nil, err
+// 	}
 
-	opHash := operation.GetUserOpHash(entrypoint, v.Chain)
-	fmt.Println("opHash", opHash)
-	hash = opHash.Bytes()
+// 	opHash := operation.GetUserOpHash(entrypoint, v.Chain)
+// 	fmt.Println("opHash", opHash)
+// 	hash = opHash.Bytes()
 
-	pk, err := crypto.HexToECDSA(v.privatekey)
-	if err != nil {
-		return nil, nil, err
-	}
-	sig, err = crypto.Sign(ecrecover.ToEthSignedMessageHash(hash), pk)
-	if err != nil {
-		err = errors.Wrap(err, "generating signature failed.")
-		return nil, nil, err
-	}
-	sig[64] += 27
+// 	pk, err := crypto.HexToECDSA(v.privatekey)
+// 	if err != nil {
+// 		return nil, nil, err
+// 	}
+// 	sig, err = crypto.Sign(ecrecover.ToEthSignedMessageHash(hash), pk)
+// 	if err != nil {
+// 		err = errors.Wrap(err, "generating signature failed.")
+// 		return nil, nil, err
+// 	}
+// 	sig[64] += 27
 
-	// userOpSignature = append(userOpSignature, v.Mode...)
-	// userOpSignature = append(userOpSignature, sig...)
+// 	// userOpSignature = append(userOpSignature, v.Mode...)
+// 	// userOpSignature = append(userOpSignature, sig...)
 
-	return sig, ecrecover.ToEthSignedMessageHash(hash), nil
-}
+// 	return sig, ecrecover.ToEthSignedMessageHash(hash), nil
+// }
 
 /**
 op.signature = abi.encodePacked(

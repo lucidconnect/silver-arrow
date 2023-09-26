@@ -8,12 +8,15 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/go-chi/chi"
-	"github.com/helicarrierstudio/silver-arrow/erc4337"
-	"github.com/helicarrierstudio/silver-arrow/graph"
-	"github.com/helicarrierstudio/silver-arrow/graph/generated"
+
+	"github.com/helicarrierstudio/silver-arrow/graphql/wallet/graph"
+	"github.com/helicarrierstudio/silver-arrow/graphql/wallet/graph/generated"
 	"github.com/helicarrierstudio/silver-arrow/repository"
+	"github.com/helicarrierstudio/silver-arrow/scheduler"
+	"github.com/helicarrierstudio/silver-arrow/turnkey"
+	"github.com/helicarrierstudio/silver-arrow/wallet"
 	"github.com/joho/godotenv"
-	"github.com/pkg/errors"
+	"github.com/robfig/cron/v3"
 	"github.com/rs/cors"
 )
 
@@ -25,25 +28,24 @@ func main() {
 	if port == "" {
 		port = defaultPort
 	}
-
-	mongoClient, err := repository.SetupMongoDatabase()
+	db, err := repository.SetupDatabase(nil)
 	if err != nil {
-		log.Panic(err)
+		log.Println(err)
 	}
-
 	router := chi.NewRouter()
 	loadCORS(router)
 
-	walletRepo := repository.NewMongoDb(mongoClient)
-	bundler, err := erc4337.InitialiseBundler()
-	if err != nil {
-		err = errors.Wrap(err, "failed to initialise bundler")
-		log.Println(err)
-	}
+	walletRepo := repository.NewDB(db)
+
+	tunkeyService := turnkey.NewTurnKeyService()
+	walletService := wallet.NewWalletService(walletRepo, tunkeyService)
+
+	jobRunner := scheduler.NewScheduler(walletRepo, walletService)
+	setupJobs(jobRunner)
 	walletSrv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{
-		WalletRepository: walletRepo,
-		Bundler:          bundler,
+		Database: walletRepo,
 		Cache:            repository.NewMCache(),
+		Turnkey:          tunkeyService,
 	}}))
 	router.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	router.Handle("/query", walletSrv)
@@ -69,6 +71,22 @@ func loadEnv() {
 			log.Fatal("Error loading .env file")
 		}
 	}
+}
+
+func setupJobs(runner *scheduler.Scheduler) {
+	log.Println("Setting up jobs...")
+	c := cron.New(
+		cron.WithChain(
+			cron.Recover(cron.DefaultLogger),
+			cron.SkipIfStillRunning(cron.DefaultLogger),
+		),
+	)
+
+	c.AddFunc("@midnight", func() {
+		runner.SubscriptionJob()
+	})
+
+	c.Start()
 }
 
 func loadCORS(router *chi.Mux) {

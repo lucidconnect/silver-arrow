@@ -5,20 +5,22 @@ import (
 	"log"
 	"math/big"
 	"os"
+	"reflect"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/helicarrierstudio/silver-arrow/erc4337"
 	"github.com/helicarrierstudio/silver-arrow/repository"
+	"github.com/helicarrierstudio/silver-arrow/repository/models"
 	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/assert"
-	"go.mongodb.org/mongo-driver/mongo"
+	"gorm.io/gorm"
 )
 
 var (
 	nodeUrl, entrypointAddress, paymasterUrl string
-	mongoClient                              *mongo.Client
+	db                                       *gorm.DB
 	nodeClient                               *erc4337.Client
 )
 
@@ -27,10 +29,12 @@ func TestMain(m *testing.M) {
 	if err = godotenv.Load("../.env.test"); err != nil {
 		log.Fatal(err)
 	}
-	mongoClient, err = repository.SetupMongoDatabase()
+	db, err = repository.SetupDatabase(nil)
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	// seedWalletsTable(db)
 	entrypointAddress = os.Getenv("ENTRY_POINT")
 	nodeUrl = os.Getenv("NODE_URL")
 	paymasterUrl = os.Getenv("PAYMASTER_URL")
@@ -41,7 +45,33 @@ func TestMain(m *testing.M) {
 	}
 
 	exitVal := m.Run()
+	// clearTables(db)
 	os.Exit(exitVal)
+}
+
+func getType(strukt interface{}) string {
+	if t := reflect.TypeOf(strukt); t.Kind() == reflect.Ptr {
+		return "*" + t.Elem().Name()
+	} else {
+		return t.Name()
+	}
+}
+
+func seedWalletsTable(db *gorm.DB) {
+	q := "INSERT INTO wallets (id, email, signer_address, wallet_address, turnkey_sub_org_id, turnkey_sub_org_name) VALUES (0, 'gb@backdrop.photo', '0x85fc2E4425d0DAba7426F50091a384ee05D37Cd2', '0x6a6F07c5c32F5fb20393a2110B2Bf0925e59571b','123','random-123')"
+
+	if err := db.Exec(q).Error; err != nil {
+		log.Fatal("unable to insert wallet")
+	}
+}
+
+func clearTables(db *gorm.DB) {
+	for _, table := range []interface{}{&models.Subscription{}, &models.Key{}, &models.Wallet{}} {
+		log.Printf("Clearing %v table", getType(table))
+		if err := db.Where("TRUE").Delete(table).Error; err != nil {
+			log.Fatal(err)
+		}
+	}
 }
 
 func TestGetUserOperationByHash(t *testing.T) {
@@ -75,7 +105,7 @@ func TestValidator(t *testing.T) {
 	sender := "0x3D073632A7a29b2AdcbF12D2712fA3E72fABc3dD"
 	key := "" // sensitive private key, need better test flow
 	sessionKey := "0x6574f281AAaA788cf89e5269E9c842E50c5713fe"
-	privKey := "0xc1fce60cfb4b32bf4584e577904d806f8c5af28104d34e9923466eb8ca6faeff"
+	// privKey := "0xc1fce60cfb4b32bf4584e577904d806f8c5af28104d34e9923466eb8ca6faeff"
 	validatorAddress := "0x40ACEE1113697bdeE3077493896Fa759d1b3e255"
 	mode := erc4337.ENABLE_MODE
 	chainId := 80001
@@ -87,7 +117,7 @@ func TestValidator(t *testing.T) {
 		t.FailNow()
 	}
 
-	validator, err := erc4337.InitialiseValidator(validatorAddress, sessionKey, privKey, mode, int64(chainId))
+	validator, err := erc4337.InitialiseValidator(validatorAddress, sessionKey, mode, int64(chainId))
 	if !assert.NoError(t, err) {
 		t.FailNow()
 	}

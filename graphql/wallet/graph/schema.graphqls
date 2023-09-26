@@ -33,6 +33,7 @@ input NewSubscription {
 }
 
 input SubscriptionValidation {
+  chain: Int!
   userOpHash: String!
   signedMessage: String!
 }

@@ -1,3 +1,7 @@
+databases:
+  - name: silver-arrow-staging-db
+    plan: starter
+  
 services:
   - type: web
     name: silver-arrow-staging
@@ -13,11 +17,27 @@ services:
         sync: false
       - key: GITHUB_USER
         sync: false
-      - key: NODE_URL
+      - key: POLYGON_MUMBAI_NODE_URL
         sync: false
       - key: PAYMASTER_URL
         sync: false
       - key: ENTRY_POINT
         sync: false
       - key: DATABASE_URL
+        sync: false
+      - key: DEFAULT_VALIDATOR
+        sync: false
+      - key: VALIDATOR_ADDRESS
+        sync: false
+      - key: USE_PAYMASTER
+        sync: false
+      - key: TURNKEY_KEY
+        sync: false
+      - key: TK_PRIVATE_KEY
+        sync: false
+      - key: TURNKEY_API_KEY_NAME
+        sync: false
+      - key: TURNKEY_HOST
+        sync: false
+      - key: KERNEL_FACTORY_ADDRESS
         sync: false

@@ -10,7 +10,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
-	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/pkg/errors"
 	"github.com/rmanzoku/ethutils/ecrecover"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
@@ -34,8 +33,8 @@ func NewERCBundler(entrypoint string, client *Client) *ERCBundler {
 	}
 }
 
-func (b *ERCBundler) GetClient() *ethclient.Client {
-	return b.client.GetEthClient()
+func (b *ERCBundler) GetClient() *Client {
+	return b.client
 }
 
 func (b *ERCBundler) AccountNonce(sender string) (*big.Int, error) {
@@ -160,16 +159,18 @@ func (b *ERCBundler) CreateUnsignedUserOperation(sender string, initCode, callDa
 		}
 
 		callGasLimit = paymaster.CallGasLimit
-		// verificationGas = hexutil.EncodeBig(getVerificationGasLimit())
-		verificationGas = paymaster.VerificationGasLimit
+		verificationGas = hexutil.EncodeBig(getVerificationGasLimit())
+		xy := hexutil.MustDecode(paymaster.VerificationGasLimit)
+		fmt.Printf("paymaster returned verification gas limit - %v", new(big.Int).SetBytes(xy) )
+		// verificationGas = paymaster.VerificationGasLimit
 		// preVerificationGas = hexutil.EncodeBig(getPreVerificationGas())
 		maxPriorityFeePerGas = paymaster.MaxPriorityFeePerGas
 		preVerificationGas = paymaster.PreVerificationGas
 		maxFeePerGas = paymaster.MaxFeePerGas
-		paymasterAndData = paymaster.PaymasterAndData
+		paymasterAndData = "0x"
 	} else {
 		fmt.Println("not using paymaster")
-		o["callGasLimit"] = "0xec00"
+		o["callGasLimit"] = "0x16710"
 		o["verificationGasLimit"] = hexutil.EncodeBig(getVerificationGasLimit())
 		o["preVerificationGas"] = hexutil.EncodeBig(getVerificationGasLimit())
 		o["maxPriorityFeePerGas"] = hexutil.EncodeBig(getMaxPriorityFeePerGas())
@@ -238,7 +239,7 @@ func SignUserOp(op map[string]any, key, mode string, merchantId []byte, chain in
 	}
 	fmt.Println("kb", kb)
 	common.FromHex(key)
-	
+
 	// Kernel has a specific convention for encoding signatures in order to determing the mode see (https://github.com/stackup-wallet/userop.js/blob/main/src/preset/builder/kernel.ts#L114-L123)
 	signature, _ := hexutil.Decode(mode)
 

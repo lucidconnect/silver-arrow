@@ -1,8 +1,8 @@
 package graph
 
 import (
-	"github.com/helicarrierstudio/silver-arrow/erc4337"
 	"github.com/helicarrierstudio/silver-arrow/repository"
+	"github.com/helicarrierstudio/silver-arrow/turnkey"
 )
 
 //go:generate go run github.com/99designs/gqlgen generate
@@ -12,7 +12,7 @@ import (
 // It serves as dependency injection for your app, add any dependencies you require here.
 
 type Resolver struct {
-	WalletRepository repository.WalletRepository
-	Bundler          *erc4337.ERCBundler
+	Database repository.Database
 	Cache            repository.CacheWizard
+	Turnkey          *turnkey.TurnkeyService
 }

@@ -10,17 +10,16 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/helicarrierstudio/silver-arrow/erc4337"
-	"github.com/helicarrierstudio/silver-arrow/graph/model"
+	"github.com/helicarrierstudio/silver-arrow/graphql/wallet/graph/model"
 	"github.com/helicarrierstudio/silver-arrow/repository"
 	"github.com/helicarrierstudio/silver-arrow/wallet"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestAddSubscription(t *testing.T) {
-	r := repository.NewMongoDb(mongoClient)
-	ercBundler := erc4337.NewERCBundler(entrypointAddress, nodeClient)
+	r := repository.NewDB(db)
 
-	ws := wallet.NewWalletService(r, ercBundler)
+	ws := wallet.NewWalletService(r, nil)
 	// mId := randKey()
 	mId := "3838hr8hud9dijh3j"
 	key := "0xe81f9f7146470e1e728cc44d22089098de6be6ebe3ca39f21b7b092f09b10cf5"
@@ -47,8 +46,11 @@ func TestAddSubscription(t *testing.T) {
 		usePaymaster = false
 	}
 
-	_, op, err := ws.AddSubscription(newSub, usePaymaster, big.NewInt(0))
-	assert.NoError(t, err)
+	chain := int64(newSub.Chain)
+	_, op, err := ws.AddSubscription(newSub, usePaymaster, big.NewInt(0), chain)
+	if !assert.NoError(t, err) {
+		t.FailNow()
+	}
 
 	sig, _, err := erc4337.SignUserOp(op, key, erc4337.SUDO_MODE, nil, 80001)
 	assert.NotEmpty(t, sig)
@@ -57,7 +59,7 @@ func TestAddSubscription(t *testing.T) {
 	op["signature"] = hexutil.Encode(sig)
 	fmt.Println(op["signature"])
 
-	data, sKey, err := ws.ValidateSubscription(op)
+	data, sKey, err := ws.ValidateSubscription(op, chain)
 	assert.NotEmpty(t, data)
 	assert.NotEmpty(t, sKey)
 	assert.NoError(t, err)
@@ -71,8 +73,8 @@ func TestAddSubscription(t *testing.T) {
 	// t.Fail()
 }
 
-func randKey() string {
-	key := make([]byte, 32)
+func randKey(length int) string {
+	key := make([]byte, length)
 
 	_, err := rand.Read(key)
 	if err != nil {
