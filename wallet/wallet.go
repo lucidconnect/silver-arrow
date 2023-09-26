@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"math/big"
+	"math/rand"
 	"os"
 	"reflect"
 	"time"
@@ -21,15 +22,15 @@ import (
 )
 
 type WalletService struct {
-	repository       repository.WalletRepository
+	database         repository.Database
 	turnkey          *turnkey.TurnkeyService
 	validatorAddress string
 }
 
-func NewWalletService(r repository.WalletRepository, t *turnkey.TurnkeyService) *WalletService {
+func NewWalletService(r repository.Database, t *turnkey.TurnkeyService) *WalletService {
 	validatorAddress := os.Getenv("VALIDATOR_ADDRESS")
 	return &WalletService{
-		repository:       r,
+		database:         r,
 		validatorAddress: validatorAddress,
 		turnkey:          t,
 	}
@@ -46,21 +47,37 @@ func (ws *WalletService) AddAccount(input model.Account) error {
 	}
 
 	result, err := ws.turnkey.GetActivity("", activityId)
+	fmt.Println("result: ", result)
 	if err != nil {
 		log.Println(err)
 		return err
 	}
 
 	orgId := turnkey.ExtractSubOrganizationIdFromResult(result)
-	wallet := &models.Wallet{
-		WalletAddress:     walletAddress,
-		SignerAddress:     *input.Signer,
-		Email:             *input.Email,
-		TurnkeySubOrgID:   orgId,
-		TurnkeySubOrgName: walletAddress,
+	tag := fmt.Sprintf("key-tag-%s", input.Address)
+	tagActivity, err := ws.turnkey.CreatePrivateKeyTag(orgId, tag)
+	if err != nil {
+		log.Println(err)
+		return err
 	}
 
-	err = ws.repository.AddAccount(wallet)
+	tagResult, err := ws.turnkey.GetActivity(orgId, tagActivity)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	tagId := turnkey.ExtractPrivateKeyTagIdFromResult(tagResult)
+	wallet := &models.Wallet{
+		WalletAddress:        walletAddress,
+		SignerAddress:        *input.Signer,
+		Email:                *input.Email,
+		TurnkeySubOrgID:      orgId,
+		TurnkeySubOrgName:    walletAddress,
+		TurnkeyPrivateKeyTag: tagId,
+	}
+
+	err = ws.database.AddAccount(wallet)
 	if err != nil {
 		log.Println(err)
 		return err
@@ -107,7 +124,7 @@ func (ws *WalletService) ValidateSubscription(userop map[string]any, chain int64
 		return nil, "", err
 	}
 	fmt.Println("validating subscription with userop hash -", opHash)
-	result, err := ws.repository.FindSubscriptionByHash(opHash)
+	result, err := ws.database.FindSubscriptionByHash(opHash)
 	if err != nil {
 		err = errors.Wrap(err, "FindSubscriptionByHash() - ")
 		return nil, "", err
@@ -126,7 +143,7 @@ func (ws *WalletService) ValidateSubscription(userop map[string]any, chain int64
 	fmt.Println("subscription result - ", result)
 
 	// get the signing key
-	signingKey, err := ws.repository.GetSubscriptionKey(result.Key.PublicKey)
+	signingKey, err := ws.database.GetSubscriptionKey(result.Key.PublicKey)
 	if err != nil {
 		err = errors.Wrap(err, "FindSubscriptionsByFilter() - ")
 		return nil, "", err
@@ -138,7 +155,24 @@ func (ws *WalletService) AddSubscription(input model.NewSubscription, usePaymast
 	var nextChargeAt time.Time
 	var initCode []byte
 	var nonce, amount *big.Int
-	sessionKey, signingKey, err := CreateAccessKey()
+
+	tagId, orgId, walletID, err := ws.database.GetWalletMetadata(input.WalletAddress)
+	if err != nil {
+		err = errors.Wrapf(err, "failed to fetch private key tag for wallet - %v", input.WalletAddress)
+	}
+	randomSalt := randKey(4)
+	keyName := fmt.Sprintf("sub-%v-%v", randomSalt, input.MerchantID)
+	activityId, err := ws.turnkey.CreatePrivateKey(orgId, keyName, tagId)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	result, err := ws.turnkey.GetActivity(orgId, activityId)
+	if err != nil {
+		return nil, nil, err
+	}
+	privateKeyID, sessionKey, err := turnkey.GetPrivateKeyIdFromResult(result)
+	// sessionKey, signingKey, err := CreateAccessKey()
 	if err != nil {
 		return nil, nil, err
 	}
@@ -167,7 +201,7 @@ func (ws *WalletService) AddSubscription(input model.NewSubscription, usePaymast
 		}
 	}
 
-	callData, err := setValidatorExecutor(sessionKey, signingKey, ws.validatorAddress, input.WalletAddress, int64(input.Chain))
+	callData, err := setValidatorExecutor(sessionKey, ws.validatorAddress, input.WalletAddress, int64(input.Chain))
 	if err != nil {
 		return nil, nil, err
 	}
@@ -185,6 +219,12 @@ func (ws *WalletService) AddSubscription(input model.NewSubscription, usePaymast
 	}
 	opHash := operation.GetUserOpHash(entrypoint, big.NewInt(int64(input.Chain)))
 
+	key := &models.Key{
+		PublicKey:    sessionKey,
+		PrivateKeyId: privateKeyID,
+		WalletID: walletID,
+	}
+
 	sub := &models.Subscription{
 		Token:        input.Token,
 		Amount:       amount.Int64(),
@@ -194,15 +234,14 @@ func (ws *WalletService) AddSubscription(input model.NewSubscription, usePaymast
 		MerchantId:   input.MerchantID,
 		NextChargeAt: nextChargeAt,
 		ExpiresAt:    nextChargeAt,
+		WalletID:     walletID,
 		// PublicKey:     sessionKey,
 		WalletAddress: input.WalletAddress,
+		Chain:         chain,
+		Key:           *key,
 	}
 
-	key := &models.Key{
-		PublicKey:    sessionKey,
-		PrivateKeyId: signingKey,
-	}
-	err = ws.repository.AddSubscription(sub, key)
+	err = ws.database.AddSubscription(sub, key)
 	if err != nil {
 		log.Println(err)
 		return nil, nil, err
@@ -281,7 +320,7 @@ func (ws *WalletService) ExecuteCharge(sender, target, mId, token, key string, a
 	erc20Token := erc4337.GetTokenAddres(token)
 	tokenAddress := common.HexToAddress(erc20Token)
 
-	wallet, err := ws.repository.FetchAccountByAddress(sender)
+	wallet, err := ws.database.FetchAccountByAddress(sender)
 	if err != nil {
 		err = errors.Wrapf(err, "ExecuteCharge() - error occured during charge execution for subscription %v - ", sender)
 		log.Println(err)
@@ -384,9 +423,9 @@ func createValidatorEnableData(publicKey, merchantId, accountAddress string) ([]
 }
 
 // creats the calldata that scopes a kernel executor to a validator
-func setValidatorExecutor(sessionKey, privateKey, validatorAddress, ownerAddress string, chain int64) ([]byte, error) {
+func setValidatorExecutor(sessionKey, validatorAddress, ownerAddress string, chain int64) ([]byte, error) {
 	mode := erc4337.ENABLE_MODE
-	validator, err := erc4337.InitialiseValidator(validatorAddress, sessionKey, privateKey, mode, chain)
+	validator, err := erc4337.InitialiseValidator(validatorAddress, sessionKey, mode, chain)
 	if err != nil {
 		return nil, err
 	}
@@ -438,4 +477,15 @@ func (ws *WalletService) isAccountDeployed(address string, chain int64) bool {
 		return false
 	}
 	return true
+}
+
+func randKey(length int) string {
+	key := make([]byte, length)
+
+	_, err := rand.Read(key)
+	if err != nil {
+		// handle error here
+	}
+	// fmt.Println(key)
+	return hexutil.Encode(key)
 }

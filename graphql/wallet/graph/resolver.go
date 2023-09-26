@@ -12,7 +12,7 @@ import (
 // It serves as dependency injection for your app, add any dependencies you require here.
 
 type Resolver struct {
-	WalletRepository repository.WalletRepository
+	Database repository.Database
 	Cache            repository.CacheWizard
 	Turnkey          *turnkey.TurnkeyService
 }

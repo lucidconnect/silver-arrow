@@ -2,6 +2,8 @@
 
 Backend service for powering subscriptions on Lucid.
 
+**IMPORTANT!!!**
+
 This service relies heavily on ERC-4337 primitives and zerodev [kenel](https://github.com/zerodevapp/kernel). Kernel is a modular smart contract wallet implementation that is built on the ERC-4337 standard.
 
 ERC-4337 is an account abstraction proposal which completely avoids the need for consensus-layer protocol changes. Instead of adding new protocol features and changing the bottom-layer transaction type, this proposal introduces a higher-layer pseudo-transaction object called a UserOperation. Users send UserOperation objects into a new separate mempool. Bundlers package up a set of these objects into a single transaction by making a call to a special contract, and that transaction then gets included in a block.

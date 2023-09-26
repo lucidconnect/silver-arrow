@@ -7,6 +7,5 @@ import "github.com/helicarrierstudio/silver-arrow/repository"
 // It serves as dependency injection for your app, add any dependencies you require here.
 
 type Resolver struct {
-	WalletRepository   repository.WalletRepository
-	MerchantRepository repository.MerchantRepository
+	Database   repository.Database
 }

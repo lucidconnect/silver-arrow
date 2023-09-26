@@ -43,7 +43,7 @@ func main() {
 	jobRunner := scheduler.NewScheduler(walletRepo, walletService)
 	setupJobs(jobRunner)
 	walletSrv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{
-		WalletRepository: walletRepo,
+		Database: walletRepo,
 		Cache:            repository.NewMCache(),
 		Turnkey:          tunkeyService,
 	}}))

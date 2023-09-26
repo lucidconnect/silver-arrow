@@ -20,7 +20,7 @@ import (
 - signature[56:88] contains the enableData
 */
 type SessionKeyOwnedValidator struct {
-	privatekey       string
+	// privatekey       string
 	Mode             []byte
 	Chain            *big.Int
 	ValidUntil       []byte
@@ -30,7 +30,7 @@ type SessionKeyOwnedValidator struct {
 	ValidatorAddress common.Address
 }
 
-func InitialiseValidator(validatorAddress, sessionKey, privKey, mode string, chainId int64) (*SessionKeyOwnedValidator, error) {
+func InitialiseValidator(validatorAddress, sessionKey, mode string, chainId int64) (*SessionKeyOwnedValidator, error) {
 	validator := common.HexToAddress(validatorAddress)
 	executor := common.HexToAddress("0x")
 	session := common.HexToAddress(sessionKey)
@@ -39,10 +39,10 @@ func InitialiseValidator(validatorAddress, sessionKey, privKey, mode string, cha
 		return nil, err
 	}
 
-	return newSessionKeyOwnedValidator(validator, executor, session, md, privKey, big.NewInt(chainId)), nil
+	return newSessionKeyOwnedValidator(validator, executor, session, md, big.NewInt(chainId)), nil
 }
 
-func newSessionKeyOwnedValidator(validator, executor, sessionKey common.Address, mode []byte, privateKey string, chain *big.Int) *SessionKeyOwnedValidator {
+func newSessionKeyOwnedValidator(validator, executor, sessionKey common.Address, mode []byte, chain *big.Int) *SessionKeyOwnedValidator {
 	validUntil, _ := parseUint48(uint64(math.Pow(2, 48)) - 1)
 	validAfter, _ := parseUint48(0)
 	return &SessionKeyOwnedValidator{
@@ -53,7 +53,7 @@ func newSessionKeyOwnedValidator(validator, executor, sessionKey common.Address,
 		SessionKey:       sessionKey,
 		ExecutorAddress:  executor,
 		ValidatorAddress: validator,
-		privatekey:       privateKey[2:],
+		// privatekey:       privateKey[2:],
 	}
 }
 

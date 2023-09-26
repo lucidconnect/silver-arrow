@@ -5,7 +5,8 @@ import (
 	"github.com/helicarrierstudio/silver-arrow/repository/models"
 )
 
-type WalletRepository interface {
+type Database interface {
+	// Wallet
 	AddAccount(*models.Wallet) error
 	FetchAccountByAddress(address string) (*models.Wallet, error)
 	AddSubscription(*models.Subscription, *models.Key) error
@@ -16,9 +17,9 @@ type WalletRepository interface {
 	DeactivateSubscription(id uint) error
 	AddSubscriptionKey(*models.Key) error
 	GetSubscriptionKey(publicKey string) (string, error)
-}
+	GetWalletMetadata(wallet string) (string, string, uuid.UUID, error)
 
-type MerchantRepository interface {
+	// Merchant
 	CreateMerchant(*models.Merchant) error
 	FetchMerchant(uuid.UUID) (*models.Merchant, error)
 	FetchMerchanstByOwner(string) ([]models.Merchant, error)

@@ -18,6 +18,7 @@ type AlchemyPaymasterRequest struct {
 	EntryPoint     string `json:"entryPoint"`
 	DummySignature string `json:"dummySignature"`
 	UserOperation  any    `json:"userOperation"`
+	FeeOverride    any    `json:"feeOverride"`
 }
 type AlchemyPaymasterResult struct {
 	PaymasterAndData     string      `json:"paymasterAndData"`
@@ -52,11 +53,16 @@ func (nc *Client) SponsorUserOperation(entryPoint string, userop, pc interface{}
 func (nc *Client) RequestGasAndPaymasterAndData(policyId, entryPoint, dummySignature string, userop any) (*AlchemyPaymasterResult, error) {
 	result := &AlchemyPaymasterResult{}
 
+	feeOverride := map[string]string{
+		"maxFeePerGas":         "0x29260CA6A",
+		"maxPriorityFeePerGas": "0x29260CA6A",
+	}
 	request := AlchemyPaymasterRequest{
 		PolicyId:       policyId,
 		EntryPoint:     entryPoint,
 		DummySignature: dummySignature,
 		UserOperation:  userop,
+		FeeOverride:    feeOverride,
 	}
 
 	time.Sleep(3 * time.Second)
@@ -66,6 +72,14 @@ func (nc *Client) RequestGasAndPaymasterAndData(policyId, entryPoint, dummySigna
 		return nil, err
 	}
 
+	// add 130098856
+	// var maxFee, maxPriorityFee *big.Int
+	// maxFee = new(big.Int).Add(new(big.Int).SetBytes(hexutil.MustDecode(result.MaxFeePerGas)), big.NewInt(130098856))
+	// maxPriorityFee = new(big.Int).Add(new(big.Int).SetBytes(hexutil.MustDecode(result.MaxFeePerGas)), big.NewInt(130098856))
+	// maxFee := new(big.Int).SetBytes(hexutil.MustDecode(result.MaxFeePerGas)).Add(big.NewInt(130098856))
+	// maxPriorityFee := new(big.Int).SetBytes(hexutil.MustDecode(result.MaxPriorityFeePerGas)).Add(big.NewInt(130098856))
+	// result.MaxFeePerGas = hexutil.EncodeBig(maxFee)
+	// result.MaxPriorityFeePerGas = hexutil.EncodeBig(maxPriorityFee)
 	fmt.Println("alchemy_requestGasAndPaymasterAndData - ", result)
 	return result, nil
 }

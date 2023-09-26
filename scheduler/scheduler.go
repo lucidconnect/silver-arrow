@@ -18,11 +18,11 @@ import (
 type Scheduler struct {
 	bundler       *erc4337.ERCBundler
 	queue         repository.Queuer
-	datastore     repository.WalletRepository
+	datastore     repository.Database
 	walletService *wallet.WalletService
 }
 
-func NewScheduler(data repository.WalletRepository, wallet *wallet.WalletService) *Scheduler {
+func NewScheduler(data repository.Database, wallet *wallet.WalletService) *Scheduler {
 	queue := repository.NewDeque()
 	return &Scheduler{
 		queue:         queue,

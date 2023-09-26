@@ -62,7 +62,7 @@ func (p *DB) FetchAccountByAddress(address string) (*models.Wallet, error) {
 
 func (p *DB) AddSubscription(subscriptionData *models.Subscription, key *models.Key) error {
 	tx := p.Db.Begin()
-	subscriptionData.Key = *key
+	// subscriptionData.Key = *key
 	if err := tx.Create(subscriptionData).Error; err != nil {
 		fmt.Println(err)
 		tx.Rollback()
@@ -136,8 +136,11 @@ func (p *DB) FindSubscriptionByHash(hash string) (*models.Subscription, error) {
 
 // returns the private key ID
 func (p *DB) GetSubscriptionKey(publicKey string) (string, error) {
-
-	return "", nil
+	var key models.Key
+	if err := p.Db.Where("public_key = ?", publicKey).Find(&key).Error; err != nil {
+		return "", err
+	}
+	return key.PrivateKeyId, nil
 }
 
 func (p *DB) CreateMerchant(m *models.Merchant) error {
@@ -167,6 +170,18 @@ func (p *DB) FindSubscriptionByMerchant(merchantId string) ([]models.Subscriptio
 		return nil, err
 	}
 	return subscriptions, nil
+}
+
+func (p *DB) GetWalletMetadata(address string) (string, string, uuid.UUID, error) {
+	var wallet models.Wallet
+	if err := p.Db.Where("wallet_address = ?", address).Find(&wallet).Error; err != nil {
+		return "", "",uuid.Nil, err
+	}
+	keyTag := wallet.TurnkeyPrivateKeyTag
+	orgId := wallet.TurnkeySubOrgID
+	walletId := wallet.ID
+
+	return keyTag, orgId, walletId, nil
 }
 
 func createForeignKeyIfNotExistsQuery(fromTable, targetTable, fromCol, targetCol string) string {

@@ -75,7 +75,7 @@ func GetPrivateKeyIdFromResult(result map[string]any) (privateKeyId, address str
 }
 
 func ExtractSubOrganizationIdFromResult(result map[string]any) string {
-	m := result["createSubOrganizationResultV3"]
+	m := result["createSubOrganizationResult"]
 	internalMap, ok := m.(map[string]any)
 	if !ok {
 		return ""
@@ -106,4 +106,19 @@ func ExctractTurnkeySignatureFromResult(result map[string]any) (*TurnkeySignatur
 		S: s,
 		V: v,
 	}, nil
+}
+
+func ExtractPrivateKeyTagIdFromResult(result map[string]any) string {
+	m := result["createPrivateKeyTagResult"]
+	internalMap, ok := m.(map[string]any)
+	if !ok {
+		return ""
+	}
+
+	tagId, ok := internalMap["privateKeyTagId"].(string)
+	if !ok {
+		return ""
+	}
+
+	return tagId
 }

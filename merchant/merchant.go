@@ -15,12 +15,12 @@ import (
 )
 
 type MerchantService struct {
-	repository      repository.MerchantRepository
+	repository      repository.Database
 	client          *ethclient.Client
 	ContractAddress common.Address
 }
 
-func NewMerchantService(c *ethclient.Client, r repository.MerchantRepository, address string) *MerchantService {
+func NewMerchantService(c *ethclient.Client, r repository.Database, address string) *MerchantService {
 	return &MerchantService{
 		repository:      r,
 		client:          c,
@@ -84,7 +84,7 @@ func (m *MerchantService) FetchMerchantsByOwner(owner string) ([]*model.Merchant
 	return merchants, nil
 }
 
-func fetchMerchantSubscriptions(repo repository.MerchantRepository, merchant string) ([]*model.Sub, error) {
+func fetchMerchantSubscriptions(repo repository.Database, merchant string) ([]*model.Sub, error) {
 	var subscriptions []*model.Sub
 	subs, err := repo.FindSubscriptionByMerchant(merchant)
 	if err != nil {

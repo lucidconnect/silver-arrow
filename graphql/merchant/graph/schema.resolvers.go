@@ -15,7 +15,7 @@ import (
 
 // AddMerchant is the resolver for the addMerchant field.
 func (r *mutationResolver) AddMerchant(ctx context.Context, input model.NewMerchant) (*model.Merchant, error) {
-	merchantService := merchant.NewMerchantService(nil, r.MerchantRepository, "")
+	merchantService := merchant.NewMerchantService(nil, r.Database, "")
 	result, err := merchantService.CreateMerchant(input)
 	if err != nil {
 		return nil, err
@@ -31,7 +31,7 @@ func (r *mutationResolver) UpdateAccount(ctx context.Context, input model.Mercha
 
 // FetchOneMerchant is the resolver for the fetchOneMerchant field.
 func (r *queryResolver) FetchOneMerchant(ctx context.Context, id string) (*model.Merchant, error) {
-	merchantService := merchant.NewMerchantService(nil, r.MerchantRepository, "")
+	merchantService := merchant.NewMerchantService(nil, r.Database, "")
 	result, err := merchantService.FetchMerchant(id)
 	if err != nil {
 		return nil, err
@@ -42,7 +42,7 @@ func (r *queryResolver) FetchOneMerchant(ctx context.Context, id string) (*model
 
 // FetchMerchants is the resolver for the fetchMerchants field.
 func (r *queryResolver) FetchMerchants(ctx context.Context, owner string) ([]*model.Merchant, error) {
-	merchantService := merchant.NewMerchantService(nil, r.MerchantRepository, "")
+	merchantService := merchant.NewMerchantService(nil, r.Database, "")
 	result, err := merchantService.FetchMerchantsByOwner(owner)
 	if err != nil {
 		return nil, err
