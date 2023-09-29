@@ -44,8 +44,7 @@ func main() {
 	setupJobs(jobRunner)
 	walletSrv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{
 		Database: walletRepo,
-		Cache:            repository.NewMCache(),
-		Turnkey:          tunkeyService,
+		Cache:    repository.NewMCache(),
 	}}))
 	router.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	router.Handle("/query", walletSrv)

@@ -16,6 +16,8 @@ import (
 	"github.com/helicarrierstudio/silver-arrow/erc4337"
 	"github.com/helicarrierstudio/silver-arrow/graphql/wallet/graph/generated"
 	"github.com/helicarrierstudio/silver-arrow/graphql/wallet/graph/model"
+	"github.com/helicarrierstudio/silver-arrow/merchant"
+	"github.com/helicarrierstudio/silver-arrow/turnkey"
 	"github.com/helicarrierstudio/silver-arrow/wallet"
 	"github.com/pkg/errors"
 )
@@ -23,7 +25,9 @@ import (
 // AddAccount is the resolver for the addAccount field.
 func (r *mutationResolver) AddAccount(ctx context.Context, input model.Account) (string, error) {
 	address := common.HexToAddress(input.Address)
-	walletService := wallet.NewWalletService(r.Database, r.Turnkey)
+	tunkeyService := turnkey.NewTurnKeyService()
+
+	walletService := wallet.NewWalletService(r.Database, tunkeyService)
 	// should check if the account is deployed
 	// deploy if not deployed
 	err := walletService.AddAccount(input)
@@ -35,7 +39,9 @@ func (r *mutationResolver) AddAccount(ctx context.Context, input model.Account) 
 
 // AddSubscription is the resolver for the addSubscription field.
 func (r *mutationResolver) AddSubscription(ctx context.Context, input model.NewSubscription) (*model.ValidationData, error) {
-	walletService := wallet.NewWalletService(r.Database, r.Turnkey)
+	tunkeyService := turnkey.NewTurnKeyService()
+
+	walletService := wallet.NewWalletService(r.Database, tunkeyService)
 	var usePaymaster bool
 	switch os.Getenv("USE_PAYMASTER") {
 	case "TRUE":
@@ -59,7 +65,10 @@ func (r *mutationResolver) AddSubscription(ctx context.Context, input model.NewS
 
 // ValidateSubscription is the resolver for the validateSubscription field.
 func (r *mutationResolver) ValidateSubscription(ctx context.Context, input model.SubscriptionValidation) (*model.SubscriptionData, error) {
-	walletService := wallet.NewWalletService(r.Database, r.Turnkey)
+	tunkeyService := turnkey.NewTurnKeyService()
+
+	walletService := wallet.NewWalletService(r.Database, tunkeyService)
+	merchantService := merchant.NewMerchantService(r.Database)
 
 	time.Sleep(time.Second)
 	var usePaymaster bool
@@ -97,9 +106,13 @@ func (r *mutationResolver) ValidateSubscription(ctx context.Context, input model
 		log.Println("walletService.ValidateSubscription()", err)
 		return nil, err
 	}
+	merchant, err := merchantService.FetchMerchant(subData.MerchantID)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+	target := merchant.ReceivingAddress
 	// x := int64(subData.Amount)
-	target := "0x1BB271879576fD79324156F539DD760756C9D061"
-
 	// Delay for a few seconds to allow the changes to be propagated onchain
 	time.Sleep(15 * time.Second)
 	err = walletService.ExecuteCharge(subData.WalletAddress, target, subData.MerchantID, subData.Token, key, int64(subData.Amount), chain, usePaymaster)
@@ -118,7 +131,9 @@ func (r *mutationResolver) CancelSubscription(ctx context.Context, id string) (s
 
 // FetchSubscriptions is the resolver for the fetchSubscriptions field.
 func (r *queryResolver) FetchSubscriptions(ctx context.Context, account string) ([]*model.SubscriptionData, error) {
-	_ = wallet.NewWalletService(r.Database, r.Turnkey)
+	tunkeyService := turnkey.NewTurnKeyService()
+
+	_ = wallet.NewWalletService(r.Database, tunkeyService)
 	panic(fmt.Errorf("not implemented: FetchSubscriptions - fetchSubscriptions"))
 }
 

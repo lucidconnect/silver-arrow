@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"log"
+	"os"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -20,10 +21,10 @@ type MerchantService struct {
 	ContractAddress common.Address
 }
 
-func NewMerchantService(c *ethclient.Client, r repository.Database, address string) *MerchantService {
+func NewMerchantService(r repository.Database) *MerchantService {
+	address := os.Getenv("LUCID_MERCHANT")
 	return &MerchantService{
 		repository:      r,
-		client:          c,
 		ContractAddress: common.HexToAddress(address),
 	}
 }
@@ -107,7 +108,7 @@ func fetchMerchantSubscriptions(repo repository.Database, merchant string) ([]*m
 }
 
 func (m *MerchantService) FetchMerchant(mid string) (*model.Merchant, error) {
-	id := ParseMerchantIdtoUUID(mid)
+	id := uuid.MustParse(mid)
 	v, _ := m.repository.FetchMerchant(id)
 
 	merchant := &model.Merchant{
