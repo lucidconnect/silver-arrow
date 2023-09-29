@@ -16,9 +16,9 @@ import (
 	"github.com/helicarrierstudio/silver-arrow/erc4337"
 	"github.com/helicarrierstudio/silver-arrow/graphql/wallet/graph/generated"
 	"github.com/helicarrierstudio/silver-arrow/graphql/wallet/graph/model"
-	"github.com/helicarrierstudio/silver-arrow/merchant"
-	"github.com/helicarrierstudio/silver-arrow/turnkey"
-	"github.com/helicarrierstudio/silver-arrow/wallet"
+	"github.com/helicarrierstudio/silver-arrow/service/merchant"
+	"github.com/helicarrierstudio/silver-arrow/service/turnkey"
+	"github.com/helicarrierstudio/silver-arrow/service/wallet"
 	"github.com/pkg/errors"
 )
 
@@ -39,6 +39,11 @@ func (r *mutationResolver) AddAccount(ctx context.Context, input model.Account) 
 
 // AddSubscription is the resolver for the addSubscription field.
 func (r *mutationResolver) AddSubscription(ctx context.Context, input model.NewSubscription) (*model.ValidationData, error) {
+	merchant, err := getAuthenticatedAndActiveMerchant(ctx)
+	if err != nil {
+		return nil, err
+	}
+	_ = merchant.ID
 	tunkeyService := turnkey.NewTurnKeyService()
 
 	walletService := wallet.NewWalletService(r.Database, tunkeyService)
@@ -106,7 +111,7 @@ func (r *mutationResolver) ValidateSubscription(ctx context.Context, input model
 		log.Println("walletService.ValidateSubscription()", err)
 		return nil, err
 	}
-	merchant, err := merchantService.FetchMerchant(subData.MerchantID)
+	merchant, err := merchantService.FetchProduct(subData.MerchantID)
 	if err != nil {
 		log.Println(err)
 		return nil, err

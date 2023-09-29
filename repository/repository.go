@@ -19,11 +19,17 @@ type Database interface {
 	GetSubscriptionKey(publicKey string) (string, error)
 	GetWalletMetadata(wallet string) (string, string, uuid.UUID, error)
 
+	// Product
+	CreateProduct(*models.Product) error
+	FetchProduct(uuid.UUID) (*models.Product, error)
+	FetchProductsByOwner(string) ([]models.Product, error)
+	FindSubscriptionByProduct(string) ([]models.Subscription, error)
+
 	// Merchant
-	CreateMerchant(*models.Merchant) error
-	FetchMerchant(uuid.UUID) (*models.Merchant, error)
-	FetchMerchanstByOwner(string) ([]models.Merchant, error)
-	FindSubscriptionByMerchant(string) ([]models.Subscription, error)
+	AddMerchant(*models.Merchant) error
+	FetchMerchantByAddress(string) (*models.Merchant, error)
+	FetchMerchantByPublicKey(string) (*models.Merchant, error)
+	UpdateMerchantKey(uuid.UUID, string) error
 }
 
 type Queuer interface {

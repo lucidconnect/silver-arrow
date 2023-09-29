@@ -3,16 +3,17 @@
 # https://gqlgen.com/getting-started/
 
 type Query {
-  fetchOneMerchant(id: String!): Merchant!
-  fetchMerchants(owner: String!): [Merchant!]!
+  fetchOneProduct(id: String!): Product!
+  fetchProducts(owner: String!): [Product!]!
 }
 
 type Mutation {
-  addMerchant(input: NewMerchant!): Merchant!
-  updateAccount(input: MerchantUpdate!): Merchant!
+  addProduct(input: NewProduct!): Product!
+  updateProduct(input: ProductUpdate!): Product!
+  createAccessKey(input: String!): AccessKey!
 }
 
-input NewMerchant {
+input NewProduct {
   name: String!
   owner: String!
   chain: Int!
@@ -20,7 +21,7 @@ input NewMerchant {
   receivingAddress: String!
 }
 
-input MerchantUpdate {
+input ProductUpdate {
   name: String
   receivingAddress: String
 }
@@ -34,14 +35,19 @@ type Sub {
   walletAddress: String!
 }
 
-type Merchant {
+type Product {
   name: String!
   owner: String!
   chain: Int!
   Token: String!
-  merchantId: String!
+  ProductId: String!
   receivingAddress: String!
   subscriptions: [Sub!]
+}
+
+type AccessKey {
+  publicKey: String!
+  privateKey: String!
 }
 
 scalar Time

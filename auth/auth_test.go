@@ -1,4 +1,4 @@
-package wallet
+package auth
 
 import (
 	"fmt"

@@ -2,27 +2,32 @@
 
 package model
 
-type Merchant struct {
+type AccessKey struct {
+	PublicKey  string `json:"publicKey"`
+	PrivateKey string `json:"privateKey"`
+}
+
+type NewProduct struct {
 	Name             string `json:"name"`
 	Owner            string `json:"owner"`
 	Chain            int    `json:"chain"`
 	Token            string `json:"Token"`
-	MerchantID       string `json:"merchantId"`
+	ReceivingAddress string `json:"receivingAddress"`
+}
+
+type Product struct {
+	Name             string `json:"name"`
+	Owner            string `json:"owner"`
+	Chain            int    `json:"chain"`
+	Token            string `json:"Token"`
+	ProductID        string `json:"ProductId"`
 	ReceivingAddress string `json:"receivingAddress"`
 	Subscriptions    []*Sub `json:"subscriptions,omitempty"`
 }
 
-type MerchantUpdate struct {
+type ProductUpdate struct {
 	Name             *string `json:"name,omitempty"`
 	ReceivingAddress *string `json:"receivingAddress,omitempty"`
-}
-
-type NewMerchant struct {
-	Name             string `json:"name"`
-	Owner            string `json:"owner"`
-	Chain            int    `json:"chain"`
-	Token            string `json:"Token"`
-	ReceivingAddress string `json:"receivingAddress"`
 }
 
 type Sub struct {
