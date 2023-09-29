@@ -13,10 +13,10 @@ These are the Zerodev kernel contracts (and more) used by lucid
 | ECDSA Validator | Base Goerli | 84531 | 0xd9AB5096a832b9ce79914329DAEE236f8Eea0390 |
 | ECDSA Validator | Base | 8453 | 0xd9AB5096a832b9ce79914329DAEE236f8Eea0390 |
 | SessionKey Owned Validator | Polygon Mumbai | 80001 | 0x40ACEE1113697bdeE3077493896Fa759d1b3e255 |
-| SessionKey Owned Validator | Base Goerli | 84531 | |
+| SessionKey Owned Validator | Base Goerli | 84531 | 0xc621C75900dbF0234dD7c9be8f8A3bCA7433E3E8 |
 | SessionKey Owned Validator | Base | 8453 | |
 | Executor (TransferErc20Action) | Polygon Mumbai | 80001 | 0x2087C7FfD0d0DAE80a00EE74325aBF3449e0eaf1 |
-| Executor (TransferErc20Action) | Base Goerli | 84531 | |
+| Executor (TransferErc20Action) | Base Goerli | 84531 | 0x2087C7FfD0d0DAE80a00EE74325aBF3449e0eaf1 |
 | Executor (TransferErc20Action) | Base | 8453 | |
 
 ## Undeployed contracts
