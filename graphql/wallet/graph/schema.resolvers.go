@@ -72,6 +72,12 @@ func (r *mutationResolver) AddSubscription(ctx context.Context, input model.NewS
 func (r *mutationResolver) ValidateSubscription(ctx context.Context, input model.SubscriptionValidation) (*model.SubscriptionData, error) {
 	tunkeyService := turnkey.NewTurnKeyService()
 
+	merch, err := getAuthenticatedAndActiveMerchant(ctx)
+	if err != nil {
+		return nil, err
+	}
+	_ = merch.ID
+
 	walletService := wallet.NewWalletService(r.Database, tunkeyService)
 	merchantService := merchant.NewMerchantService(r.Database)
 
@@ -137,7 +143,12 @@ func (r *mutationResolver) CancelSubscription(ctx context.Context, id string) (s
 // FetchSubscriptions is the resolver for the fetchSubscriptions field.
 func (r *queryResolver) FetchSubscriptions(ctx context.Context, account string) ([]*model.SubscriptionData, error) {
 	tunkeyService := turnkey.NewTurnKeyService()
-
+	merchant, err := getAuthenticatedAndActiveMerchant(ctx)
+	if err != nil {
+		return nil, err
+	}
+	_ = merchant.ID
+	
 	_ = wallet.NewWalletService(r.Database, tunkeyService)
 	panic(fmt.Errorf("not implemented: FetchSubscriptions - fetchSubscriptions"))
 }
