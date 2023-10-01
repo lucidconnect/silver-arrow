@@ -10,13 +10,13 @@ import (
 
 	"github.com/helicarrierstudio/silver-arrow/graphql/merchant/graph/generated"
 	"github.com/helicarrierstudio/silver-arrow/graphql/merchant/graph/model"
-	"github.com/helicarrierstudio/silver-arrow/merchant"
+	"github.com/helicarrierstudio/silver-arrow/service/merchant"
 )
 
-// AddMerchant is the resolver for the addMerchant field.
-func (r *mutationResolver) AddMerchant(ctx context.Context, input model.NewMerchant) (*model.Merchant, error) {
+// AddProduct is the resolver for the addProduct field.
+func (r *mutationResolver) AddProduct(ctx context.Context, input model.NewProduct) (*model.Product, error) {
 	merchantService := merchant.NewMerchantService(r.Database)
-	result, err := merchantService.CreateMerchant(input)
+	result, err := merchantService.CreateProduct(input)
 	if err != nil {
 		return nil, err
 	}
@@ -24,26 +24,35 @@ func (r *mutationResolver) AddMerchant(ctx context.Context, input model.NewMerch
 	return result, nil
 }
 
-// UpdateAccount is the resolver for the updateAccount field.
-func (r *mutationResolver) UpdateAccount(ctx context.Context, input model.MerchantUpdate) (*model.Merchant, error) {
-	panic(fmt.Errorf("not implemented: UpdateAccount - updateAccount"))
+// UpdateProduct is the resolver for the updateProduct field.
+func (r *mutationResolver) UpdateProduct(ctx context.Context, input model.ProductUpdate) (*model.Product, error) {
+	panic(fmt.Errorf("not implemented: UpdateProduct - updateProduct"))
 }
 
-// FetchOneMerchant is the resolver for the fetchOneMerchant field.
-func (r *queryResolver) FetchOneMerchant(ctx context.Context, id string) (*model.Merchant, error) {
+// CreateAccessKey is the resolver for the createAccessKey field.
+func (r *mutationResolver) CreateAccessKey(ctx context.Context, input string) (*model.AccessKey, error) {
 	merchantService := merchant.NewMerchantService(r.Database)
-	result, err := merchantService.FetchMerchant(id)
+	accessKeys, err := merchantService.CreateAccessKeys(input)
 	if err != nil {
 		return nil, err
 	}
-
-	return result, nil
+	return accessKeys, nil
 }
 
-// FetchMerchants is the resolver for the fetchMerchants field.
-func (r *queryResolver) FetchMerchants(ctx context.Context, owner string) ([]*model.Merchant, error) {
+// FetchOneProduct is the resolver for the fetchOneProduct field.
+func (r *queryResolver) FetchOneProduct(ctx context.Context, id string) (*model.Product, error) {
 	merchantService := merchant.NewMerchantService(r.Database)
-	result, err := merchantService.FetchMerchantsByOwner(owner)
+	result, err := merchantService.FetchProduct(id)
+	if err != nil {
+		return result, nil
+	}
+	panic(fmt.Errorf("not implemented: FetchOneProduct - fetchOneProduct"))
+}
+
+// FetchProducts is the resolver for the fetchProducts field.
+func (r *queryResolver) FetchProducts(ctx context.Context, owner string) ([]*model.Product, error) {
+	merchantService := merchant.NewMerchantService(r.Database)
+	result, err := merchantService.FetchProductsByOwner(owner)
 	if err != nil {
 		return nil, err
 	}
@@ -59,3 +68,40 @@ func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//     it when you're done.
+//   - You have helper methods in this file. Move them out to keep these resolver files clean.
+// func (r *mutationResolver) AddMerchant(ctx context.Context, input model.NewMerchant) (*model.Merchant, error) {
+// 	merchantService := merchant.NewMerchantService(r.Database)
+// 	result, err := merchantService.CreateMerchant(input)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	return result, nil
+// }
+// func (r *mutationResolver) UpdateAccount(ctx context.Context, input model.MerchantUpdate) (*model.Merchant, error) {
+// 	panic(fmt.Errorf("not implemented: UpdateAccount - updateAccount"))
+// }
+// func (r *queryResolver) FetchOneMerchant(ctx context.Context, id string) (*model.Merchant, error) {
+// 	merchantService := merchant.NewMerchantService(r.Database)
+// 	result, err := merchantService.FetchMerchant(id)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	return result, nil
+// }
+// func (r *queryResolver) FetchMerchants(ctx context.Context, owner string) ([]*model.Merchant, error) {
+// 	merchantService := merchant.NewMerchantService(r.Database)
+// 	result, err := merchantService.FetchMerchantsByOwner(owner)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	return result, nil
+// }

@@ -27,7 +27,7 @@ func SetupDatabase(dbconn *sql.DB) (*gorm.DB, error) {
 	}
 
 	// ...
-	if err = db.AutoMigrate(models.Wallet{}, models.Key{}, models.Subscription{}, models.Merchant{}); err != nil {
+	if err = db.AutoMigrate(models.Wallet{}, models.Key{}, models.Subscription{}, models.Product{}, models.Merchant{}); err != nil {
 		log.Fatal("Error migrating database models")
 	}
 	// db.Model(&models.Subscription{}).
@@ -143,27 +143,27 @@ func (p *DB) GetSubscriptionKey(publicKey string) (string, error) {
 	return key.PrivateKeyId, nil
 }
 
-func (p *DB) CreateMerchant(m *models.Merchant) error {
+func (p *DB) CreateProduct(m *models.Product) error {
 	return p.Db.Create(m).Error
 }
 
-func (p *DB) FetchMerchant(id uuid.UUID) (*models.Merchant, error) {
-	var merchant *models.Merchant
-	if err := p.Db.Where("id = ?", id).Find(&merchant).Error; err != nil {
+func (p *DB) FetchProduct(id uuid.UUID) (*models.Product, error) {
+	var product *models.Product
+	if err := p.Db.Where("id = ?", id).Find(&product).Error; err != nil {
 		return nil, err
 	}
-	return merchant, nil
+	return product, nil
 }
 
-func (p *DB) FetchMerchanstByOwner(owner string) ([]models.Merchant, error) {
-	var merchants []models.Merchant
+func (p *DB) FetchProductsByOwner(owner string) ([]models.Product, error) {
+	var merchants []models.Product
 	if err := p.Db.Where("owner = ?", owner).Find(&merchants).Error; err != nil {
 		return nil, err
 	}
 	return merchants, nil
 }
 
-func (p *DB) FindSubscriptionByMerchant(merchantId string) ([]models.Subscription, error) {
+func (p *DB) FindSubscriptionByProduct(merchantId string) ([]models.Subscription, error) {
 	var subscriptions []models.Subscription
 
 	if err := p.Db.Where("merchant_id = ?", merchantId).Find(&subscriptions).Error; err != nil {
@@ -175,7 +175,7 @@ func (p *DB) FindSubscriptionByMerchant(merchantId string) ([]models.Subscriptio
 func (p *DB) GetWalletMetadata(address string) (string, string, uuid.UUID, error) {
 	var wallet models.Wallet
 	if err := p.Db.Where("wallet_address = ?", address).Find(&wallet).Error; err != nil {
-		return "", "",uuid.Nil, err
+		return "", "", uuid.Nil, err
 	}
 	keyTag := wallet.TurnkeyPrivateKeyTag
 	orgId := wallet.TurnkeySubOrgID
@@ -184,31 +184,29 @@ func (p *DB) GetWalletMetadata(address string) (string, string, uuid.UUID, error
 	return keyTag, orgId, walletId, nil
 }
 
-func createForeignKeyIfNotExistsQuery(fromTable, targetTable, fromCol, targetCol string) string {
-	return fmt.Sprintf(`
-		DO $$
-		BEGIN
-			IF NOT (
-				SELECT
-					COUNT(1) >= 1
-				FROM 
-					information_schema.table_constraints AS tc 
-					JOIN information_schema.key_column_usage AS kcu
-						ON tc.constraint_name = kcu.constraint_name
-						AND tc.table_schema = kcu.table_schema
-					JOIN information_schema.constraint_column_usage AS ccu
-						ON ccu.constraint_name = tc.constraint_name
-						AND ccu.table_schema = tc.table_schema
-				WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_name='%s' AND ccu.column_name = '%s'
-			) THEN
-					ALTER TABLE %s
-					ADD CONSTRAINT %s_%s_%s_%s_foreign
-					FOREIGN KEY (%s) REFERENCES %s(%s)
-					ON UPDATE RESTRICT
-					ON DELETE RESTRICT;
-			END IF;
-		END;
-		$$;`,
-		fromTable, targetCol, fromTable, fromTable, fromCol, targetTable, targetCol, fromCol, targetTable, targetCol,
-	)
+func (p *DB) AddMerchant(merchant *models.Merchant) error {
+	return p.Db.Create(merchant).Error
+}
+
+func (p *DB) FetchMerchantByAddress(address string) (*models.Merchant, error) {
+	var merchant *models.Merchant
+	if err := p.Db.Where("owner_address = ?", address).First(&merchant).Error; err != nil {
+		return nil, err
+	}
+	return merchant, nil
+}
+
+func (p *DB) FetchMerchantByPublicKey(key string) (*models.Merchant, error) {
+	var merchant *models.Merchant
+	if err := p.Db.Where("public_key = ?", key).First(&merchant).Error; err != nil {
+		return nil, err
+	}
+	return merchant, nil
+}
+
+func (p *DB) UpdateMerchantKey(id uuid.UUID, key string) error {
+	if err := p.Db.Where("id = ?", id).UpdateColumn("public_key", key).Error; err != nil {
+		return err
+	}
+	return nil
 }

@@ -12,9 +12,10 @@ import (
 	"github.com/helicarrierstudio/silver-arrow/graphql/wallet/graph"
 	"github.com/helicarrierstudio/silver-arrow/graphql/wallet/graph/generated"
 	"github.com/helicarrierstudio/silver-arrow/repository"
-	"github.com/helicarrierstudio/silver-arrow/scheduler"
-	"github.com/helicarrierstudio/silver-arrow/turnkey"
-	"github.com/helicarrierstudio/silver-arrow/wallet"
+	"github.com/helicarrierstudio/silver-arrow/service/merchant"
+	"github.com/helicarrierstudio/silver-arrow/service/scheduler"
+	"github.com/helicarrierstudio/silver-arrow/service/turnkey"
+	"github.com/helicarrierstudio/silver-arrow/service/wallet"
 	"github.com/joho/godotenv"
 	"github.com/robfig/cron/v3"
 	"github.com/rs/cors"
@@ -35,15 +36,18 @@ func main() {
 	router := chi.NewRouter()
 	loadCORS(router)
 
-	walletRepo := repository.NewDB(db)
+	database := repository.NewDB(db)
 
 	tunkeyService := turnkey.NewTurnKeyService()
-	walletService := wallet.NewWalletService(walletRepo, tunkeyService)
+	walletService := wallet.NewWalletService(database, tunkeyService)
+	merchantService := merchant.NewMerchantService(database)
 
-	jobRunner := scheduler.NewScheduler(walletRepo, walletService)
+	router.Use(merchantService.Middleware())
+
+	jobRunner := scheduler.NewScheduler(database, walletService)
 	setupJobs(jobRunner)
 	walletSrv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{
-		Database: walletRepo,
+		Database: database,
 		Cache:    repository.NewMCache(),
 	}}))
 	router.Handle("/", playground.Handler("GraphQL playground", "/query"))

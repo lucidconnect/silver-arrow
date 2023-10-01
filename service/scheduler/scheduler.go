@@ -11,7 +11,7 @@ import (
 	LucidMerchant "github.com/helicarrierstudio/silver-arrow/abi/LucidMerchant"
 	"github.com/helicarrierstudio/silver-arrow/erc4337"
 	"github.com/helicarrierstudio/silver-arrow/repository"
-	"github.com/helicarrierstudio/silver-arrow/wallet"
+	"github.com/helicarrierstudio/silver-arrow/service/wallet"
 	"github.com/pkg/errors"
 )
 

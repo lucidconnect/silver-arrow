@@ -4,36 +4,39 @@ import (
 	"encoding/base64"
 	"fmt"
 	"log"
-	"os"
 	"strings"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/google/uuid"
 	"github.com/helicarrierstudio/silver-arrow/graphql/merchant/graph/model"
 	"github.com/helicarrierstudio/silver-arrow/repository"
 	"github.com/helicarrierstudio/silver-arrow/repository/models"
 )
 
-type MerchantService struct {
-	repository      repository.Database
-	client          *ethclient.Client
-	ContractAddress common.Address
-}
+// type MerchantService struct {
+// 	repository      repository.Database
+// 	client          *ethclient.Client
+// 	ContractAddress common.Address
+// }
 
-func NewMerchantService(r repository.Database) *MerchantService {
-	address := os.Getenv("LUCID_MERCHANT")
-	return &MerchantService{
-		repository:      r,
-		ContractAddress: common.HexToAddress(address),
-	}
-}
+// func NewMerchantService(r repository.Database) *MerchantService {
+// 	address := os.Getenv("LUCID_MERCHANT")
+// 	return &MerchantService{
+// 		repository:      r,
+// 		ContractAddress: common.HexToAddress(address),
+// 	}
+// }
 
-func (m *MerchantService) CreateMerchant(input model.NewMerchant) (*model.Merchant, error) {
+func (m *MerchantService) CreateProduct(input model.NewProduct) (*model.Product, error) {
 	id := uuid.New()
 
+	// pk, privKey, err := auth.CreateAccessKey()
+	// if err != nil {
+	// 	err = errors.Wrap(err, "an error occured while creating access key")
+	// 	return nil, err
+	// }
+
 	chainId := int64(input.Chain)
-	merchant := &models.Merchant{
+	product := &models.Product{
 		ID:             id,
 		Name:           input.Name,
 		Chain:          chainId,
@@ -41,53 +44,52 @@ func (m *MerchantService) CreateMerchant(input model.NewMerchant) (*model.Mercha
 		Token:          input.Token,
 		DepositAddress: input.ReceivingAddress,
 	}
-	if err := m.repository.CreateMerchant(merchant); err != nil {
+	if err := m.repository.CreateProduct(product); err != nil {
 		return nil, err
 	}
-	merchantId, _ := EncodeUUIDToMerchantId(id)
 
-	merchantObj := &model.Merchant{
+	productID, _ := Base64EncodeUUID(id)
+	merchantObj := &model.Product{
 		Name:             input.Name,
 		Chain:            input.Chain,
 		Owner:            input.Owner,
 		Token:            input.Token,
-		MerchantID:       merchantId,
+		ProductID:        productID,
 		ReceivingAddress: input.ReceivingAddress,
 	}
 	return merchantObj, nil
 }
 
-func (m *MerchantService) UpdateMerchant() {}
 
-func (m *MerchantService) FetchMerchantsByOwner(owner string) ([]*model.Merchant, error) {
-	var merchants []*model.Merchant
-	ms, err := m.repository.FetchMerchanstByOwner(owner)
+func (m *MerchantService) FetchProductsByOwner(owner string) ([]*model.Product, error) {
+	var products []*model.Product
+	ms, err := m.repository.FetchProductsByOwner(owner)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, v := range ms {
-		merchantId, _ := EncodeUUIDToMerchantId(v.ID)
-		subscriptions, err := fetchMerchantSubscriptions(m.repository, merchantId)
+		ProductID, _ := Base64EncodeUUID(v.ID)
+		subscriptions, err := fetchMerchantSubscriptions(m.repository, ProductID)
 		if err != nil {
 			log.Println(err)
 		}
-		merchant := &model.Merchant{
+		product := &model.Product{
 			Name:             v.Name,
 			Owner:            v.Owner,
 			Chain:            int(v.Chain),
-			MerchantID:       merchantId,
+			ProductID:        ProductID,
 			ReceivingAddress: v.DepositAddress,
 			Subscriptions:    subscriptions,
 		}
-		merchants = append(merchants, merchant)
+		products = append(products, product)
 	}
-	return merchants, nil
+	return products, nil
 }
 
 func fetchMerchantSubscriptions(repo repository.Database, merchant string) ([]*model.Sub, error) {
 	var subscriptions []*model.Sub
-	subs, err := repo.FindSubscriptionByMerchant(merchant)
+	subs, err := repo.FindSubscriptionByProduct(merchant)
 	if err != nil {
 		return nil, err
 	}
@@ -107,22 +109,22 @@ func fetchMerchantSubscriptions(repo repository.Database, merchant string) ([]*m
 	return subscriptions, nil
 }
 
-func (m *MerchantService) FetchMerchant(mid string) (*model.Merchant, error) {
+func (m *MerchantService) FetchProduct(mid string) (*model.Product, error) {
 	id := uuid.MustParse(mid)
-	v, _ := m.repository.FetchMerchant(id)
+	v, _ := m.repository.FetchProduct(id)
 
-	merchant := &model.Merchant{
+	merchant := &model.Product{
 		Name:             v.Name,
 		Owner:            v.Owner,
 		Chain:            int(v.Chain),
-		MerchantID:       mid,
+		ProductID:        mid,
 		ReceivingAddress: v.DepositAddress,
 	}
 
 	return merchant, nil
 }
 
-func EncodeUUIDToMerchantId(id uuid.UUID) (string, error) {
+func Base64EncodeUUID(id uuid.UUID) (string, error) {
 	b, err := id.MarshalBinary()
 	if err != nil {
 		return "", err
@@ -130,7 +132,7 @@ func EncodeUUIDToMerchantId(id uuid.UUID) (string, error) {
 	return base64.RawURLEncoding.EncodeToString(b), nil
 }
 
-func ParseMerchantIdtoUUID(mid string) uuid.UUID {
+func ParseUUID(mid string) uuid.UUID {
 	b, _ := base64.RawStdEncoding.DecodeString(mid)
 	id, _ := uuid.FromBytes(b)
 	return id

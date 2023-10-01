@@ -13,10 +13,10 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/helicarrierstudio/silver-arrow/erc4337"
 	"github.com/helicarrierstudio/silver-arrow/graphql/wallet/graph/model"
-	"github.com/helicarrierstudio/silver-arrow/merchant"
+	"github.com/helicarrierstudio/silver-arrow/service/merchant"
 	"github.com/helicarrierstudio/silver-arrow/repository"
 	"github.com/helicarrierstudio/silver-arrow/repository/models"
-	"github.com/helicarrierstudio/silver-arrow/turnkey"
+	"github.com/helicarrierstudio/silver-arrow/service/turnkey"
 	"github.com/pkg/errors"
 	"github.com/rmanzoku/ethutils/ecrecover"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
@@ -227,15 +227,15 @@ func (ws *WalletService) AddSubscription(input model.NewSubscription, usePaymast
 	}
 
 	sub := &models.Subscription{
-		Token:        input.Token,
-		Amount:       amount.Int64(),
-		Active:       false,
-		Interval:     interval.Nanoseconds(),
-		UserOpHash:   opHash.Hex(),
-		MerchantId:   merchant.ParseMerchantIdtoUUID(input.MerchantID).String(),
-		NextChargeAt: nextChargeAt,
-		ExpiresAt:    nextChargeAt,
-		WalletID:     walletID,
+		Token:         input.Token,
+		Amount:        amount.Int64(),
+		Active:        false,
+		Interval:      interval.Nanoseconds(),
+		UserOpHash:    opHash.Hex(),
+		MerchantId:    merchant.ParseUUID(input.MerchantID).String(),
+		NextChargeAt:  nextChargeAt,
+		ExpiresAt:     nextChargeAt,
+		WalletID:      walletID,
 		WalletAddress: input.WalletAddress,
 		Chain:         chain,
 		Key:           *key,

@@ -12,7 +12,7 @@ import (
 	"github.com/helicarrierstudio/silver-arrow/erc4337"
 	"github.com/helicarrierstudio/silver-arrow/graphql/wallet/graph/model"
 	"github.com/helicarrierstudio/silver-arrow/repository"
-	"github.com/helicarrierstudio/silver-arrow/wallet"
+	"github.com/helicarrierstudio/silver-arrow/service/wallet"
 	"github.com/stretchr/testify/assert"
 )
 
