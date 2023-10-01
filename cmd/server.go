@@ -50,8 +50,16 @@ func main() {
 		Database: database,
 		Cache:    repository.NewMCache(),
 	}}))
+
+	merchantSrv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{
+		Database: database,
+		Cache: repository.NewMCache(),
+	}}))
 	router.Handle("/", playground.Handler("GraphQL playground", "/query"))
+	router.Handle("/merchant/graphiql", playground.Handler("GraphQL playground", "/merchant/query"))
+
 	router.Handle("/query", walletSrv)
+	router.Handle("/merchant/query", merchantSrv)
 
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
 	log.Fatal(http.ListenAndServe(":"+port, router))
