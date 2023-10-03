@@ -9,8 +9,10 @@ import (
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/go-chi/chi"
 
-	"github.com/helicarrierstudio/silver-arrow/graphql/wallet/graph"
-	"github.com/helicarrierstudio/silver-arrow/graphql/wallet/graph/generated"
+	merchant_generated "github.com/helicarrierstudio/silver-arrow/graphql/merchant/graph/generated"
+	wallet_graph "github.com/helicarrierstudio/silver-arrow/graphql/wallet/graph"
+	merchant_graph "github.com/helicarrierstudio/silver-arrow/graphql/merchant/graph"
+	wallet_generated "github.com/helicarrierstudio/silver-arrow/graphql/wallet/graph/generated"
 	"github.com/helicarrierstudio/silver-arrow/repository"
 	"github.com/helicarrierstudio/silver-arrow/service/merchant"
 	"github.com/helicarrierstudio/silver-arrow/service/scheduler"
@@ -46,14 +48,13 @@ func main() {
 
 	jobRunner := scheduler.NewScheduler(database, walletService)
 	setupJobs(jobRunner)
-	walletSrv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{
+	walletSrv := handler.NewDefaultServer(wallet_generated.NewExecutableSchema(wallet_generated.Config{Resolvers: &wallet_graph.Resolver{
 		Database: database,
 		Cache:    repository.NewMCache(),
 	}}))
 
-	merchantSrv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{
+	merchantSrv := handler.NewDefaultServer(merchant_generated.NewExecutableSchema(merchant_generated.Config{Resolvers: &merchant_graph.Resolver{
 		Database: database,
-		Cache: repository.NewMCache(),
 	}}))
 	router.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	router.Handle("/merchant/graphiql", playground.Handler("GraphQL playground", "/merchant/query"))
