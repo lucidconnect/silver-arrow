@@ -11,7 +11,7 @@ type NewProduct struct {
 	Name             string `json:"name"`
 	Owner            string `json:"owner"`
 	Chain            int    `json:"chain"`
-	Token            string `json:"Token"`
+	Token            string `json:"token"`
 	ReceivingAddress string `json:"receivingAddress"`
 }
 
@@ -19,7 +19,7 @@ type Product struct {
 	Name             string `json:"name"`
 	Owner            string `json:"owner"`
 	Chain            int    `json:"chain"`
-	Token            string `json:"Token"`
+	Token            string `json:"token"`
 	ProductID        string `json:"ProductId"`
 	ReceivingAddress string `json:"receivingAddress"`
 	Subscriptions    []*Sub `json:"subscriptions,omitempty"`
@@ -31,7 +31,7 @@ type ProductUpdate struct {
 }
 
 type Sub struct {
-	Chain         int    `json:"Chain"`
+	Chain         int    `json:"chain"`
 	Token         string `json:"token"`
 	Amount        int    `json:"amount"`
 	Active        bool   `json:"active"`
