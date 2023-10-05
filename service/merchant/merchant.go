@@ -55,3 +55,11 @@ func (m *MerchantService) CreateAccessKeys(owner string) (*model.AccessKey, erro
 	return accessKey, nil
 }
 
+func (m *MerchantService) FetchMerchantKey(owner string) (string, error) {
+	merchant , err := m.repository.FetchMerchantByAddress(owner)
+	if err != nil {
+		return "", err
+	}
+
+	return merchant.PublicKey, nil
+}
