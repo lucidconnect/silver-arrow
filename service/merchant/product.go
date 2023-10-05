@@ -35,6 +35,10 @@ func (m *MerchantService) CreateProduct(input model.NewProduct) (*model.Product,
 	// 	return nil, err
 	// }
 
+	merchant, err := m.repository.FetchMerchantByAddress(input.Owner)
+	if err != nil {
+		return nil, err
+	}
 	chainId := int64(input.Chain)
 	product := &models.Product{
 		ID:             id,
@@ -43,6 +47,7 @@ func (m *MerchantService) CreateProduct(input model.NewProduct) (*model.Product,
 		Owner:          input.Owner,
 		Token:          input.Token,
 		DepositAddress: input.ReceivingAddress,
+		MerchantID:     merchant.ID,
 	}
 	if err := m.repository.CreateProduct(product); err != nil {
 		return nil, err
@@ -59,7 +64,6 @@ func (m *MerchantService) CreateProduct(input model.NewProduct) (*model.Product,
 	}
 	return merchantObj, nil
 }
-
 
 func (m *MerchantService) FetchProductsByOwner(owner string) ([]*model.Product, error) {
 	var products []*model.Product

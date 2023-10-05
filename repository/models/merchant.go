@@ -11,7 +11,6 @@ type Product struct {
 	Owner          string    `gorm:"index;not null"`
 	Token          string    `gorm:"not null"`
 	DepositAddress string    `gorm:"not null"`
-	PublicKey      string    `gorm:"not null"`
 	MerchantID     uuid.UUID
 }
 
