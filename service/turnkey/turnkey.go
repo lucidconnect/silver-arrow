@@ -12,9 +12,11 @@ import (
 
 	"github.com/pkg/errors"
 	tk "github.com/tkhq/go-sdk"
+	"github.com/tkhq/go-sdk/pkg/api/client"
 	"github.com/tkhq/go-sdk/pkg/api/client/who_am_i"
 	"github.com/tkhq/go-sdk/pkg/api/models"
 	"github.com/tkhq/go-sdk/pkg/apikey"
+	"github.com/tkhq/go-sdk/pkg/store/local"
 )
 
 const TURNKEY_API_SIGNATURE_SCHEME = "SIGNATURE_SCHEME_TK_API_P256"
@@ -53,15 +55,37 @@ func NewTurnKeyService() (*TurnkeyService, error) {
 	}, nil
 }
 
+func initKeys(keyPath, keysDir string) (*tk.Client, error) {
+	store := local.New()
+	err := store.SetKeysDirectory(keysDir)
+	if err != nil {
+		return nil, err
+	}
+
+	key, err := store.Load(keyPath)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to load API key")
+	}
+
+	return &tk.Client{
+		Client:        client.NewHTTPClient(nil),
+		Authenticator: &tk.Authenticator{Key: key},
+		APIKey:        key,
+	}, nil
+}
 func initTurnkeyClient() (*tk.Client, error) {
-	keyPath := os.Getenv("TK_PRIVATE_KEY")
+	keyPath := os.Getenv("TK_KEYS_NAME")
+	keyDir := os.Getenv("TK_KEYS_DIR")
+
 	fmt.Println("path ", keyPath)
-	client, err := tk.New(keyPath)
+	// client, err := tk.New(keyPath)
+	client, err := initKeys(keyPath, keyDir)
 	if err != nil {
 		err = errors.Wrap(err, "tk.New()")
 		log.Println(err)
 		return nil, err
 	}
+
 	fmt.Println("org ", *client.APIKey)
 	p := who_am_i.NewPublicAPIServiceGetWhoamiParams().WithBody(&models.V1GetWhoamiRequest{
 		OrganizationID: client.DefaultOrganization(),
