@@ -72,7 +72,6 @@ func (ws *WalletService) AddAccount(input model.Account) error {
 	wallet := &models.Wallet{
 		WalletAddress:        walletAddress,
 		SignerAddress:        *input.Signer,
-		Email:                *input.Email,
 		TurnkeySubOrgID:      orgId,
 		TurnkeySubOrgName:    walletAddress,
 		TurnkeyPrivateKeyTag: tagId,
