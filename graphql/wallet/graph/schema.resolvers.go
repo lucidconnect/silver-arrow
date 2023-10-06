@@ -25,12 +25,15 @@ import (
 // AddAccount is the resolver for the addAccount field.
 func (r *mutationResolver) AddAccount(ctx context.Context, input model.Account) (string, error) {
 	address := common.HexToAddress(input.Address)
-	tunkeyService := turnkey.NewTurnKeyService()
+	tunkeyService, err := turnkey.NewTurnKeyService()
+	if err != nil {
+		return "", err
+	}
 
 	walletService := wallet.NewWalletService(r.Database, tunkeyService)
 	// should check if the account is deployed
 	// deploy if not deployed
-	err := walletService.AddAccount(input)
+	err = walletService.AddAccount(input)
 	if err != nil {
 		return "", err
 	}
@@ -44,7 +47,10 @@ func (r *mutationResolver) AddSubscription(ctx context.Context, input model.NewS
 		return nil, err
 	}
 	_ = merchant.ID
-	tunkeyService := turnkey.NewTurnKeyService()
+	tunkeyService, err := turnkey.NewTurnKeyService()
+	if err != nil {
+		return nil, err
+	}
 
 	walletService := wallet.NewWalletService(r.Database, tunkeyService)
 	var usePaymaster bool
@@ -70,7 +76,10 @@ func (r *mutationResolver) AddSubscription(ctx context.Context, input model.NewS
 
 // ValidateSubscription is the resolver for the validateSubscription field.
 func (r *mutationResolver) ValidateSubscription(ctx context.Context, input model.SubscriptionValidation) (*model.SubscriptionData, error) {
-	tunkeyService := turnkey.NewTurnKeyService()
+	tunkeyService, err := turnkey.NewTurnKeyService()
+	if err != nil {
+		return nil, err
+	}
 
 	merch, err := getAuthenticatedAndActiveMerchant(ctx)
 	if err != nil {
@@ -142,13 +151,16 @@ func (r *mutationResolver) CancelSubscription(ctx context.Context, id string) (s
 
 // FetchSubscriptions is the resolver for the fetchSubscriptions field.
 func (r *queryResolver) FetchSubscriptions(ctx context.Context, account string) ([]*model.SubscriptionData, error) {
-	tunkeyService := turnkey.NewTurnKeyService()
+	tunkeyService, err := turnkey.NewTurnKeyService()
+	if err != nil {
+		return nil, err
+	}
 	merchant, err := getAuthenticatedAndActiveMerchant(ctx)
 	if err != nil {
 		return nil, err
 	}
 	_ = merchant.ID
-	
+
 	_ = wallet.NewWalletService(r.Database, tunkeyService)
 	panic(fmt.Errorf("not implemented: FetchSubscriptions - fetchSubscriptions"))
 }

@@ -13,7 +13,7 @@ import (
 )
 
 func TestCreateAccessKey(t *testing.T) {
-	tk := turnkey.NewTurnKeyService()
+	tk, _ := turnkey.NewTurnKeyService()
 	if !assert.NotEmpty(t, tk) {
 		t.FailNow()
 	}
@@ -42,7 +42,7 @@ func TestCreateAccessKey(t *testing.T) {
 }
 
 func TestCreateSubOrganization(t *testing.T) {
-	tk := turnkey.NewTurnKeyService()
+	tk, _ := turnkey.NewTurnKeyService()
 	if !assert.NotEmpty(t, tk) {
 		t.FailNow()
 	}
@@ -64,7 +64,7 @@ func TestCreateSubOrganization(t *testing.T) {
 }
 
 func TestCreatePrivateKeyTag(t *testing.T) {
-	tk := turnkey.NewTurnKeyService()
+	tk, _ := turnkey.NewTurnKeyService()
 	if !assert.NotEmpty(t, tk) {
 		t.FailNow()
 	}
@@ -87,7 +87,7 @@ func TestCreatePrivateKeyTag(t *testing.T) {
 }
 
 func TestSignMessage(t *testing.T) {
-	tk := turnkey.NewTurnKeyService()
+	tk, _ := turnkey.NewTurnKeyService()
 	if !assert.NotEmpty(t, tk) {
 		t.FailNow()
 	}

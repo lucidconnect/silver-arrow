@@ -39,18 +39,18 @@ type TurnkeyService struct {
 	TurnkeyClient *tk.Client
 }
 
-func NewTurnKeyService() *TurnkeyService {
+func NewTurnKeyService() (*TurnkeyService, error) {
 	host := os.Getenv("TURNKEY_HOST")
 	client, err := initTurnkeyClient()
 	if err != nil {
 		log.Println(err, "unable to initialise Turnkey client")
-		return nil
+		return nil, err
 	}
 	return &TurnkeyService{
 		Protocol:      "https",
 		Host:          host,
 		TurnkeyClient: client,
-	}
+	}, nil
 }
 
 func initTurnkeyClient() (*tk.Client, error) {
@@ -62,7 +62,7 @@ func initTurnkeyClient() (*tk.Client, error) {
 		log.Println(err)
 		return nil, err
 	}
-
+	fmt.Println("turnkey client ", *client)
 	p := who_am_i.NewPublicAPIServiceGetWhoamiParams().WithBody(&models.V1GetWhoamiRequest{
 		OrganizationID: client.DefaultOrganization(),
 	})

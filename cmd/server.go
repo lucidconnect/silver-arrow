@@ -9,9 +9,9 @@ import (
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/go-chi/chi"
 
+	merchant_graph "github.com/helicarrierstudio/silver-arrow/graphql/merchant/graph"
 	merchant_generated "github.com/helicarrierstudio/silver-arrow/graphql/merchant/graph/generated"
 	wallet_graph "github.com/helicarrierstudio/silver-arrow/graphql/wallet/graph"
-	merchant_graph "github.com/helicarrierstudio/silver-arrow/graphql/merchant/graph"
 	wallet_generated "github.com/helicarrierstudio/silver-arrow/graphql/wallet/graph/generated"
 	"github.com/helicarrierstudio/silver-arrow/repository"
 	"github.com/helicarrierstudio/silver-arrow/service/merchant"
@@ -40,7 +40,10 @@ func main() {
 
 	database := repository.NewDB(db)
 
-	tunkeyService := turnkey.NewTurnKeyService()
+	tunkeyService, err := turnkey.NewTurnKeyService()
+	if err != nil {
+		log.Panic(err)
+	}
 	walletService := wallet.NewWalletService(database, tunkeyService)
 	merchantService := merchant.NewMerchantService(database)
 
