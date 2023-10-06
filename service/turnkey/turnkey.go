@@ -62,7 +62,7 @@ func initTurnkeyClient() (*tk.Client, error) {
 		log.Println(err)
 		return nil, err
 	}
-	fmt.Println("turnkey client ", *client)
+	fmt.Println("org ", client.APIKey.Organizations)
 	p := who_am_i.NewPublicAPIServiceGetWhoamiParams().WithBody(&models.V1GetWhoamiRequest{
 		OrganizationID: client.DefaultOrganization(),
 	})
