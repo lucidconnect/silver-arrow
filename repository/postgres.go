@@ -205,7 +205,9 @@ func (p *DB) FetchMerchantByPublicKey(key string) (*models.Merchant, error) {
 }
 
 func (p *DB) UpdateMerchantKey(id uuid.UUID, key string) error {
-	if err := p.Db.Where("id = ?", id).UpdateColumn("public_key", key).Error; err != nil {
+	var merchant *models.Merchant
+
+	if err := p.Db.Model(&merchant).Where("id = ?", id).Update("public_key", key).Error; err != nil {
 		return err
 	}
 	return nil
