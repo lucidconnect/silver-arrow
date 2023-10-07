@@ -39,7 +39,7 @@ func main() {
 	loadCORS(router)
 
 	database := repository.NewDB(db)
-
+	database.RunMigrations()
 	tunkeyService, err := turnkey.NewTurnKeyService()
 	if err != nil {
 		log.Panic(err)
