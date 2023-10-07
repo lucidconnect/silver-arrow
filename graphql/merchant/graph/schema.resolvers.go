@@ -46,7 +46,7 @@ func (r *queryResolver) FetchOneProduct(ctx context.Context, id string) (*model.
 	if err != nil {
 		return result, nil
 	}
-	panic(fmt.Errorf("not implemented: FetchOneProduct - fetchOneProduct"))
+	return result, nil
 }
 
 // FetchProducts is the resolver for the fetchProducts field.

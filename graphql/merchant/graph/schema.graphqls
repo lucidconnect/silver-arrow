@@ -44,6 +44,7 @@ type Product {
   ProductId: String!
   receivingAddress: String!
   subscriptions: [Sub!]
+  createdAt: String
 }
 
 type AccessKey {

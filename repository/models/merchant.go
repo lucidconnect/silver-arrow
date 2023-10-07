@@ -1,6 +1,8 @@
 package models
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 )
 
@@ -12,6 +14,7 @@ type Product struct {
 	Token          string    `gorm:"not null"`
 	DepositAddress string    `gorm:"not null"`
 	MerchantID     uuid.UUID
+	CreatedAt      time.Time
 }
 
 type Merchant struct {

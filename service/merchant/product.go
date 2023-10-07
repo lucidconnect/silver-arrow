@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/helicarrierstudio/silver-arrow/graphql/merchant/graph/model"
@@ -48,6 +49,7 @@ func (m *MerchantService) CreateProduct(input model.NewProduct) (*model.Product,
 		Token:          input.Token,
 		DepositAddress: input.ReceivingAddress,
 		MerchantID:     merchant.ID,
+		CreatedAt:      time.Now(),
 	}
 	if err := m.repository.CreateProduct(product); err != nil {
 		return nil, err

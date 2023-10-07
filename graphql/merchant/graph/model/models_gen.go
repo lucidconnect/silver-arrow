@@ -16,13 +16,14 @@ type NewProduct struct {
 }
 
 type Product struct {
-	Name             string `json:"name"`
-	Owner            string `json:"owner"`
-	Chain            int    `json:"chain"`
-	Token            string `json:"token"`
-	ProductID        string `json:"ProductId"`
-	ReceivingAddress string `json:"receivingAddress"`
-	Subscriptions    []*Sub `json:"subscriptions,omitempty"`
+	Name             string  `json:"name"`
+	Owner            string  `json:"owner"`
+	Chain            int     `json:"chain"`
+	Token            string  `json:"token"`
+	ProductID        string  `json:"ProductId"`
+	ReceivingAddress string  `json:"receivingAddress"`
+	Subscriptions    []*Sub  `json:"subscriptions,omitempty"`
+	CreatedAt        *string `json:"createdAt,omitempty"`
 }
 
 type ProductUpdate struct {
