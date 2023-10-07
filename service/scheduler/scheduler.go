@@ -5,6 +5,7 @@ import (
 	"log"
 	"math/big"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -15,6 +16,8 @@ import (
 	"github.com/pkg/errors"
 )
 
+var defaultChain int64
+
 type Scheduler struct {
 	bundler       *erc4337.ERCBundler
 	queue         repository.Queuer
@@ -24,8 +27,19 @@ type Scheduler struct {
 
 func NewScheduler(data repository.Database, wallet *wallet.WalletService) *Scheduler {
 	queue := repository.NewDeque()
+	chain := os.Getenv("DEFAULT_CHAIN")
+	defaultChain, err := strconv.ParseInt(chain, 10, 64)
+	if err != nil {
+		panic(err)
+	}
+
+	bundler, err := erc4337.InitialiseBundler(defaultChain)
+	if err != nil {
+		panic(err)
+	}
 	return &Scheduler{
 		queue:         queue,
+		bundler:       bundler,
 		datastore:     data,
 		walletService: wallet,
 	}
@@ -58,6 +72,7 @@ func (s *Scheduler) SubscriptionJob() {
 		amount := big.NewInt(sub.Amount)
 		wallet := common.HexToAddress(sub.WalletAddress)
 		token := common.HexToAddress(sub.TokenAddress)
+		// chain := sub.Chain
 
 		balance, err := client.GetErc20TokenBalance(token, wallet)
 		if err != nil {
