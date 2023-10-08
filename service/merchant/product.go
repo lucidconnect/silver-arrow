@@ -119,12 +119,14 @@ func (m *MerchantService) FetchProduct(mid string) (*model.Product, error) {
 	id := uuid.MustParse(mid)
 	v, _ := m.repository.FetchProduct(id)
 
+	createdAt := v.CreatedAt.Format(time.DateTime)
 	merchant := &model.Product{
 		Name:             v.Name,
 		Owner:            v.Owner,
 		Chain:            int(v.Chain),
 		ProductID:        mid,
 		ReceivingAddress: v.DepositAddress,
+		CreatedAt:        &createdAt,
 	}
 
 	return merchant, nil
