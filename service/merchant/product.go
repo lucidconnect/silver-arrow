@@ -119,7 +119,7 @@ func (m *MerchantService) FetchProduct(pid string) (*model.Product, error) {
 	id := ParseUUID(pid)
 	v, _ := m.repository.FetchProduct(id)
 
-	createdAt := v.CreatedAt.Format(time.DateTime)
+	createdAt := v.CreatedAt.Format(time.RFC3339)
 	merchant := &model.Product{
 		Name:             v.Name,
 		Owner:            v.Owner,
@@ -141,7 +141,7 @@ func Base64EncodeUUID(id uuid.UUID) (string, error) {
 }
 
 func ParseUUID(mid string) uuid.UUID {
-	b, _ := base64.RawStdEncoding.DecodeString(mid)
+	b, _ := base64.RawURLEncoding.DecodeString(mid)
 	id, _ := uuid.FromBytes(b)
 	return id
 }
