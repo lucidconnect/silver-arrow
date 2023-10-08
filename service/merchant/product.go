@@ -115,8 +115,8 @@ func fetchMerchantSubscriptions(repo repository.Database, merchant string) ([]*m
 	return subscriptions, nil
 }
 
-func (m *MerchantService) FetchProduct(mid string) (*model.Product, error) {
-	id := uuid.MustParse(mid)
+func (m *MerchantService) FetchProduct(pid string) (*model.Product, error) {
+	id := ParseUUID(pid)
 	v, _ := m.repository.FetchProduct(id)
 
 	createdAt := v.CreatedAt.Format(time.DateTime)
@@ -124,7 +124,7 @@ func (m *MerchantService) FetchProduct(mid string) (*model.Product, error) {
 		Name:             v.Name,
 		Owner:            v.Owner,
 		Chain:            int(v.Chain),
-		ProductID:        mid,
+		ProductID:        pid,
 		ReceivingAddress: v.DepositAddress,
 		CreatedAt:        &createdAt,
 	}
