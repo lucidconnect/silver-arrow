@@ -2,8 +2,9 @@ package erc4337
 
 import (
 	"fmt"
-	"log"
 	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
 type PaymasterResult struct {

@@ -3,9 +3,10 @@ package erc4337
 import (
 	"crypto/ecdsa"
 	"fmt"
-	"log"
 	"math/big"
 	"strings"
+
+	"github.com/rs/zerolog/log"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
@@ -247,7 +248,7 @@ func GetEntryPointAddress() common.Address {
 func (b *ERCBundler) getContractInitCode(address common.Address) []byte {
 	code, err := b.client.GetAccountCode(address)
 	if err != nil {
-		log.Println("Oops! could not fetch account code", err)
+		log.Err(err).Msg("Oops! could not fetch account code")
 		return nil
 	}
 	fmt.Println("Account code - ", code)

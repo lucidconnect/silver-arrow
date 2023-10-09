@@ -2,7 +2,6 @@ package erc4337
 
 import (
 	"fmt"
-	"log"
 	"math"
 	"math/big"
 
@@ -243,17 +242,15 @@ func getStructHash(sig, validUntil, validAfter, enableData []byte, validator, ex
 
 func (v *SessionKeyOwnedValidator) SetExecution(enableData []byte, ownerAccount string) ([]byte, error) {
 	kernelAbi, err := KernelStorage.KernelStorageMetaData.GetAbi()
-	// abiStr := getKernelStorageAbi()
-	// kernelAbi, err := abi.JSON(strings.NewReader(abiStr))
 	if err != nil {
-		log.Println(err)
+		err = errors.Wrap(err, "KernelStorage.GetAbi():")
 		return nil, err
 	}
 
 	selector := [4]byte{}
 	sel, err := hexutil.Decode("0x84189294")
 	if err != nil {
-		err = errors.Wrap(err, "invalid selector hex")
+		err = errors.Wrap(err, "hexutil.Decode():")
 		return nil, err
 	}
 	copy(selector[:], sel)

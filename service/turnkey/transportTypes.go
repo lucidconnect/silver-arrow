@@ -1,12 +1,14 @@
 package turnkey
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"strconv"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/pkg/errors"
 )
 
 type TurnkeyRequest struct {
@@ -16,56 +18,83 @@ type TurnkeyRequest struct {
 	Parameters     any    `json:"parameters"`
 }
 
-func newEthereumPrivateKeyRequest(orgId, keyName, keyTag string) TurnkeyRequest {
+func newEthereumPrivateKeyRequest(orgId, keyName, keyTag string) ([]byte, error) {
 	activity := "ACTIVITY_TYPE_CREATE_PRIVATE_KEYS_V2"
 	timestamp := time.Now().UnixMilli()
 	keyParam := createPrivateKeyParam(keyName, keyTag, SECP256K1, ETHEREUM)
-	return TurnkeyRequest{
+	request := TurnkeyRequest{
 		Type:           activity,
 		TimestampMs:    strconv.FormatInt(timestamp, 10),
 		OrganizationId: orgId,
 		Parameters:     keyParam,
 	}
+	payload, err := json.Marshal(request)
+	if err != nil {
+		err = errors.Wrap(err, "failed to encode turnkey request to create private key")
+		return nil, err
+	}
+	return payload, nil
 }
 
-func newSubOrganizationRequest(orgId, subOrgName string) TurnkeyRequest {
+func newSubOrganizationRequest(orgId, subOrgName string) ([]byte, error) {
 	activity := "ACTIVITY_TYPE_CREATE_SUB_ORGANIZATION_V2"
 	// turnkeyUsername := os.Getenv("TURNKEY_USERNAME")\
 	turnkeyUsername := "x"
 	timestamp := time.Now().UnixMilli()
 	subOrgParams := newSubOrganizationIntentV3(subOrgName, turnkeyUsername)
-	return TurnkeyRequest{
+	request := TurnkeyRequest{
 		Type:           activity,
 		TimestampMs:    strconv.FormatInt(timestamp, 10),
 		OrganizationId: orgId,
 		Parameters:     subOrgParams,
 	}
+
+	payload, err := json.Marshal(request)
+	if err != nil {
+		err = errors.Wrap(err, "failed to encode turnkey request to create sub organization")
+		return nil, err
+	}
+	return payload, nil
 }
 
-func newSignPayloadRequest(orgId, privateKeyId, payload string) TurnkeyRequest {
+func newSignPayloadRequest(orgId, privateKeyId, signaturePayload string) ([]byte, error) {
 	activity := "ACTIVITY_TYPE_SIGN_RAW_PAYLOAD"
 	timestamp := time.Now().UnixMilli()
-	params := newV1SignPayloadIntent(privateKeyId, payload)
+	params := newV1SignPayloadIntent(privateKeyId, signaturePayload)
 
-	return TurnkeyRequest{
+	request := TurnkeyRequest{
 		Type:           activity,
 		TimestampMs:    strconv.FormatInt(timestamp, 10),
 		OrganizationId: orgId,
 		Parameters:     params,
 	}
+
+	payload, err := json.Marshal(request)
+	if err != nil {
+		err = errors.Wrap(err, "failed to encode turnkey request to sign raw payload")
+		return nil, err
+	}
+	return payload, nil
 }
 
-func newPrivateKeyTagRequest(orgId, keyTag string, keyIds []string) TurnkeyRequest {
+func newPrivateKeyTagRequest(orgId, keyTag string, keyIds []string) ([]byte, error) {
 	activity := "ACTIVITY_TYPE_CREATE_PRIVATE_KEY_TAG"
 	timestamp := time.Now().UnixMilli()
 	params := newV1CreatePrivateKeyTagIntent(keyTag, keyIds)
 
-	return TurnkeyRequest{
+	request := TurnkeyRequest{
 		Type:           activity,
 		TimestampMs:    strconv.FormatInt(timestamp, 10),
 		OrganizationId: orgId,
 		Parameters:     params,
 	}
+
+	payload, err := json.Marshal(request)
+	if err != nil {
+		err = errors.Wrap(err, "failed to encode turnkey request to create private key tag")
+		return nil, err
+	}
+	return payload, nil
 }
 
 type GetActivityRequest struct {
@@ -73,11 +102,18 @@ type GetActivityRequest struct {
 	OrganizationId string `json:"organizationId"`
 }
 
-func newActivityPollRequest(orgId, activityId string) GetActivityRequest {
-	return GetActivityRequest{
+func newActivityPollRequest(orgId, activityId string) ([]byte, error) {
+	activityRequest := GetActivityRequest{
 		ActivityId:     activityId,
 		OrganizationId: orgId,
 	}
+
+	payload, err := json.Marshal(activityRequest)
+	if err != nil {
+		err = errors.Wrap(err, "failed to encode turnkey request to create new activity")
+		return nil, err
+	}
+	return payload, nil
 }
 
 type RootUserParams struct {

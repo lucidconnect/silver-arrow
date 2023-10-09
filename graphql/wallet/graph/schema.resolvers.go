@@ -7,7 +7,6 @@ package graph
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"time"
 
@@ -62,13 +61,11 @@ func (r *mutationResolver) AddSubscription(ctx context.Context, input model.NewS
 	}
 	validationData, userOp, err := walletService.AddSubscription(input, usePaymaster, common.Big0, int64(input.Chain))
 	if err != nil {
-		log.Println(err)
 		return nil, err
 	}
 	fmt.Println("Userop hash", validationData.UserOpHash)
 	err = r.Cache.Set(validationData.UserOpHash, userOp)
 	if err != nil {
-		log.Println(err)
 		return nil, err
 	}
 	return validationData, nil
@@ -101,18 +98,15 @@ func (r *mutationResolver) ValidateSubscription(ctx context.Context, input model
 
 	opInterface, err := r.Cache.Get(input.UserOpHash)
 	if err != nil {
-		log.Println(err)
 		return nil, err
 	}
 	op, _ := opInterface.(map[string]any)
 	sig, err := hexutil.Decode(erc4337.SUDO_MODE)
 	if err != nil {
-		log.Println(err)
 		return nil, err
 	}
 	partialSig, err := hexutil.Decode(input.SignedMessage)
 	if err != nil {
-		log.Println(err)
 		return nil, err
 	}
 	fmt.Println("partial signature - ", partialSig)
@@ -120,15 +114,12 @@ func (r *mutationResolver) ValidateSubscription(ctx context.Context, input model
 	op["signature"] = hexutil.Encode(sig)
 
 	chain := int64(input.Chain)
-	log.Println("User op", op)
 	subData, key, err := walletService.ValidateSubscription(op, chain)
 	if err != nil {
-		log.Println("walletService.ValidateSubscription()", err)
 		return nil, err
 	}
 	merchant, err := merchantService.FetchProduct(subData.MerchantID)
 	if err != nil {
-		log.Println(err)
 		return nil, err
 	}
 	target := merchant.ReceivingAddress
@@ -138,7 +129,6 @@ func (r *mutationResolver) ValidateSubscription(ctx context.Context, input model
 	err = walletService.ExecuteCharge(subData.WalletAddress, target, subData.MerchantID, subData.Token, key, int64(subData.Amount), chain, usePaymaster)
 	if err != nil {
 		err = errors.Wrap(err, "ExecuteCharge() - error occurred during first time charge execution - ")
-		log.Println(err)
 		return subData, err
 	}
 	return subData, nil

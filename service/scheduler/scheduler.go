@@ -2,11 +2,12 @@ package scheduler
 
 import (
 	"fmt"
-	"log"
 	"math/big"
 	"os"
 	"strconv"
 	"time"
+
+	"github.com/rs/zerolog/log"
 
 	"github.com/ethereum/go-ethereum/common"
 	LucidMerchant "github.com/helicarrierstudio/silver-arrow/abi/LucidMerchant"
@@ -57,12 +58,12 @@ func (s *Scheduler) SubscriptionJob() {
 	// read from the database and fetch subscriptions expiring in 3 days
 	subsDueIn3, err := s.datastore.FetchDueSubscriptions(3)
 	if err != nil {
-		log.Println(err)
+		log.Err(err).Send()
 	}
 
 	dueToday, err := s.datastore.FetchDueSubscriptions(0)
 	if err != nil {
-		log.Println(err)
+		log.Err(err).Send()
 	}
 
 	client := s.bundler.GetClient()
@@ -76,7 +77,7 @@ func (s *Scheduler) SubscriptionJob() {
 
 		balance, err := client.GetErc20TokenBalance(token, wallet)
 		if err != nil {
-			log.Println(err)
+			log.Err(err).Send()
 			continue
 		}
 
@@ -97,7 +98,7 @@ func (s *Scheduler) SubscriptionJob() {
 
 		balance, err := client.GetErc20TokenBalance(token, wallet)
 		if err != nil {
-			log.Println(err)
+			log.Err(err).Send()
 			continue
 		}
 
@@ -113,7 +114,7 @@ func (s *Scheduler) SubscriptionJob() {
 			err = s.walletService.ExecuteCharge(sub.WalletAddress, sub.MerchantDepositAddress, sub.MerchantId, sub.Token, sub.Key.PrivateKeyId, sub.Amount, chain, usePaymaster)
 			if err != nil {
 				err = errors.Wrapf(err, "ExecuteCharge() - error occurred during charge execution for subscription %v - ", sub.ID)
-				log.Println(err)
+				log.Err(err).Send()
 				continue
 			}
 		}

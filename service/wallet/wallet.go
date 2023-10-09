@@ -2,20 +2,21 @@ package wallet
 
 import (
 	"fmt"
-	"log"
 	"math/big"
 	"math/rand"
 	"os"
 	"reflect"
 	"time"
 
+	"github.com/rs/zerolog/log"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/helicarrierstudio/silver-arrow/erc4337"
 	"github.com/helicarrierstudio/silver-arrow/graphql/wallet/graph/model"
-	"github.com/helicarrierstudio/silver-arrow/service/merchant"
 	"github.com/helicarrierstudio/silver-arrow/repository"
 	"github.com/helicarrierstudio/silver-arrow/repository/models"
+	"github.com/helicarrierstudio/silver-arrow/service/merchant"
 	"github.com/helicarrierstudio/silver-arrow/service/turnkey"
 	"github.com/pkg/errors"
 	"github.com/rmanzoku/ethutils/ecrecover"
@@ -43,14 +44,14 @@ func (ws *WalletService) AddAccount(input model.Account) error {
 	// create turnkey sub organization
 	activityId, err := ws.turnkey.CreateSubOrganization("", walletAddress)
 	if err != nil {
-		log.Println(err)
+		log.Err(err).Send()
 		return err
 	}
 
 	result, err := ws.turnkey.GetActivity("", activityId)
 	fmt.Println("result: ", result)
 	if err != nil {
-		log.Println(err)
+		log.Err(err).Send()
 		return err
 	}
 
@@ -58,13 +59,13 @@ func (ws *WalletService) AddAccount(input model.Account) error {
 	tag := fmt.Sprintf("key-tag-%s", input.Address)
 	tagActivity, err := ws.turnkey.CreatePrivateKeyTag(orgId, tag)
 	if err != nil {
-		log.Println(err)
+		log.Err(err).Send()
 		return err
 	}
 
 	tagResult, err := ws.turnkey.GetActivity(orgId, tagActivity)
 	if err != nil {
-		log.Println(err)
+		log.Err(err).Send()
 		return err
 	}
 
@@ -79,7 +80,7 @@ func (ws *WalletService) AddAccount(input model.Account) error {
 
 	err = ws.database.AddAccount(wallet)
 	if err != nil {
-		log.Println(err)
+		log.Err(err).Send()
 		return err
 	}
 	return nil
@@ -114,19 +115,19 @@ func convertMapToStruct(m map[string]interface{}, s interface{}) error {
 func (ws *WalletService) ValidateSubscription(userop map[string]any, chain int64) (*model.SubscriptionData, string, error) {
 	bundler, err := erc4337.InitialiseBundler(chain)
 	if err != nil {
-		err = errors.Wrap(err, "failed to initialise bundler")
-		log.Println(err)
+		log.Err(err).Msg("failed to initialise bundler")
+		return nil, "", err
 	}
 
 	opHash, err := bundler.SendUserOp(userop)
 	if err != nil {
-		err = errors.Wrap(err, "SendUserOp()")
+		log.Err(err).Msg("failed to send user op")
 		return nil, "", err
 	}
 	fmt.Println("validating subscription with userop hash -", opHash)
 	result, err := ws.database.FindSubscriptionByHash(opHash)
 	if err != nil {
-		err = errors.Wrap(err, "FindSubscriptionByHash() - ")
+		log.Err(err).Msgf("failed to find subscription with hash %v", opHash)
 		return nil, "", err
 	}
 	token := result.Token
@@ -145,7 +146,7 @@ func (ws *WalletService) ValidateSubscription(userop map[string]any, chain int64
 	// get the signing key
 	signingKey, err := ws.database.GetSubscriptionKey(result.Key.PublicKey)
 	if err != nil {
-		err = errors.Wrap(err, "FindSubscriptionsByFilter() - ")
+		log.Err(err).Send()
 		return nil, "", err
 	}
 	return subData, signingKey, nil
@@ -158,29 +159,33 @@ func (ws *WalletService) AddSubscription(input model.NewSubscription, usePaymast
 
 	tagId, orgId, walletID, err := ws.database.GetWalletMetadata(input.WalletAddress)
 	if err != nil {
-		err = errors.Wrapf(err, "failed to fetch private key tag for wallet - %v", input.WalletAddress)
+		log.Err(err).Msgf("failed to fetch private key tag for wallet - %v", input.WalletAddress)
+		return nil, nil, err
 	}
 	randomSalt := randKey(4)
 	keyName := fmt.Sprintf("sub-%v-%v", randomSalt, input.MerchantID)
 	activityId, err := ws.turnkey.CreatePrivateKey(orgId, keyName, tagId)
 	if err != nil {
+		log.Err(err).Msg("failed to create subscription private key")
 		return nil, nil, err
 	}
 
 	result, err := ws.turnkey.GetActivity(orgId, activityId)
 	if err != nil {
+		log.Err(err).Send()
 		return nil, nil, err
 	}
 	privateKeyID, sessionKey, err := turnkey.GetPrivateKeyIdFromResult(result)
 	// sessionKey, signingKey, err := CreateAccessKey()
 	if err != nil {
+		log.Err(err).Send()
 		return nil, nil, err
 	}
 
 	bundler, err := erc4337.InitialiseBundler(chain)
 	if err != nil {
-		err = errors.Wrap(err, "failed to initialise bundler")
-		log.Println(err)
+		log.Err(err).Msg("failed to initialise bundler")
+		return nil, nil, err
 	}
 
 	// supported token is still USDC, so minor factor is 1000000
@@ -191,30 +196,34 @@ func (ws *WalletService) AddSubscription(input model.NewSubscription, usePaymast
 	if !isAccountDeployed {
 		initCode, err = GetContractInitCode(common.HexToAddress(input.OwnerAddress), index)
 		if err != nil {
+			log.Err(err).Send()
 			return nil, nil, err
 		}
 		nonce = common.Big0
 	} else {
 		nonce, err = bundler.AccountNonce(input.WalletAddress)
 		if err != nil {
+			log.Err(err).Send()
 			return nil, nil, err
 		}
 	}
 
 	callData, err := setValidatorExecutor(sessionKey, ws.validatorAddress, input.WalletAddress, int64(input.Chain))
 	if err != nil {
+		log.Err(err).Msg("failed to set a validator")
 		return nil, nil, err
 	}
 
 	op, err := bundler.CreateUnsignedUserOperation(input.WalletAddress, initCode, callData, nonce, usePaymaster, int64(input.Chain))
 	if err != nil {
-		log.Println(err)
+		log.Err(err).Msg("failed to create user operation")
 		return nil, nil, err
 	}
 
 	entrypoint := erc4337.GetEntryPointAddress()
 	operation, err := userop.New(op)
 	if err != nil {
+		log.Err(err).Send()
 		return nil, nil, err
 	}
 	opHash := operation.GetUserOpHash(entrypoint, big.NewInt(int64(input.Chain)))
@@ -242,7 +251,7 @@ func (ws *WalletService) AddSubscription(input model.NewSubscription, usePaymast
 
 	err = ws.database.AddSubscription(sub, key)
 	if err != nil {
-		log.Println(err)
+		log.Err(err).Send()
 		return nil, nil, err
 	}
 
@@ -312,8 +321,8 @@ func weiToAmount(amt *big.Int) int64 {
 func (ws *WalletService) ExecuteCharge(sender, target, mId, token, key string, amount, chain int64, sponsored bool) error {
 	bundler, err := erc4337.InitialiseBundler(chain)
 	if err != nil {
-		err = errors.Wrap(err, "failed to initialise bundler")
-		log.Println(err)
+		log.Err(err).Msg("failed to initialise bundler")
+		return err
 	}
 
 	erc20Token := erc4337.GetTokenAddres(token)
@@ -321,8 +330,7 @@ func (ws *WalletService) ExecuteCharge(sender, target, mId, token, key string, a
 
 	wallet, err := ws.database.FetchAccountByAddress(sender)
 	if err != nil {
-		err = errors.Wrapf(err, "ExecuteCharge() - error occured during charge execution for subscription %v - ", sender)
-		log.Println(err)
+		log.Err(err).Send()
 		return err
 	}
 	org := wallet.TurnkeySubOrgID
@@ -339,19 +347,20 @@ func (ws *WalletService) ExecuteCharge(sender, target, mId, token, key string, a
 
 	nonce, err := bundler.AccountNonce(sender)
 	if err != nil {
-		log.Println(err)
+		log.Err(err).Send()
 		return err
 	}
 
 	op, err := bundler.CreateUnsignedUserOperation(sender, nil, data, nonce, sponsored, chain)
 	if err != nil {
-		err = errors.Wrap(err, "CreateUnsignedUserOperation() - ")
+		log.Err(err).Send()
 		return err
 	}
 	// fmt.Println("user operation", op)
 
 	operation, err := userop.New(op)
 	if err != nil {
+		log.Err(err).Send()
 		return err
 	}
 
@@ -366,26 +375,26 @@ func (ws *WalletService) ExecuteCharge(sender, target, mId, token, key string, a
 	fmt.Println("Signing user op with key - ", key)
 	turnkeyActivityId, err := ws.turnkey.SignMessage(org, key, message)
 	if err != nil {
-		err = errors.Wrap(err, "SignMessage() - ")
+		log.Err(err).Send()
 		return err
 	}
 
 	result, err := ws.turnkey.GetActivity(org, turnkeyActivityId)
 	if err != nil {
-		err = errors.Wrap(err, "SignMessage() - ")
+		log.Err(err).Send()
 		return err
 	}
 
 	sig, err := turnkey.ExctractTurnkeySignatureFromResult(result)
 	if err != nil {
-		err = errors.Wrap(err, "ExctractTurnkeySignatureFromResult() - ")
+		log.Err(err).Send()
 		return err
 	}
 	op["signature"] = sig.ParseSignature(erc4337.VALIDATOR_MODE)
 
 	opHash, err := bundler.SendUserOp(op)
 	if err != nil {
-		err = errors.Wrap(err, "SendUserOp() - ")
+		log.Err(err).Send()
 		return err
 	}
 
@@ -436,6 +445,7 @@ func setValidatorExecutor(sessionKey, validatorAddress, ownerAddress string, cha
 
 	callData, err := validator.SetExecution(enableData, ownerAddress)
 	if err != nil {
+		err = errors.Wrap(err, "validator.SetExecution():")
 		return nil, err
 	}
 	return callData, nil
@@ -462,17 +472,18 @@ func (ws *WalletService) isAccountDeployed(address string, chain int64) bool {
 	bundler, err := erc4337.InitialiseBundler(chain)
 	if err != nil {
 		err = errors.Wrap(err, "failed to initialise bundler")
-		log.Println(err)
+		log.Panic().Err(err).Send()
+		return false
 	}
 
 	code, err := bundler.GetClient().GetAccountCode(common.HexToAddress(address))
 	if err != nil {
-		fmt.Println("An error occured")
+		log.Err(err).Send()
 		return false
 	}
 	fmt.Println("Code ", code)
 	if len(code) == 0 {
-		fmt.Println("account not deployed, should be deployed first!")
+		log.Info().Msg("account not deployed, should be deployed first!")
 		return false
 	}
 	return true
