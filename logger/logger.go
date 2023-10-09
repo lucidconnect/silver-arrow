@@ -1,8 +1,6 @@
 package logger
 
 import (
-	"fmt"
-	"log/syslog"
 	"os"
 	"time"
 
@@ -18,14 +16,14 @@ func SetUpDefaultLogger() {
 
 // SetUpLoggerFromConfig ...
 func SetUpLoggerFromConfig(environment string) {
-	var zsyslog zerolog.SyslogWriter
-	app := fmt.Sprint("silver-arrow-", environment)
-	zsyslog, err := syslog.New(syslog.LOG_USER|syslog.LOG_EMERG|syslog.LOG_CRIT|syslog.LOG_ERR|syslog.LOG_WARNING|syslog.LOG_INFO|syslog.LOG_DEBUG, app)
-	if err != nil {
-		panic(err)
-	}
+	// var zsyslog zerolog.SyslogWriter
+	// app := fmt.Sprint("silver-arrow-", environment)
+	// zsyslog, err := syslog.New(syslog.LOG_USER|syslog.LOG_EMERG|syslog.LOG_CRIT|syslog.LOG_ERR|syslog.LOG_WARNING|syslog.LOG_INFO|syslog.LOG_DEBUG, app)
+	// if err != nil {
+	// 	panic(err)
+	// }
 
-	log.Logger = log.Output(zerolog.ConsoleWriter{Out: zsyslog, TimeFormat: time.Kitchen})
+	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.Kitchen})
 	level := GetLevel(os.Getenv("LOG_LEVEL"))
 	log.Info().Msgf("Setting log level to %v", level)
 	zerolog.SetGlobalLevel(level)
