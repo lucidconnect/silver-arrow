@@ -68,7 +68,7 @@ func seedWalletsTable(db *gorm.DB) {
 
 func clearTables(db *gorm.DB) {
 	for _, table := range []interface{}{&models.Subscription{}, &models.Key{}, &models.Wallet{}} {
-		log.Printf("Clearing %v table", getType(table))
+		log.Info().Msgf("Clearing %v table", getType(table))
 		if err := db.Where("TRUE").Delete(table).Error; err != nil {
 		log.Fatal().Err(err)
 		}

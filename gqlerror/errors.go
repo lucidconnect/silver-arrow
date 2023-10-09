@@ -1,4 +1,4 @@
-package errors
+package gqlerror
 
 import (
 	"context"
@@ -12,6 +12,7 @@ import (
 type ErrorCode string
 
 const (
+	NilError                     ErrorCode = ""
 	InternalError                ErrorCode = "INTERNAL_ERROR"
 	MerchantDataInvalid          ErrorCode = "INPUT_INVALID"
 	MerchantAuthorisationFailed  ErrorCode = "MERCHANT_AUTHORISATION_FAILED"

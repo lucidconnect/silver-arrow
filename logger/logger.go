@@ -10,33 +10,6 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type Logger struct {
-	l zerolog.Logger
-}
-
-func NewLogger() *Logger {
-	return &Logger{
-		l:  log.Logger,
-	}
-}
-
-func (log *Logger) Log(err error, msg, level string)  {
-	switch level {
-	case "debug":
-		log.l.Debug().Msg(msg)
-	case "info":
-		log.l.Info().Msg(msg)
-	case "warn":
-		log.l.Warn().Msg(msg)
-	case "error":
-		log.l.Error().Err(err).Msg(msg)
-	case "fatal":
-		log.l.Fatal().Msg(msg)
-	case "panic":
-		log.l.Panic().Msg(msg)
-	}
-}
-
 // SetUpDefaultLogger ... is used to bootstrap logging since some logging configurations are in the app config
 func SetUpDefaultLogger() {
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.Kitchen})

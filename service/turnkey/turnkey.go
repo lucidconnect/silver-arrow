@@ -46,7 +46,6 @@ func NewTurnKeyService() (*TurnkeyService, error) {
 	host := os.Getenv("TURNKEY_HOST")
 	client, err := initTurnkeyClient()
 	if err != nil {
-		log.Err(err).Send()
 		return nil, err
 	}
 	return &TurnkeyService{

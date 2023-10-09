@@ -42,7 +42,7 @@ func (nc *Client) SponsorUserOperation(entryPoint string, userop, pc interface{}
 
 	err := nc.p.Client().CallContext(nc.ctx, result, "pm_sponsorUserOperation", userop, entryPoint, pc)
 	if err != nil {
-		log.Printf("pm_sponsorUserOperation -  message: %v \n", err)
+		log.Err(err).Msg("pm_sponsorUserOperation")
 		return nil, err
 	}
 
@@ -69,7 +69,7 @@ func (nc *Client) RequestGasAndPaymasterAndData(policyId, entryPoint, dummySigna
 	time.Sleep(3 * time.Second)
 	err := nc.p.Client().CallContext(nc.ctx, result, "alchemy_requestGasAndPaymasterAndData", request)
 	if err != nil {
-		log.Printf("alchemy_requestGasAndPaymasterAndData -  message: %v \n", err)
+		log.Err(err).Msg("alchemy_requestGasAndPaymasterAndData")
 		return nil, err
 	}
 
@@ -81,6 +81,6 @@ func (nc *Client) RequestGasAndPaymasterAndData(policyId, entryPoint, dummySigna
 	// maxPriorityFee := new(big.Int).SetBytes(hexutil.MustDecode(result.MaxPriorityFeePerGas)).Add(big.NewInt(130098856))
 	// result.MaxFeePerGas = hexutil.EncodeBig(maxFee)
 	// result.MaxPriorityFeePerGas = hexutil.EncodeBig(maxPriorityFee)
-	fmt.Println("alchemy_requestGasAndPaymasterAndData - ", result)
+	// fmt.Println("alchemy_requestGasAndPaymasterAndData - ", result)
 	return result, nil
 }

@@ -55,8 +55,9 @@ func main() {
 	jobRunner := scheduler.NewScheduler(database, walletService)
 	setupJobs(jobRunner)
 	walletSrv := handler.NewDefaultServer(wallet_generated.NewExecutableSchema(wallet_generated.Config{Resolvers: &wallet_graph.Resolver{
-		Database: database,
-		Cache:    repository.NewMCache(),
+		Cache:          repository.NewMCache(),
+		Database:       database,
+		TurnkeyService: tunkeyService,
 	}}))
 
 	merchantSrv := handler.NewDefaultServer(merchant_generated.NewExecutableSchema(merchant_generated.Config{Resolvers: &merchant_graph.Resolver{
