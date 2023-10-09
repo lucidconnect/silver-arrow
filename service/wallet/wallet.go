@@ -143,6 +143,7 @@ func (ws *WalletService) ValidateSubscription(userop map[string]any, chain int64
 	}
 	token := result.Token
 
+	createdAt := result.CreatedAt.Format(time.RFC3339)
 	amount := int(result.Amount)
 	subData := &model.SubscriptionData{
 		ID:            result.Key.PublicKey,
@@ -151,6 +152,7 @@ func (ws *WalletService) ValidateSubscription(userop map[string]any, chain int64
 		Interval:      int(result.Interval),
 		MerchantID:    result.MerchantId,
 		WalletAddress: result.WalletAddress,
+		CreatedAt:     &createdAt,
 	}
 	fmt.Println("subscription result - ", result)
 

@@ -8,6 +8,7 @@ require (
 	github.com/ethereum/go-ethereum v1.12.2
 	github.com/pkg/errors v0.9.1
 	github.com/rs/cors v1.9.0
+	github.com/rs/zerolog v1.31.0
 	github.com/stackup-wallet/stackup-bundler v0.6.14
 	github.com/vektah/gqlparser/v2 v2.5.8
 	gorm.io/gorm v1.25.4
@@ -17,7 +18,6 @@ require (
 	github.com/btcsuite/btcd/btcec/v2 v2.3.2 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
-	github.com/rs/zerolog v1.31.0 // indirect
 	go.mongodb.org/mongo-driver v1.12.1 // indirect
 )
 

@@ -58,6 +58,7 @@ type ComplexityRoot struct {
 
 	SubscriptionData struct {
 		Amount          func(childComplexity int) int
+		CreatedAt       func(childComplexity int) int
 		ID              func(childComplexity int) int
 		Interval        func(childComplexity int) int
 		MerchantID      func(childComplexity int) int
@@ -162,6 +163,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.SubscriptionData.Amount(childComplexity), true
+
+	case "SubscriptionData.createdAt":
+		if e.complexity.SubscriptionData.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.SubscriptionData.CreatedAt(childComplexity), true
 
 	case "SubscriptionData.id":
 		if e.complexity.SubscriptionData.ID == nil {
@@ -372,6 +380,7 @@ type SubscriptionData {
   merchantId: String!
 	walletAddress: String!
   subscriptionKey: String!
+  createdAt: String
 }
 
 scalar Time`, BuiltIn: false},
@@ -677,6 +686,8 @@ func (ec *executionContext) fieldContext_Mutation_validateSubscription(ctx conte
 				return ec.fieldContext_SubscriptionData_walletAddress(ctx, field)
 			case "subscriptionKey":
 				return ec.fieldContext_SubscriptionData_subscriptionKey(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_SubscriptionData_createdAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type SubscriptionData", field.Name)
 		},
@@ -803,6 +814,8 @@ func (ec *executionContext) fieldContext_Query_fetchSubscriptions(ctx context.Co
 				return ec.fieldContext_SubscriptionData_walletAddress(ctx, field)
 			case "subscriptionKey":
 				return ec.fieldContext_SubscriptionData_subscriptionKey(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_SubscriptionData_createdAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type SubscriptionData", field.Name)
 		},
@@ -1246,6 +1259,47 @@ func (ec *executionContext) _SubscriptionData_subscriptionKey(ctx context.Contex
 }
 
 func (ec *executionContext) fieldContext_SubscriptionData_subscriptionKey(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SubscriptionData",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SubscriptionData_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.SubscriptionData) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SubscriptionData_createdAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SubscriptionData_createdAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "SubscriptionData",
 		Field:      field,
@@ -3457,6 +3511,8 @@ func (ec *executionContext) _SubscriptionData(ctx context.Context, sel ast.Selec
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "createdAt":
+			out.Values[i] = ec._SubscriptionData_createdAt(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
