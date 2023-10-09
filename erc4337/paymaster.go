@@ -77,22 +77,15 @@ func (nc *Client) RequestGasAndPaymasterAndData(policyId, entryPoint, dummySigna
 
 	// add 130098856
 	var maxFee, maxPriorityFee *big.Int
-	mxFee, err := hexutil.DecodeBig(result.MaxFeePerGas)
-	if err != nil {
-		log.Err(err).Send()
-		return nil, err
-	}
+
+	mxFee, _ := new(big.Int).SetString(result.MaxFeePerGas, 16)
 	maxFeex := new(big.Int).Mul(mxFee, big.NewInt(10))
 	maxFee = new(big.Int).Div(maxFeex, big.NewInt(7))
 
-	mxPriorityFee, err := hexutil.DecodeBig(result.MaxPriorityFeePerGas)
-	if err != nil {
-		log.Err(err).Send()
-		return nil, err
-	}
+	mxPriorityFee, _ := new(big.Int).SetString(result.MaxPriorityFeePerGas, 16)
 	maxPriorityFeex := new(big.Int).Mul(mxPriorityFee, big.NewInt(10))
 	maxPriorityFee = new(big.Int).Div(maxPriorityFeex, big.NewInt(7))
-	
+
 	// maxFee := new(big.Int).SetBytes(hexutil.MustDecode(result.MaxFeePerGas)).Add(big.NewInt(130098856))
 	// maxPriorityFee := new(big.Int).SetBytes(hexutil.MustDecode(result.MaxPriorityFeePerGas)).Add(big.NewInt(130098856))
 
