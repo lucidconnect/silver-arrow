@@ -95,7 +95,12 @@ func (p *DB) DeactivateSubscription(id uint) error {
 	return p.Db.Where("id = ?", id).UpdateColumn("active", false).Error
 }
 
-func (p *DB) UpdateSubscription(id uint) error {
+func (p *DB) UpdateSubscription(id uuid.UUID, update map[string]interface{}) error {
+	var subscription *models.Subscription
+
+	if err := p.Db.Model(&subscription).Where("id = ?", id).Updates(update).Error; err != nil {
+		return err
+	}
 	return errors.New("unimplemented")
 }
 

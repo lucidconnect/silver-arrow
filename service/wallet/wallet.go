@@ -156,6 +156,12 @@ func (ws *WalletService) ValidateSubscription(userop map[string]any, chain int64
 	}
 	fmt.Println("subscription result - ", result)
 
+	update := map[string]interface{}{"active": true}
+	err = ws.database.UpdateSubscription(result.ID, update)
+	if err != nil {
+		log.Err(err).Send()
+		return nil, "", err
+	}
 	// get the signing key
 	signingKey, err := ws.database.GetSubscriptionKey(result.Key.PublicKey)
 	if err != nil {
