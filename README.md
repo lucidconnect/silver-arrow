@@ -97,3 +97,12 @@ CREATE TABLE "Keys" (
 0xF0309DDDe30c75A6211565774E48c3733bf87F84
 Mumbai
 ```
+
+## AUTHORIZATION
+
+```
+Authorization: "Bearer `public_key`
+X-Lucid-Request-Signature: `<signed-request>`
+Lucid-Request-Hash: `<sha256-hashed-request>`
+
+```
