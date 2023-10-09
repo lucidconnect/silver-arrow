@@ -2,8 +2,10 @@ package erc4337
 
 import (
 	"fmt"
+	"math/big"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/rs/zerolog/log"
 )
 
@@ -74,13 +76,18 @@ func (nc *Client) RequestGasAndPaymasterAndData(policyId, entryPoint, dummySigna
 	}
 
 	// add 130098856
-	// var maxFee, maxPriorityFee *big.Int
-	// maxFee = new(big.Int).Add(new(big.Int).SetBytes(hexutil.MustDecode(result.MaxFeePerGas)), big.NewInt(130098856))
-	// maxPriorityFee = new(big.Int).Add(new(big.Int).SetBytes(hexutil.MustDecode(result.MaxFeePerGas)), big.NewInt(130098856))
+	var maxFee, maxPriorityFee *big.Int
+	maxFeex := new(big.Int).Mul(new(big.Int).SetBytes(hexutil.MustDecode(result.MaxFeePerGas)), big.NewInt(10))
+	maxFee = new(big.Int).Div(maxFeex, big.NewInt(7))
+
+	maxPriorityFeex := new(big.Int).Mul(new(big.Int).SetBytes(hexutil.MustDecode(result.MaxPriorityFeePerGas)), big.NewInt(10))
+	maxPriorityFee = new(big.Int).Div(maxPriorityFeex, big.NewInt(7))
+	
 	// maxFee := new(big.Int).SetBytes(hexutil.MustDecode(result.MaxFeePerGas)).Add(big.NewInt(130098856))
 	// maxPriorityFee := new(big.Int).SetBytes(hexutil.MustDecode(result.MaxPriorityFeePerGas)).Add(big.NewInt(130098856))
-	// result.MaxFeePerGas = hexutil.EncodeBig(maxFee)
-	// result.MaxPriorityFeePerGas = hexutil.EncodeBig(maxPriorityFee)
-	// fmt.Println("alchemy_requestGasAndPaymasterAndData - ", result)
+
+	result.MaxFeePerGas = hexutil.EncodeBig(maxFee)
+	result.MaxPriorityFeePerGas = hexutil.EncodeBig(maxPriorityFee)
+	fmt.Println("alchemy_requestGasAndPaymasterAndData - ", result)
 	return result, nil
 }
