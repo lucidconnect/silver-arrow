@@ -68,7 +68,7 @@ func (b *ERCBundler) CreateUnsignedUserOperation(sender string, initCode, callDa
 	}
 
 	if sponsored {
-		policyId := "2e865ced-98e5-4265-a20e-b46c695a28bd"
+		policyId := os.Getenv("POLICY_ID")
 		paymaster, err = b.client.RequestGasAndPaymasterAndData(policyId, b.EntryPoint, hexutil.Encode(tok), o)
 		if err != nil {
 			err = errors.Wrap(err, "call to sponsor user op failed")
