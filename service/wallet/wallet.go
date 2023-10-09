@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
+	"gorm.io/gorm"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -41,48 +42,58 @@ func NewWalletService(r repository.Database, t *turnkey.TurnkeyService) *WalletS
 func (ws *WalletService) AddAccount(input model.Account) error {
 	walletAddress := input.Address
 
-	// create turnkey sub organization
-	activityId, err := ws.turnkey.CreateSubOrganization("", walletAddress)
+	// Check if account exists
+	_, err := ws.database.FetchAccountByAddress(walletAddress)
 	if err != nil {
-		log.Err(err).Send()
-		return err
+		if err == gorm.ErrRecordNotFound {
+			// create turnkey sub organization
+			activityId, err := ws.turnkey.CreateSubOrganization("", walletAddress)
+			if err != nil {
+				log.Err(err).Send()
+				return err
+			}
+
+			result, err := ws.turnkey.GetActivity("", activityId)
+			fmt.Println("result: ", result)
+			if err != nil {
+				log.Err(err).Send()
+				return err
+			}
+
+			orgId := turnkey.ExtractSubOrganizationIdFromResult(result)
+			tag := fmt.Sprintf("key-tag-%s", input.Address)
+			tagActivity, err := ws.turnkey.CreatePrivateKeyTag(orgId, tag)
+			if err != nil {
+				log.Err(err).Send()
+				return err
+			}
+
+			tagResult, err := ws.turnkey.GetActivity(orgId, tagActivity)
+			if err != nil {
+				log.Err(err).Send()
+				return err
+			}
+
+			tagId := turnkey.ExtractPrivateKeyTagIdFromResult(tagResult)
+			wallet := &models.Wallet{
+				WalletAddress:        walletAddress,
+				SignerAddress:        *input.Signer,
+				TurnkeySubOrgID:      orgId,
+				TurnkeySubOrgName:    walletAddress,
+				TurnkeyPrivateKeyTag: tagId,
+			}
+
+			err = ws.database.AddAccount(wallet)
+			if err != nil {
+				log.Err(err).Send()
+				return err
+			}
+		} else {
+			log.Err(err).Send()
+			return err
+		}
 	}
 
-	result, err := ws.turnkey.GetActivity("", activityId)
-	fmt.Println("result: ", result)
-	if err != nil {
-		log.Err(err).Send()
-		return err
-	}
-
-	orgId := turnkey.ExtractSubOrganizationIdFromResult(result)
-	tag := fmt.Sprintf("key-tag-%s", input.Address)
-	tagActivity, err := ws.turnkey.CreatePrivateKeyTag(orgId, tag)
-	if err != nil {
-		log.Err(err).Send()
-		return err
-	}
-
-	tagResult, err := ws.turnkey.GetActivity(orgId, tagActivity)
-	if err != nil {
-		log.Err(err).Send()
-		return err
-	}
-
-	tagId := turnkey.ExtractPrivateKeyTagIdFromResult(tagResult)
-	wallet := &models.Wallet{
-		WalletAddress:        walletAddress,
-		SignerAddress:        *input.Signer,
-		TurnkeySubOrgID:      orgId,
-		TurnkeySubOrgName:    walletAddress,
-		TurnkeyPrivateKeyTag: tagId,
-	}
-
-	err = ws.database.AddAccount(wallet)
-	if err != nil {
-		log.Err(err).Send()
-		return err
-	}
 	return nil
 }
 
