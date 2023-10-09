@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/rs/zerolog/log"
 
@@ -219,6 +220,7 @@ func (tk *TurnkeyService) SignMessage(orgId, privateKeyId, message string) (stri
 }
 
 func (tk *TurnkeyService) GetActivity(orgId, activityId string) (map[string]any, error) {
+	time.Sleep(time.Second) // not ideal, should be improved
 	if orgId == "" {
 		orgId = *tk.TurnkeyClient.DefaultOrganization()
 	}
