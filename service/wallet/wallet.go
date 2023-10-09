@@ -8,6 +8,7 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 
@@ -17,7 +18,6 @@ import (
 	"github.com/helicarrierstudio/silver-arrow/graphql/wallet/graph/model"
 	"github.com/helicarrierstudio/silver-arrow/repository"
 	"github.com/helicarrierstudio/silver-arrow/repository/models"
-	"github.com/helicarrierstudio/silver-arrow/service/merchant"
 	"github.com/helicarrierstudio/silver-arrow/service/turnkey"
 	"github.com/pkg/errors"
 	"github.com/rmanzoku/ethutils/ecrecover"
@@ -171,7 +171,7 @@ func (ws *WalletService) ValidateSubscription(userop map[string]any, chain int64
 	return subData, signingKey, nil
 }
 
-func (ws *WalletService) AddSubscription(input model.NewSubscription, usePaymaster bool, index *big.Int, chain int64) (*model.ValidationData, map[string]any, error) {
+func (ws *WalletService) AddSubscription(merchantId uuid.UUID, input model.NewSubscription, usePaymaster bool, index *big.Int, chain int64) (*model.ValidationData, map[string]any, error) {
 	var nextChargeAt time.Time
 	var initCode []byte
 	var nonce, amount *big.Int
@@ -259,7 +259,7 @@ func (ws *WalletService) AddSubscription(input model.NewSubscription, usePaymast
 		Active:        false,
 		Interval:      interval.Nanoseconds(),
 		UserOpHash:    opHash.Hex(),
-		MerchantId:    merchant.ParseUUID(input.MerchantID).String(),
+		MerchantId:    merchantId.String(),
 		NextChargeAt:  nextChargeAt,
 		ExpiresAt:     nextChargeAt,
 		WalletID:      walletID,

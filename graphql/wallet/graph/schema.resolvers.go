@@ -49,7 +49,7 @@ func (r *mutationResolver) AddSubscription(ctx context.Context, input model.NewS
 	default:
 		usePaymaster = false
 	}
-	validationData, userOp, err := walletService.AddSubscription(input, usePaymaster, common.Big0, int64(input.Chain))
+	validationData, userOp, err := walletService.AddSubscription(merchant.ID,input, usePaymaster, common.Big0, int64(input.Chain))
 	if err != nil {
 		return nil, err
 	}
