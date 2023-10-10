@@ -104,9 +104,12 @@ func (b *ERCBundler) CreateUnsignedUserOperation(sender string, initCode, callDa
 		paymasterAndData = "0x"
 		verificationGas = hexutil.EncodeBig(getVerificationGasLimit())
 		// preVerificationGas = hexutil.EncodeBig(getVerificationGasLimit())
-
-		maxPriorityFeePerGas = hexutil.EncodeBig(getMaxPriorityFeePerGas())
-		maxFeePerGas = hexutil.EncodeBig(getMaxFeePerGas())
+		maxPriorityFeePerGas, err = b.client.GetMaxPriorityFee()
+		if err != nil {
+			return nil, err
+		}
+		// maxPriorityFeePerGas = hexutil.EncodeBig(getMaxPriorityFeePerGas())
+		maxFeePerGas = calcMaxFeePerGas(maxPriorityFeePerGas)
 		preVerificationGas = gasEstimate.PreVerificationGas
 	}
 
@@ -119,6 +122,13 @@ func (b *ERCBundler) CreateUnsignedUserOperation(sender string, initCode, callDa
 	o["paymasterAndData"] = paymasterAndData
 
 	return o, nil
+}
+
+func calcMaxFeePerGas(maxPriorityFee string) string {
+	maxPriorityFeeBig, _ := new(big.Int).SetString(maxPriorityFee, 0)
+	maxFeePerGasBig := new(big.Int).Add(maxPriorityFeeBig, big.NewInt(22))
+
+	return hexutil.EncodeBig(maxFeePerGasBig)
 }
 
 // SendUserOp uses the necessary inputs to send a useroperation to the smart account
