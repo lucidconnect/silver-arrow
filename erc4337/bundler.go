@@ -9,7 +9,7 @@ import (
 func (nc *Client) GetMaxPriorityFee() (string, error) {
 	var result string
 
-	err := nc.c.Client().CallContext(nc.ctx, result, "rundler_maxPriorityFeePerGas")
+	err := nc.c.Client().CallContext(nc.ctx, &result, "rundler_maxPriorityFeePerGas")
 	if err != nil {
 		err = errors.Wrap(err, "rundler_maxPriorityFeePerGas call error")
 		return "", err
