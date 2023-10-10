@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/helicarrierstudio/silver-arrow/repository/models"
+	"github.com/rmanzoku/ethutils/ecrecover"
 	"github.com/rs/zerolog/log"
 )
 
@@ -63,14 +63,17 @@ func (m *MerchantService) Middleware() func(http.Handler) http.Handler {
 				return
 			}
 
-			pub, err := crypto.SigToPub(hash, signatureBytes)
+			// pub, err := crypto.SigToPub(hash, signatureBytes)
+
+			ethSignedMsg := ecrecover.ToEthSignedMessageHash(hash)
+			recovered, err := ecrecover.Recover(ethSignedMsg, signatureBytes)
 			if err != nil {
 				log.Err(err).Send()
 				next.ServeHTTP(w, r)
 				return
 			}
-
-			if strings.Compare(authorizationValue, hexutil.Encode(crypto.CompressPubkey(pub))) != 0 {
+			
+			if strings.Compare(authorizationValue, recovered.Hex()) != 0 {
 				next.ServeHTTP(w, r)
 				return
 			}
