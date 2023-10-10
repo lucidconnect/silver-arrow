@@ -2,7 +2,6 @@ package repository
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"os"
 	"time"
@@ -101,7 +100,7 @@ func (p *DB) UpdateSubscription(id uuid.UUID, update map[string]interface{}) err
 	if err := p.Db.Model(&subscription).Where("id = ?", id).Updates(update).Error; err != nil {
 		return err
 	}
-	return errors.New("unimplemented")
+	return nil
 }
 
 func (p *DB) FetchDueSubscriptions(days int) ([]models.Subscription, error) {

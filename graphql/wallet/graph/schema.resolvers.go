@@ -18,6 +18,7 @@ import (
 	"github.com/helicarrierstudio/silver-arrow/service/merchant"
 	"github.com/helicarrierstudio/silver-arrow/service/wallet"
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 )
 
 // AddAccount is the resolver for the addAccount field.
@@ -40,7 +41,8 @@ func (r *mutationResolver) AddSubscription(ctx context.Context, input model.NewS
 	if err != nil {
 		return nil, err
 	}
-	_ = merchant.ID
+	merchantId := merchant.ID
+	log.Info().Msgf("Authenticated Merchant: %v", merchantId)
 	walletService := wallet.NewWalletService(r.Database, r.TurnkeyService)
 	var usePaymaster bool
 	switch os.Getenv("USE_PAYMASTER") {
@@ -49,7 +51,7 @@ func (r *mutationResolver) AddSubscription(ctx context.Context, input model.NewS
 	default:
 		usePaymaster = false
 	}
-	validationData, userOp, err := walletService.AddSubscription(merchant.ID,input, usePaymaster, common.Big0, int64(input.Chain))
+	validationData, userOp, err := walletService.AddSubscription(merchantId,input, usePaymaster, common.Big0, int64(input.Chain))
 	if err != nil {
 		return nil, err
 	}
