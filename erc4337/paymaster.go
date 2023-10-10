@@ -76,20 +76,20 @@ func (nc *Client) RequestGasAndPaymasterAndData(policyId, entryPoint, dummySigna
 	}
 
 	// add 130098856
-	var maxFee, maxPriorityFee *big.Int
+	// var maxFee, maxPriorityFee *big.Int
 
-	mxFee, _ := new(big.Int).SetString(result.MaxFeePerGas, 16)
-	maxFeex := new(big.Int).Mul(mxFee, big.NewInt(10))
-	maxFee = new(big.Int).Div(maxFeex, big.NewInt(7))
+	maxFeePerGasBig, _ := new(big.Int).SetString(result.MaxFeePerGas, 0)
+	_maxFeePerGas := new(big.Int).Mul(maxFeePerGasBig, big.NewInt(10))
+	maxFeePerGas := new(big.Int).Div(_maxFeePerGas, big.NewInt(7))
 
-	mxPriorityFee, _ := new(big.Int).SetString(result.MaxPriorityFeePerGas, 16)
-	maxPriorityFeex := new(big.Int).Mul(mxPriorityFee, big.NewInt(10))
-	maxPriorityFee = new(big.Int).Div(maxPriorityFeex, big.NewInt(7))
+	maxPriorityFeeBig, _ := new(big.Int).SetString(result.MaxPriorityFeePerGas, 0)
+	_maxPriorityFee := new(big.Int).Mul(maxPriorityFeeBig, big.NewInt(10))
+	maxPriorityFee := new(big.Int).Div(_maxPriorityFee, big.NewInt(7))
 
 	// maxFee := new(big.Int).SetBytes(hexutil.MustDecode(result.MaxFeePerGas)).Add(big.NewInt(130098856))
 	// maxPriorityFee := new(big.Int).SetBytes(hexutil.MustDecode(result.MaxPriorityFeePerGas)).Add(big.NewInt(130098856))
 
-	result.MaxFeePerGas = hexutil.EncodeBig(maxFee)
+	result.MaxFeePerGas = hexutil.EncodeBig(maxFeePerGas)
 	result.MaxPriorityFeePerGas = hexutil.EncodeBig(maxPriorityFee)
 	fmt.Println("alchemy_requestGasAndPaymasterAndData - ", result)
 	return result, nil
