@@ -3,6 +3,7 @@ package merchant
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -31,7 +32,7 @@ func (m *MerchantService) Middleware() func(http.Handler) http.Handler {
 			// privateKeyValue := r.Header.Get("Private-Key")
 			signature := r.Header.Get("X-Lucid-Request-Signature")
 			requestHash := r.Header.Get("Lucid-Request-Hash")
-			hash, err := hexutil.Decode(requestHash)
+			hash, err := hexutil.Decode(fmt.Sprintf("0x%v", requestHash))
 			if err != nil {
 				log.Err(err).Send()
 				next.ServeHTTP(w, r)
