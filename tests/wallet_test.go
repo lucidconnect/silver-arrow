@@ -9,6 +9,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/google/uuid"
 	"github.com/helicarrierstudio/silver-arrow/erc4337"
 	"github.com/helicarrierstudio/silver-arrow/graphql/wallet/graph/model"
 	"github.com/helicarrierstudio/silver-arrow/repository"
@@ -47,7 +48,7 @@ func TestAddSubscription(t *testing.T) {
 	}
 
 	chain := int64(newSub.Chain)
-	_, op, err := ws.AddSubscription(newSub, usePaymaster, big.NewInt(0), chain)
+	_, op, err := ws.AddSubscription(uuid.New(), newSub, usePaymaster, big.NewInt(0), chain)
 	if !assert.NoError(t, err) {
 		t.FailNow()
 	}

@@ -3,8 +3,10 @@ package merchant
 import (
 	"encoding/base64"
 	"fmt"
-	"log"
 	"strings"
+
+	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 	"time"
 
 	"github.com/google/uuid"
@@ -13,28 +15,8 @@ import (
 	"github.com/helicarrierstudio/silver-arrow/repository/models"
 )
 
-// type MerchantService struct {
-// 	repository      repository.Database
-// 	client          *ethclient.Client
-// 	ContractAddress common.Address
-// }
-
-// func NewMerchantService(r repository.Database) *MerchantService {
-// 	address := os.Getenv("LUCID_MERCHANT")
-// 	return &MerchantService{
-// 		repository:      r,
-// 		ContractAddress: common.HexToAddress(address),
-// 	}
-// }
-
 func (m *MerchantService) CreateProduct(input model.NewProduct) (*model.Product, error) {
 	id := uuid.New()
-
-	// pk, privKey, err := auth.CreateAccessKey()
-	// if err != nil {
-	// 	err = errors.Wrap(err, "an error occured while creating access key")
-	// 	return nil, err
-	// }
 
 	merchant, err := m.repository.FetchMerchantByAddress(input.Owner)
 	if err != nil {
@@ -52,6 +34,7 @@ func (m *MerchantService) CreateProduct(input model.NewProduct) (*model.Product,
 		CreatedAt:      time.Now(),
 	}
 	if err := m.repository.CreateProduct(product); err != nil {
+		log.Err(err).Send()
 		return nil, err
 	}
 
@@ -71,6 +54,7 @@ func (m *MerchantService) FetchProductsByOwner(owner string) ([]*model.Product, 
 	var products []*model.Product
 	ms, err := m.repository.FetchProductsByOwner(owner)
 	if err != nil {
+		log.Err(err).Send()
 		return nil, err
 	}
 
@@ -78,7 +62,8 @@ func (m *MerchantService) FetchProductsByOwner(owner string) ([]*model.Product, 
 		ProductID, _ := Base64EncodeUUID(v.ID)
 		subscriptions, err := fetchMerchantSubscriptions(m.repository, ProductID)
 		if err != nil {
-			log.Println(err)
+			log.Err(err).Send()
+			continue
 		}
 		product := &model.Product{
 			Name:             v.Name,
@@ -97,6 +82,7 @@ func fetchMerchantSubscriptions(repo repository.Database, merchant string) ([]*m
 	var subscriptions []*model.Sub
 	subs, err := repo.FindSubscriptionByProduct(merchant)
 	if err != nil {
+		log.Err(err).Send()
 		return nil, err
 	}
 
@@ -135,6 +121,7 @@ func (m *MerchantService) FetchProduct(pid string) (*model.Product, error) {
 func Base64EncodeUUID(id uuid.UUID) (string, error) {
 	b, err := id.MarshalBinary()
 	if err != nil {
+		err = errors.Wrap(err, "marshalling uuid failed")
 		return "", err
 	}
 	return base64.RawURLEncoding.EncodeToString(b), nil

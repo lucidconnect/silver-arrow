@@ -2,11 +2,12 @@ package tests
 
 import (
 	"fmt"
-	"log"
 	"math/big"
 	"os"
 	"reflect"
 	"testing"
+
+	"github.com/rs/zerolog/log"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -27,11 +28,11 @@ var (
 func TestMain(m *testing.M) {
 	var err error
 	if err = godotenv.Load("../.env.test"); err != nil {
-		log.Fatal(err)
+		log.Fatal().Err(err)
 	}
 	db, err = repository.SetupDatabase(nil)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal().Err(err)
 	}
 
 	// seedWalletsTable(db)
@@ -41,7 +42,7 @@ func TestMain(m *testing.M) {
 
 	nodeClient, err = erc4337.Dial(nodeUrl, paymasterUrl)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal().Err(err)
 	}
 
 	exitVal := m.Run()
@@ -61,15 +62,15 @@ func seedWalletsTable(db *gorm.DB) {
 	q := "INSERT INTO wallets (id, email, signer_address, wallet_address, turnkey_sub_org_id, turnkey_sub_org_name) VALUES (0, 'gb@backdrop.photo', '0x85fc2E4425d0DAba7426F50091a384ee05D37Cd2', '0x6a6F07c5c32F5fb20393a2110B2Bf0925e59571b','123','random-123')"
 
 	if err := db.Exec(q).Error; err != nil {
-		log.Fatal("unable to insert wallet")
+		log.Fatal().Err(err)
 	}
 }
 
 func clearTables(db *gorm.DB) {
 	for _, table := range []interface{}{&models.Subscription{}, &models.Key{}, &models.Wallet{}} {
-		log.Printf("Clearing %v table", getType(table))
+		log.Info().Msgf("Clearing %v table", getType(table))
 		if err := db.Where("TRUE").Delete(table).Error; err != nil {
-			log.Fatal(err)
+		log.Fatal().Err(err)
 		}
 	}
 }

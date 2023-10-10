@@ -3,10 +3,11 @@ package erc4337
 import (
 	"context"
 	"fmt"
-	"log"
 	"math/big"
 	"os"
 	"time"
+
+	"github.com/rs/zerolog/log"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -69,7 +70,7 @@ func Dial(url, paymasterUrl string) (*Client, error) {
 
 	client, err := ethclient.Dial(url)
 	if err != nil {
-		log.Fatal("Oops! Something went wrong ", err)
+		log.Fatal().Err(err).Msg("Oops! Something went wrong ")
 		return nil, err
 	}
 
@@ -77,7 +78,7 @@ func Dial(url, paymasterUrl string) (*Client, error) {
 		fmt.Println("initialising with a paymaster")
 		paymasterClient, err = ethclient.Dial(paymasterUrl)
 		if err != nil {
-			log.Fatal("Oops! Something went wrong ", err)
+			log.Fatal().Err(err).Msg("Oops! Something went wrong ")
 			return nil, err
 		}
 	}
@@ -154,11 +155,8 @@ func (nc *Client) SendUserOperation(entryPoint string, userop map[string]any) (s
 	initCode, _ := userop["initCode"].(string)
 	callGasLimit, _ := userop["callGasLimit"].(string)
 	verificationGasLimit, _ := userop["verificationGasLimit"].(string)
-	preVerificationGas, ok := userop["preVerificationGas"].(string)
-	if !ok {
-		log.Panic(userop["preVerificationGas"])
-	}
-
+	preVerificationGas, _ := userop["preVerificationGas"].(string)
+	
 	maxFeePerGas, _ := userop["maxFeePerGas"].(string)
 	maxPriorityFeePerGas, _ := userop["maxPriorityFeePerGas"].(string)
 	paymasterAndData, _ := userop["paymasterAndData"].(string)
@@ -209,10 +207,8 @@ func (nc *Client) EstimateUserOperationGas(entrypointAddress string, userop map[
 	initCode, _ := userop["initCode"].(string)
 	callGasLimit, _ := userop["callGasLimit"].(string)
 	verificationGasLimit, _ := userop["verificationGasLimit"].(string)
-	preVerificationGas, ok := userop["preVerificationGas"].(string)
-	if !ok {
-		log.Panic(userop["preVerificationGas"])
-	}
+	preVerificationGas, _ := userop["preVerificationGas"].(string)
+	
 
 	maxFeePerGas, _ := userop["maxFeePerGas"].(string)
 	maxPriorityFeePerGas, _ := userop["maxPriorityFeePerGas"].(string)

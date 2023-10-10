@@ -80,3 +80,16 @@ func TestExecuteFnSignature(t *testing.T) {
 	methodId := data[:4]
 	assert.Equal(t, "0xb61d27f6", hexutil.Encode(methodId))
 }
+
+// func TestGasFee(t *testing.T) {
+// 	maxFeePerGasHex := "29260CA6A"
+// 	maxFeePerGasBig, ok := new(big.Int).SetString(maxFeePerGasHex, 16)
+// 	if !ok {
+// 		t.Fail()
+// 	}
+// 	fmt.Println(maxFeePerGasBig)
+// 	_maxFeePerGas := new(big.Int).Mul(maxFeePerGasBig, big.NewInt(10))
+// 	maxFeePerGas := new(big.Int).Div(_maxFeePerGas, big.NewInt(7))
+// 	fmt.Println("adjusted maxFeePerGas", maxFeePerGas)
+
+// }

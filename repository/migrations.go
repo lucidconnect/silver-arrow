@@ -1,10 +1,9 @@
 package repository
 
 import (
-	"log"
-
 	"github.com/go-gormigrate/gormigrate/v2"
 	"github.com/helicarrierstudio/silver-arrow/repository/migrations"
+	"github.com/rs/zerolog/log"
 )
 
 func (db *DB) RunMigrations() {
@@ -13,6 +12,6 @@ func (db *DB) RunMigrations() {
 	})
 
 	if err := migrator.Migrate(); err != nil {
-		log.Fatalf("Unable to run migrations: %v", err)
+		log.Err(err).Msg("Unable to run migrations")
 	}
 }

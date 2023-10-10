@@ -2,9 +2,9 @@ package turnkey
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
-	"log"
+
+	"github.com/pkg/errors"
 )
 
 type SignRawPayloadResult struct {
@@ -58,13 +58,13 @@ func GetPrivateKeyIdFromResult(result map[string]any) (privateKeyId, address str
 
 	privateKeyB, err := json.Marshal(privateKeyI)
 	if err != nil {
-		log.Println(err)
+		err = errors.Wrap(err, "marshalling turnkey createPrivateKeysResult interface failed")
 		return "", "", err
 	}
 
 	err = json.Unmarshal(privateKeyB, &privateKeyResult)
 	if err != nil {
-		log.Println(err)
+		err = errors.Wrap(err, "failed to unmarshall turnkey createPrivateKeysResult interface into struct")
 		return "", "", err
 	}
 

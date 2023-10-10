@@ -3,7 +3,6 @@ package erc4337
 import (
 	"crypto/rand"
 	"fmt"
-	"log"
 	"math/big"
 	"os"
 
@@ -69,7 +68,7 @@ func (b *ERCBundler) CreateUnsignedUserOperation(sender string, initCode, callDa
 	}
 
 	if sponsored {
-		policyId := "2e865ced-98e5-4265-a20e-b46c695a28bd"
+		policyId := os.Getenv("POLICY_ID")
 		paymaster, err = b.client.RequestGasAndPaymasterAndData(policyId, b.EntryPoint, hexutil.Encode(tok), o)
 		if err != nil {
 			err = errors.Wrap(err, "call to sponsor user op failed")
@@ -79,13 +78,13 @@ func (b *ERCBundler) CreateUnsignedUserOperation(sender string, initCode, callDa
 		callGasLimit = paymaster.CallGasLimit
 		verificationGas = hexutil.EncodeBig(getVerificationGasLimit())
 		xy := hexutil.MustDecode(paymaster.VerificationGasLimit)
-		fmt.Printf("paymaster returned verification gas limit - %v", new(big.Int).SetBytes(xy) )
+		fmt.Printf("paymaster returned verification gas limit - %v", new(big.Int).SetBytes(xy))
 		// verificationGas = paymaster.VerificationGasLimit
 		// preVerificationGas = hexutil.EncodeBig(getPreVerificationGas())
 		maxPriorityFeePerGas = paymaster.MaxPriorityFeePerGas
 		preVerificationGas = paymaster.PreVerificationGas
 		maxFeePerGas = paymaster.MaxFeePerGas
-		paymasterAndData = "0x"
+		paymasterAndData = paymaster.PaymasterAndData
 	} else {
 		fmt.Println("not using paymaster")
 		o["callGasLimit"] = "0x16710"
@@ -151,7 +150,7 @@ func SignUserOp(op map[string]any, key, mode string, merchantId []byte, chain in
 
 	kb, err := hexutil.Decode(key)
 	if err != nil {
-		log.Println("SignUserOp() - ", err)
+		// log.Err(err).Msg("SignUserOp() - ")
 		err = errors.Wrap(err, "SignUserOp() - ")
 		return nil, nil, err
 	}

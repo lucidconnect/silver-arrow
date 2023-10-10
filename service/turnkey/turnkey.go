@@ -6,9 +6,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
+	"time"
+
+	"github.com/rs/zerolog/log"
 
 	"github.com/pkg/errors"
 	tk "github.com/tkhq/go-sdk"
@@ -45,7 +47,6 @@ func NewTurnKeyService() (*TurnkeyService, error) {
 	host := os.Getenv("TURNKEY_HOST")
 	client, err := initTurnkeyClient()
 	if err != nil {
-		log.Println(err, "unable to initialise Turnkey client")
 		return nil, err
 	}
 	return &TurnkeyService{
@@ -81,8 +82,7 @@ func initTurnkeyClient() (*tk.Client, error) {
 	// client, err := tk.New(keyPath)
 	client, err := initKeys(keyPath, keyDir)
 	if err != nil {
-		err = errors.Wrap(err, "tk.New()")
-		log.Println(err)
+		err = errors.Wrap(err, "initTurnkeyClient() failed to create a new api client")
 		return nil, err
 	}
 
@@ -93,7 +93,7 @@ func initTurnkeyClient() (*tk.Client, error) {
 
 	resp, err := client.V0().WhoAmi.PublicAPIServiceGetWhoami(p, client.Authenticator)
 	if err != nil {
-		err = errors.Wrap(err, "PublicAPIServiceGetWhoami()")
+		err = errors.Wrap(err, "initTurnkeyClient() failed to turnkey public api service")
 		return nil, err
 	}
 
@@ -108,22 +108,24 @@ func (tk *TurnkeyService) CreatePrivateKeyTag(orgId, keyTag string) (string, err
 	}
 
 	privateKeyIds := []string{}
-	privateKeyTagRequest := newPrivateKeyTagRequest(orgId, keyTag, privateKeyIds)
 	apiKey := tk.TurnkeyClient.APIKey
 	path := "/public/v1/submit/create_private_key_tag"
 
-	payload, err := json.Marshal(privateKeyTagRequest)
+	payload, err := newPrivateKeyTagRequest(orgId, keyTag, privateKeyIds)
 	if err != nil {
+		log.Err(err).Caller().Msg("failed to marshall private key tag request")
 		return "", err
 	}
 
 	stamp, err := apikey.Stamp(payload, apiKey)
 	if err != nil {
+		log.Err(err).Caller().Send()
 		return "", err
 	}
 
 	response, err := tk.makeRequest(path, stamp, payload)
 	if err != nil {
+		log.Err(err).Caller().Send()
 		return "", err
 	}
 
@@ -132,22 +134,24 @@ func (tk *TurnkeyService) CreatePrivateKeyTag(orgId, keyTag string) (string, err
 }
 
 func (tk *TurnkeyService) CreatePrivateKey(orgId, name, tag string) (string, error) {
-	log.Println(orgId)
+	log.Debug().Msgf("creating private key for orgId %v", orgId)
 
 	if orgId == "" {
 		orgId = *tk.TurnkeyClient.DefaultOrganization()
 	}
-	keyRequest := newEthereumPrivateKeyRequest(orgId, name, tag)
+
 	apiKey := tk.TurnkeyClient.APIKey
 	path := "/public/v1/submit/create_private_keys"
 
-	payload, err := json.Marshal(keyRequest)
+	payload, err := newEthereumPrivateKeyRequest(orgId, name, tag)
 	if err != nil {
+		log.Err(err).Caller().Send()
 		return "", err
 	}
 
 	stamp, err := apikey.Stamp(payload, apiKey)
 	if err != nil {
+		log.Err(err).Caller().Send()
 		return "", err
 	}
 
@@ -165,20 +169,21 @@ func (tk *TurnkeyService) CreateSubOrganization(orgId, subOrgName string) (strin
 	}
 	apiKey := tk.TurnkeyClient.APIKey
 	path := "/public/v1/submit/create_sub_organization"
-	subOrganizationRequest := newSubOrganizationRequest(orgId, subOrgName)
 
-	payload, err := json.Marshal(subOrganizationRequest)
+	payload, err := newSubOrganizationRequest(orgId, subOrgName)
 	if err != nil {
 		return "", err
 	}
 
 	stamp, err := apikey.Stamp(payload, apiKey)
 	if err != nil {
+		log.Err(err).Caller().Send()
 		return "", err
 	}
 
 	response, err := tk.makeRequest(path, stamp, payload)
 	if err != nil {
+		log.Err(err).Caller().Send()
 		return "", err
 	}
 
@@ -189,22 +194,25 @@ func (tk *TurnkeyService) SignMessage(orgId, privateKeyId, message string) (stri
 	if orgId == "" {
 		orgId = *tk.TurnkeyClient.DefaultOrganization()
 	}
-	signatureRequest := newSignPayloadRequest(orgId, privateKeyId, message)
+
 	apiKey := tk.TurnkeyClient.APIKey
 	path := "/public/v1/submit/sign_raw_payload"
 
-	payload, err := json.Marshal(signatureRequest)
+	payload, err := newSignPayloadRequest(orgId, privateKeyId, message)
 	if err != nil {
+		log.Err(err).Caller().Send()
 		return "", err
 	}
 
 	stamp, err := apikey.Stamp(payload, apiKey)
 	if err != nil {
+		log.Err(err).Caller().Send()
 		return "", err
 	}
 
 	response, err := tk.makeRequest(path, stamp, payload)
 	if err != nil {
+		log.Err(err).Caller().Send()
 		return "", err
 	}
 
@@ -212,25 +220,29 @@ func (tk *TurnkeyService) SignMessage(orgId, privateKeyId, message string) (stri
 }
 
 func (tk *TurnkeyService) GetActivity(orgId, activityId string) (map[string]any, error) {
+	time.Sleep(time.Second) // not ideal, should be improved
 	if orgId == "" {
 		orgId = *tk.TurnkeyClient.DefaultOrganization()
 	}
-	activityRequest := newActivityPollRequest(orgId, activityId)
+
 	apiKey := tk.TurnkeyClient.APIKey
 	path := "/public/v1/query/get_activity"
 
-	payload, err := json.Marshal(activityRequest)
+	payload, err := newActivityPollRequest(orgId, activityId)
 	if err != nil {
+		log.Err(err).Caller().Send()
 		return nil, err
 	}
 
 	stamp, err := apikey.Stamp(payload, apiKey)
 	if err != nil {
+		log.Err(err).Caller().Send()
 		return nil, err
 	}
 
 	response, err := tk.makeRequest(path, stamp, payload)
 	if err != nil {
+		log.Err(err).Caller().Send()
 		return nil, err
 	}
 
@@ -246,7 +258,6 @@ func (tk *TurnkeyService) makeRequest(path, stamp string, payload []byte) (*Turn
 
 	responseBodyBytes, err := io.ReadAll(response.Body)
 	if err != nil {
-		log.Println(err)
 		errMsg := &ResponseError{
 			Code: response.StatusCode,
 			Text: response.Status,
@@ -265,7 +276,7 @@ func (tk *TurnkeyService) makeRequest(path, stamp string, payload []byte) (*Turn
 
 	err = json.Unmarshal(responseBodyBytes, &parsedResponse)
 	if err != nil {
-		fmt.Println(err)
+		err = errors.Wrap(err, "failed to encode turnkey response")
 		return nil, err
 	}
 	return parsedResponse, nil

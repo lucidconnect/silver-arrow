@@ -24,13 +24,14 @@ type NewSubscription struct {
 }
 
 type SubscriptionData struct {
-	ID              string `json:"id"`
-	Token           string `json:"token"`
-	Amount          int    `json:"amount"`
-	Interval        int    `json:"interval"`
-	MerchantID      string `json:"merchantId"`
-	WalletAddress   string `json:"walletAddress"`
-	SubscriptionKey string `json:"subscriptionKey"`
+	ID              string  `json:"id"`
+	Token           string  `json:"token"`
+	Amount          int     `json:"amount"`
+	Interval        int     `json:"interval"`
+	MerchantID      string  `json:"merchantId"`
+	WalletAddress   string  `json:"walletAddress"`
+	SubscriptionKey string  `json:"subscriptionKey"`
+	CreatedAt       *string `json:"createdAt,omitempty"`
 }
 
 type SubscriptionValidation struct {

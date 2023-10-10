@@ -4,12 +4,12 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/helicarrierstudio/silver-arrow/repository/models"
+	"github.com/rs/zerolog/log"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -28,7 +28,7 @@ func SetupDatabase(dbconn *sql.DB) (*gorm.DB, error) {
 
 	// ...
 	if err = db.AutoMigrate(models.Wallet{}, models.Merchant{}, models.Key{}, models.Subscription{}, models.Product{}); err != nil {
-		log.Fatal("Error migrating database models")
+		log.Fatal().Err(err).Msg("Error migrating database models")
 	}
 	// db.Model(&models.Subscription{}).
 	// 	Exec(createForeignKeyIfNotExistsQuery("subscriptions", "wallets", "wallet_address", "wallet_address"))
@@ -95,7 +95,12 @@ func (p *DB) DeactivateSubscription(id uint) error {
 	return p.Db.Where("id = ?", id).UpdateColumn("active", false).Error
 }
 
-func (p *DB) UpdateSubscription(id uint) error {
+func (p *DB) UpdateSubscription(id uuid.UUID, update map[string]interface{}) error {
+	var subscription *models.Subscription
+
+	if err := p.Db.Model(&subscription).Where("id = ?", id).Updates(update).Error; err != nil {
+		return err
+	}
 	return errors.New("unimplemented")
 }
 

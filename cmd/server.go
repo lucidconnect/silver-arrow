@@ -1,18 +1,19 @@
 package main
 
 import (
-	"log"
 	"net/http"
 	"os"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/go-chi/chi"
+	"gorm.io/gorm"
 
 	merchant_graph "github.com/helicarrierstudio/silver-arrow/graphql/merchant/graph"
 	merchant_generated "github.com/helicarrierstudio/silver-arrow/graphql/merchant/graph/generated"
 	wallet_graph "github.com/helicarrierstudio/silver-arrow/graphql/wallet/graph"
 	wallet_generated "github.com/helicarrierstudio/silver-arrow/graphql/wallet/graph/generated"
+	"github.com/helicarrierstudio/silver-arrow/logger"
 	"github.com/helicarrierstudio/silver-arrow/repository"
 	"github.com/helicarrierstudio/silver-arrow/service/merchant"
 	"github.com/helicarrierstudio/silver-arrow/service/scheduler"
@@ -21,20 +22,22 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/robfig/cron/v3"
 	"github.com/rs/cors"
+	"github.com/rs/zerolog/log"
 )
 
 const defaultPort = "8080"
 
+var (
+	db *gorm.DB
+)
+
 func main() {
-	loadEnv()
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = defaultPort
-	}
-	db, err := repository.SetupDatabase(nil)
-	if err != nil {
-		log.Println(err)
-	}
+	bootstrap()
+
+	// db, err := repository.SetupDatabase(nil)
+	// if err != nil {
+	// 	log.Println(err)
+	// }
 	router := chi.NewRouter()
 	loadCORS(router)
 
@@ -42,7 +45,7 @@ func main() {
 	database.RunMigrations()
 	tunkeyService, err := turnkey.NewTurnKeyService()
 	if err != nil {
-		log.Panic(err)
+		log.Panic().Err(err).Send()
 	}
 	walletService := wallet.NewWalletService(database, tunkeyService)
 	merchantService := merchant.NewMerchantService(database)
@@ -52,8 +55,9 @@ func main() {
 	jobRunner := scheduler.NewScheduler(database, walletService)
 	setupJobs(jobRunner)
 	walletSrv := handler.NewDefaultServer(wallet_generated.NewExecutableSchema(wallet_generated.Config{Resolvers: &wallet_graph.Resolver{
-		Database: database,
-		Cache:    repository.NewMCache(),
+		Cache:          repository.NewMCache(),
+		Database:       database,
+		TurnkeyService: tunkeyService,
 	}}))
 
 	merchantSrv := handler.NewDefaultServer(merchant_generated.NewExecutableSchema(merchant_generated.Config{Resolvers: &merchant_graph.Resolver{
@@ -65,31 +69,52 @@ func main() {
 	router.Handle("/query", walletSrv)
 	router.Handle("/merchant/query", merchantSrv)
 
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = defaultPort
+	}
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
-	log.Fatal(http.ListenAndServe(":"+port, router))
+	if err := http.ListenAndServe(":"+port, router); err != nil {
+		log.Fatal().Err(err).Msg("unable to start the server")
+	}
+	log.Fatal()
 }
 
-func loadEnv() {
-	env := os.Getenv("APP_ENV")
+func bootstrap() {
+	var err error
+	app := os.Getenv("APP_ENV")
+	loadEnv(app)
+	if app == "staging" || app == "production" {
+		logger.SetUpLoggerFromConfig(app)
+	} else {
+		logger.SetUpDefaultLogger()
+	}
+	db, err = repository.SetupDatabase(nil)
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed to establish a database connection")
+	}
 
-	switch env {
+}
+
+func loadEnv(app string) {
+	switch app {
 	case "development":
 		log.Print("Loading configurations...Development")
 		err := godotenv.Load(".env.development.local")
 		if err != nil {
-			log.Fatal("Error loading .env file")
+			log.Fatal().Err(err).Msg("Error loading .env file")
 		}
 	case "test":
 		log.Print("Loading configurations...Test")
 		err := godotenv.Load(".env.test.local")
 		if err != nil {
-			log.Fatal("Error loading .env file")
+			log.Fatal().Err(err).Msg("Error loading .env file")
 		}
 	}
 }
 
 func setupJobs(runner *scheduler.Scheduler) {
-	log.Println("Setting up jobs...")
+	log.Print("Setting up jobs...")
 	c := cron.New(
 		cron.WithChain(
 			cron.Recover(cron.DefaultLogger),

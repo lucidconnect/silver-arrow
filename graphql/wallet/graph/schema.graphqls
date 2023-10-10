@@ -50,6 +50,7 @@ type SubscriptionData {
   merchantId: String!
 	walletAddress: String!
   subscriptionKey: String!
+  createdAt: String
 }
 
 scalar Time
