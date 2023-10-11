@@ -6,6 +6,7 @@ type Query {
   fetchOneProduct(id: String!): Product!
   fetchProducts(owner: String!): [Product!]!
   fetchMerchantKey(owner: String!): String!
+  fetchMerchantStats(owner: String!): MerchantStats!
 }
 
 type Mutation {
@@ -52,4 +53,9 @@ type AccessKey {
   privateKey: String!
 }
 
+type MerchantStats {
+  users: Int!
+  products: Int!
+  subscriptions: Int!
+}
 scalar Time

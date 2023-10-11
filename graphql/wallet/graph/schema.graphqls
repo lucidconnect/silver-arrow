@@ -27,6 +27,7 @@ input NewSubscription {
 	token: String!
 	amount: Int!
 	interval: Int!
+  productId: String!
   merchantId: String!
 	walletAddress: String!
   ownerAddress: String!

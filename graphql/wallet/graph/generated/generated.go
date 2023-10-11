@@ -357,6 +357,7 @@ input NewSubscription {
 	token: String!
 	amount: Int!
 	interval: Int!
+  productId: String!
   merchantId: String!
 	walletAddress: String!
   ownerAddress: String!
@@ -3183,7 +3184,7 @@ func (ec *executionContext) unmarshalInputNewSubscription(ctx context.Context, o
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"chain", "nextChargeAt", "token", "amount", "interval", "merchantId", "walletAddress", "ownerAddress"}
+	fieldsInOrder := [...]string{"chain", "nextChargeAt", "token", "amount", "interval", "productId", "merchantId", "walletAddress", "ownerAddress"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -3235,6 +3236,15 @@ func (ec *executionContext) unmarshalInputNewSubscription(ctx context.Context, o
 				return it, err
 			}
 			it.Interval = data
+		case "productId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("productId"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ProductID = data
 		case "merchantId":
 			var err error
 

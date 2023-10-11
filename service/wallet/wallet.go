@@ -18,6 +18,7 @@ import (
 	"github.com/helicarrierstudio/silver-arrow/graphql/wallet/graph/model"
 	"github.com/helicarrierstudio/silver-arrow/repository"
 	"github.com/helicarrierstudio/silver-arrow/repository/models"
+	"github.com/helicarrierstudio/silver-arrow/service/merchant"
 	"github.com/helicarrierstudio/silver-arrow/service/turnkey"
 	"github.com/pkg/errors"
 	"github.com/rmanzoku/ethutils/ecrecover"
@@ -181,6 +182,13 @@ func (ws *WalletService) AddSubscription(merchantId uuid.UUID, input model.NewSu
 		log.Err(err).Msgf("failed to fetch private key tag for wallet - %v", input.WalletAddress)
 		return nil, nil, err
 	}
+
+	id := merchant.ParseUUID(input.ProductID)
+
+	product, err := ws.database.FetchProduct(id)
+	if err != nil {
+		log.Err(err).Msg("failed to fetch product")
+	}
 	randomSalt := randKey(4)
 	keyName := fmt.Sprintf("sub-%v-%v", randomSalt, input.MerchantID)
 	activityId, err := ws.turnkey.CreatePrivateKey(orgId, keyName, tagId)
@@ -254,18 +262,19 @@ func (ws *WalletService) AddSubscription(merchantId uuid.UUID, input model.NewSu
 	}
 
 	sub := &models.Subscription{
-		Token:         input.Token,
-		Amount:        amount.Int64(),
-		Active:        false,
-		Interval:      interval.Nanoseconds(),
-		UserOpHash:    opHash.Hex(),
-		MerchantId:    merchantId.String(),
-		NextChargeAt:  nextChargeAt,
-		ExpiresAt:     nextChargeAt,
-		WalletID:      walletID,
-		WalletAddress: input.WalletAddress,
-		Chain:         chain,
-		Key:           *key,
+		Token:                  input.Token,
+		Amount:                 amount.Int64(),
+		Active:                 false,
+		Interval:               interval.Nanoseconds(),
+		UserOpHash:             opHash.Hex(),
+		MerchantId:             merchantId.String(),
+		MerchantDepositAddress: product.DepositAddress,
+		NextChargeAt:           nextChargeAt,
+		ExpiresAt:              nextChargeAt,
+		WalletID:               walletID,
+		WalletAddress:          input.WalletAddress,
+		Chain:                  chain,
+		Key:                    *key,
 	}
 
 	err = ws.database.AddSubscription(sub, key)

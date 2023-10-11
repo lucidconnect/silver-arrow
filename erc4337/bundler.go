@@ -1,9 +1,11 @@
 package erc4337
 
 import (
-	"fmt"
+	"math/big"
 
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 )
 
 func (nc *Client) GetMaxPriorityFee() (string, error) {
@@ -15,6 +17,9 @@ func (nc *Client) GetMaxPriorityFee() (string, error) {
 		return "", err
 	}
 
-	fmt.Println("rundler_maxPriorityFeePerGas - ", result)
-	return result, nil
+	log.Debug().Msgf("rundler_maxPriorityFeePerGas - %v", result)
+	maxPriorityFeeBig, _ := new(big.Int).SetString(result, 0)
+	maxPriorityFee := new(big.Int).Mul(maxPriorityFeeBig, big.NewInt(2))
+	log.Debug().Msgf("adjusted maxPriorityFeePerGas - %v", maxPriorityFee)
+	return hexutil.EncodeBig(maxPriorityFee), nil
 }

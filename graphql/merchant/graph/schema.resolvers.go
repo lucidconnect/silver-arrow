@@ -70,6 +70,16 @@ func (r *queryResolver) FetchMerchantKey(ctx context.Context, owner string) (str
 	return result, nil
 }
 
+// FetchMerchantStats is the resolver for the fetchMerchantStats field.
+func (r *queryResolver) FetchMerchantStats(ctx context.Context, owner string) (*model.MerchantStats, error) {
+	merchantService := merchant.NewMerchantService(r.Database)
+	stats, err := merchantService.SummarizeMerchant(owner)
+	if err != nil {
+		return nil, err
+	}
+	return stats, nil
+}
+
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
 

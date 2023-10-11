@@ -18,6 +18,7 @@ type NewSubscription struct {
 	Token         string     `json:"token"`
 	Amount        int        `json:"amount"`
 	Interval      int        `json:"interval"`
+	ProductID     string     `json:"productId"`
 	MerchantID    string     `json:"merchantId"`
 	WalletAddress string     `json:"walletAddress"`
 	OwnerAddress  string     `json:"ownerAddress"`

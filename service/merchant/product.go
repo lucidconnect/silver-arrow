@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"strings"
 
+	"time"
+
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/helicarrierstudio/silver-arrow/graphql/merchant/graph/model"
-	"github.com/helicarrierstudio/silver-arrow/repository"
 	"github.com/helicarrierstudio/silver-arrow/repository/models"
 )
 
@@ -60,7 +60,7 @@ func (m *MerchantService) FetchProductsByOwner(owner string) ([]*model.Product, 
 
 	for _, v := range ms {
 		ProductID, _ := Base64EncodeUUID(v.ID)
-		subscriptions, err := fetchMerchantSubscriptions(m.repository, ProductID)
+		subscriptions, err := parseMerchantSubscriptions(v.Subscriptions)
 		if err != nil {
 			log.Err(err).Send()
 			continue
@@ -78,13 +78,8 @@ func (m *MerchantService) FetchProductsByOwner(owner string) ([]*model.Product, 
 	return products, nil
 }
 
-func fetchMerchantSubscriptions(repo repository.Database, merchant string) ([]*model.Sub, error) {
+func parseMerchantSubscriptions(subs []models.Subscription) ([]*model.Sub, error) {
 	var subscriptions []*model.Sub
-	subs, err := repo.FindSubscriptionByProduct(merchant)
-	if err != nil {
-		log.Err(err).Send()
-		return nil, err
-	}
 
 	for _, sub := range subs {
 		subscription := &model.Sub{

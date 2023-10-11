@@ -6,6 +6,7 @@ import (
 	"github.com/helicarrierstudio/silver-arrow/graphql/merchant/graph/model"
 	"github.com/helicarrierstudio/silver-arrow/repository"
 	"github.com/helicarrierstudio/silver-arrow/repository/models"
+	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 )
 
@@ -22,6 +23,7 @@ func NewMerchantService(r repository.Database) *MerchantService {
 func (m *MerchantService) CreateAccessKeys(owner string) (*model.AccessKey, error) {
 	pk, sk, err := auth.CreateAccessKey()
 	if err != nil {
+		log.Err(err).Send()
 		return nil, err
 	}
 
@@ -41,14 +43,17 @@ func (m *MerchantService) CreateAccessKeys(owner string) (*model.AccessKey, erro
 			}
 			err := m.repository.AddMerchant(merchant)
 			if err != nil {
+				log.Err(err).Send()
 				return nil, err
 			}
 		} else {
+			log.Err(err).Send()
 			return nil, err
 		}
 	} else {
 		err = m.repository.UpdateMerchantKey(merchant.ID, pk)
 		if err != nil {
+			log.Err(err).Send()
 			return nil, err
 		}
 	}
@@ -56,10 +61,34 @@ func (m *MerchantService) CreateAccessKeys(owner string) (*model.AccessKey, erro
 }
 
 func (m *MerchantService) FetchMerchantKey(owner string) (string, error) {
-	merchant , err := m.repository.FetchMerchantByAddress(owner)
+	merchant, err := m.repository.FetchMerchantByAddress(owner)
 	if err != nil {
+		log.Err(err).Send()
 		return "", err
 	}
 
 	return merchant.PublicKey, nil
+}
+
+func (m *MerchantService) SummarizeMerchant(owner string) (*model.MerchantStats, error) {
+	var totalSubscriptions, totalUsers int
+	products, err := m.repository.FetchProductsByOwner(owner)
+	if err != nil {
+		log.Err(err).Send()
+		return nil, err
+	}
+
+	nProduct := len(products)
+
+	for _, product := range products {
+		subs := len(product.Subscriptions)
+		totalSubscriptions += subs
+	}
+	totalUsers = totalSubscriptions
+	stats := &model.MerchantStats{
+		Users:         totalUsers,
+		Products:      nProduct,
+		Subscriptions: totalSubscriptions,
+	}
+	return stats, nil
 }

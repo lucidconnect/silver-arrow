@@ -161,7 +161,7 @@ func (p *DB) FetchProduct(id uuid.UUID) (*models.Product, error) {
 
 func (p *DB) FetchProductsByOwner(owner string) ([]models.Product, error) {
 	var merchants []models.Product
-	if err := p.Db.Where("owner = ?", owner).Find(&merchants).Error; err != nil {
+	if err := p.Db.Where("owner = ?", owner).Preload("Subscription").Find(&merchants).Error; err != nil {
 		return nil, err
 	}
 	return merchants, nil

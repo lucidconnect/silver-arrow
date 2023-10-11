@@ -25,7 +25,7 @@ func (m *MerchantService) Middleware() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			authorizationValue := r.Header.Get("Authorization")
-			log.Info().Msgf("merchant public key - %v", authorizationValue)
+			// log.Info().Msgf("merchant public key - %v", authorizationValue)
 			// privateKeyValue := r.Header.Get("Private-Key")
 			// signature := r.Header.Get("X-Lucid-Request-Signature")
 			// requestHash := r.Header.Get("Lucid-Request-Hash")
