@@ -1,11 +1,12 @@
 package merchant
 
 import (
+	"encoding/hex"
 	"fmt"
 	"testing"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/rmanzoku/ethutils/ecrecover"
 	"github.com/stretchr/testify/assert"
 )
@@ -18,16 +19,17 @@ func TestSignatureVerification(t *testing.T) {
 
 	// fmt.Println(xc)
 
-	testHash := hexutil.MustDecode("0xa379c53749b89b570912c33788588b54c5539e5ba5ecd748fca6279eb8b27831")
-	// fmt.Println(testHash)
-	testSig := hexutil.MustDecode("0x1142d7b29272ad3d7e28928d55dd9a168adbf2b8cc66820cb0ef785741f9bf6b7745232d9241d8147fee1b11c4243dfdaa0f81c3b3927991cb34f5c401da01821b")
-	pubKey := hexutil.MustDecode("0x02e9ec28a584b0ff8206bec029c1fdcc40688f0f6310d6888dec28e8849afcb9c7")
-	// fmt.Println("",pubKey)
-	pub, err := crypto.DecompressPubkey(pubKey)
+	dec, err := hex.DecodeString("716dcb74a5b473599a55a80e063d0de8091605c96813cc8542df78e2b4c8075d")
 	if !assert.Nil(t, err) {
 		t.Fail()
 	}
-	addr := crypto.PubkeyToAddress(*pub)
+
+	fmt.Println(dec)
+	testHash := hexutil.MustDecode("0x716dcb74a5b473599a55a80e063d0de8091605c96813cc8542df78e2b4c8075d")
+	fmt.Println(testHash)
+	testSig := hexutil.MustDecode("0x162c9dff76986aa795d464e6cd76d3d26864c3fe58896e96af746bec76af6db94e14b1a91110327ca726803acc5317c0f8eaa9df4afa04892590015aace2bd321b")
+	
+	addr := common.HexToAddress("0x31De6d0c0d1ad1223081d72903b9C14773D7857b")
 	fmt.Println(addr)
 	// testSig[64] += 27
 	// fmt.Println(testSig)
@@ -39,8 +41,6 @@ func TestSignatureVerification(t *testing.T) {
 		t.Fail()
 	}
 
-	ecrecover.Example()
-
 	// pub, _ := crypto.SigToPub(ethSignedMsg, testSig)
 	// fmt.Println(crypto.CompressPubkey(pub))
 	fmt.Printf("recovered public key: %v", (recoveredPubKey))
@@ -49,4 +49,9 @@ func TestSignatureVerification(t *testing.T) {
 	// 	t.Fail()
 	// }
 	// fmt.Println("valid? ", ok)
+}
+
+func ToEthSignedMessageHash(message []byte) []byte {
+	msg := fmt.Sprintf("\x19Ethereum Signed Message:\n%d%s", len(message), message)
+	return ecrecover.Keccak256([]byte(msg))
 }

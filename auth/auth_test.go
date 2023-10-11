@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"testing"
 
@@ -24,7 +25,8 @@ func TestAccessKeyConsistency(t *testing.T) {
 	fmt.Println("Address:", address)
 
 	msg := []byte("hello")
-	msgHash := ecrecover.ToEthSignedMessageHash(crypto.Keccak256(msg))
+	hashed := sha256.New().Sum(msg)
+	msgHash := ecrecover.ToEthSignedMessageHash(crypto.Keccak256(hashed))
 	key, _ := hexutil.Decode(privKey)
 	sig, err := secp256k1.Sign(msgHash, key)
 	if !assert.NoError(t, err) {
