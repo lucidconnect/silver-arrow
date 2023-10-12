@@ -100,6 +100,11 @@ func (m *MerchantService) FetchProduct(pid string) (*model.Product, error) {
 	id := ParseUUID(pid)
 	v, _ := m.repository.FetchProduct(id)
 
+	subscriptions, err := parseMerchantSubscriptions(v.Subscriptions)
+	if err != nil {
+		log.Err(err).Send()
+		return nil, err
+	}
 	createdAt := v.CreatedAt.Format(time.RFC3339)
 	merchant := &model.Product{
 		Name:             v.Name,
@@ -108,6 +113,7 @@ func (m *MerchantService) FetchProduct(pid string) (*model.Product, error) {
 		ProductID:        pid,
 		ReceivingAddress: v.DepositAddress,
 		CreatedAt:        &createdAt,
+		Subscriptions:    subscriptions,
 	}
 
 	return merchant, nil
