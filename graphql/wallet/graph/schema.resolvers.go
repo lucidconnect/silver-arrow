@@ -105,19 +105,20 @@ func (r *mutationResolver) ValidateSubscription(ctx context.Context, input model
 	if err != nil {
 		return nil, err
 	}
-	merchant, err := merchantService.FetchProduct(subData.MerchantID)
+	product, err := merchantService.FetchProduct(subData.ProductID)
 	if err != nil {
 		return nil, err
 	}
-	target := merchant.ReceivingAddress
+	target := product.ReceivingAddress
 	// x := int64(subData.Amount)
 	// Delay for a few seconds to allow the changes to be propagated onchain
 	time.Sleep(15 * time.Second)
-	err = walletService.ExecuteCharge(subData.WalletAddress, target, subData.MerchantID, subData.Token, key, int64(subData.Amount), chain, usePaymaster)
+	err = walletService.ExecuteCharge(subData.WalletAddress, target, subData.Token, key, int64(subData.Amount), chain, usePaymaster)
 	if err != nil {
 		err = errors.Wrap(err, "ExecuteCharge() - error occurred during first time charge execution - ")
 		return subData, err
 	}
+
 	return subData, nil
 }
 

@@ -22,7 +22,7 @@ func TestAddSubscription(t *testing.T) {
 
 	ws := wallet.NewWalletService(r, nil)
 	// mId := randKey()
-	mId := "3838hr8hud9dijh3j"
+	pId := "3838hr8hud9dijh3j"
 	key := "0xe81f9f7146470e1e728cc44d22089098de6be6ebe3ca39f21b7b092f09b10cf5"
 	p, _ := crypto.HexToECDSA(key[2:])
 	owner := crypto.PubkeyToAddress(p.PublicKey).Hex()
@@ -33,7 +33,7 @@ func TestAddSubscription(t *testing.T) {
 		Token:        "USDC",
 		Amount:       1,
 		Interval:     30,
-		MerchantID:   mId,
+		ProductID:   pId,
 		// WalletAddress: "0x14De44b6100dE479655D752ECD2230D10F8fA061",
 		WalletAddress: "0x6a6F07c5c32F5fb20393a2110B2Bf0925e59571b",
 		OwnerAddress:  "0x85fc2E4425d0DAba7426F50091a384ee05D37Cd2",

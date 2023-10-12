@@ -28,7 +28,6 @@ input NewSubscription {
 	amount: Int!
 	interval: Int!
   productId: String!
-  merchantId: String!
 	walletAddress: String!
   ownerAddress: String!
 }
@@ -48,7 +47,7 @@ type SubscriptionData {
 	token: String!
   amount: Int!
 	interval: Int!
-  merchantId: String!
+  productId: String!
 	walletAddress: String!
   subscriptionKey: String!
   createdAt: String

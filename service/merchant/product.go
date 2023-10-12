@@ -106,7 +106,7 @@ func (m *MerchantService) FetchProduct(pid string) (*model.Product, error) {
 		return nil, err
 	}
 	createdAt := v.CreatedAt.Format(time.RFC3339)
-	merchant := &model.Product{
+	product := &model.Product{
 		Name:             v.Name,
 		Owner:            v.Owner,
 		Chain:            int(v.Chain),
@@ -116,7 +116,7 @@ func (m *MerchantService) FetchProduct(pid string) (*model.Product, error) {
 		Subscriptions:    subscriptions,
 	}
 
-	return merchant, nil
+	return product, nil
 }
 
 func Base64EncodeUUID(id uuid.UUID) (string, error) {

@@ -61,7 +61,7 @@ type ComplexityRoot struct {
 		CreatedAt       func(childComplexity int) int
 		ID              func(childComplexity int) int
 		Interval        func(childComplexity int) int
-		MerchantID      func(childComplexity int) int
+		ProductID       func(childComplexity int) int
 		SubscriptionKey func(childComplexity int) int
 		Token           func(childComplexity int) int
 		WalletAddress   func(childComplexity int) int
@@ -185,12 +185,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.SubscriptionData.Interval(childComplexity), true
 
-	case "SubscriptionData.merchantId":
-		if e.complexity.SubscriptionData.MerchantID == nil {
+	case "SubscriptionData.productId":
+		if e.complexity.SubscriptionData.ProductID == nil {
 			break
 		}
 
-		return e.complexity.SubscriptionData.MerchantID(childComplexity), true
+		return e.complexity.SubscriptionData.ProductID(childComplexity), true
 
 	case "SubscriptionData.subscriptionKey":
 		if e.complexity.SubscriptionData.SubscriptionKey == nil {
@@ -358,7 +358,6 @@ input NewSubscription {
 	amount: Int!
 	interval: Int!
   productId: String!
-  merchantId: String!
 	walletAddress: String!
   ownerAddress: String!
 }
@@ -378,7 +377,7 @@ type SubscriptionData {
 	token: String!
   amount: Int!
 	interval: Int!
-  merchantId: String!
+  productId: String!
 	walletAddress: String!
   subscriptionKey: String!
   createdAt: String
@@ -681,8 +680,8 @@ func (ec *executionContext) fieldContext_Mutation_validateSubscription(ctx conte
 				return ec.fieldContext_SubscriptionData_amount(ctx, field)
 			case "interval":
 				return ec.fieldContext_SubscriptionData_interval(ctx, field)
-			case "merchantId":
-				return ec.fieldContext_SubscriptionData_merchantId(ctx, field)
+			case "productId":
+				return ec.fieldContext_SubscriptionData_productId(ctx, field)
 			case "walletAddress":
 				return ec.fieldContext_SubscriptionData_walletAddress(ctx, field)
 			case "subscriptionKey":
@@ -809,8 +808,8 @@ func (ec *executionContext) fieldContext_Query_fetchSubscriptions(ctx context.Co
 				return ec.fieldContext_SubscriptionData_amount(ctx, field)
 			case "interval":
 				return ec.fieldContext_SubscriptionData_interval(ctx, field)
-			case "merchantId":
-				return ec.fieldContext_SubscriptionData_merchantId(ctx, field)
+			case "productId":
+				return ec.fieldContext_SubscriptionData_productId(ctx, field)
 			case "walletAddress":
 				return ec.fieldContext_SubscriptionData_walletAddress(ctx, field)
 			case "subscriptionKey":
@@ -1140,8 +1139,8 @@ func (ec *executionContext) fieldContext_SubscriptionData_interval(ctx context.C
 	return fc, nil
 }
 
-func (ec *executionContext) _SubscriptionData_merchantId(ctx context.Context, field graphql.CollectedField, obj *model.SubscriptionData) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SubscriptionData_merchantId(ctx, field)
+func (ec *executionContext) _SubscriptionData_productId(ctx context.Context, field graphql.CollectedField, obj *model.SubscriptionData) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SubscriptionData_productId(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1154,7 +1153,7 @@ func (ec *executionContext) _SubscriptionData_merchantId(ctx context.Context, fi
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.MerchantID, nil
+		return obj.ProductID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1171,7 +1170,7 @@ func (ec *executionContext) _SubscriptionData_merchantId(ctx context.Context, fi
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SubscriptionData_merchantId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_SubscriptionData_productId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "SubscriptionData",
 		Field:      field,
@@ -3184,7 +3183,7 @@ func (ec *executionContext) unmarshalInputNewSubscription(ctx context.Context, o
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"chain", "nextChargeAt", "token", "amount", "interval", "productId", "merchantId", "walletAddress", "ownerAddress"}
+	fieldsInOrder := [...]string{"chain", "nextChargeAt", "token", "amount", "interval", "productId", "walletAddress", "ownerAddress"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -3245,15 +3244,6 @@ func (ec *executionContext) unmarshalInputNewSubscription(ctx context.Context, o
 				return it, err
 			}
 			it.ProductID = data
-		case "merchantId":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("merchantId"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.MerchantID = data
 		case "walletAddress":
 			var err error
 
@@ -3506,8 +3496,8 @@ func (ec *executionContext) _SubscriptionData(ctx context.Context, sel ast.Selec
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "merchantId":
-			out.Values[i] = ec._SubscriptionData_merchantId(ctx, field, obj)
+		case "productId":
+			out.Values[i] = ec._SubscriptionData_productId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

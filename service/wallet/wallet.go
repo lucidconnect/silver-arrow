@@ -142,8 +142,13 @@ func (ws *WalletService) ValidateSubscription(userop map[string]any, chain int64
 		log.Err(err).Msgf("failed to find subscription with hash %v", opHash)
 		return nil, "", err
 	}
-	token := result.Token
 
+	productId, err := merchant.Base64EncodeUUID(result.ProductID)
+	if err != nil {
+		log.Err(err).Msg("encoding product id failed")
+		return nil, "", err
+	}
+	token := result.Token
 	createdAt := result.CreatedAt.Format(time.RFC3339)
 	amount := int(result.Amount)
 	subData := &model.SubscriptionData{
@@ -151,7 +156,7 @@ func (ws *WalletService) ValidateSubscription(userop map[string]any, chain int64
 		Token:         token,
 		Amount:        amount,
 		Interval:      int(result.Interval),
-		MerchantID:    result.MerchantId,
+		ProductID:     productId,
 		WalletAddress: result.WalletAddress,
 		CreatedAt:     &createdAt,
 	}
@@ -183,14 +188,14 @@ func (ws *WalletService) AddSubscription(merchantId uuid.UUID, input model.NewSu
 		return nil, nil, err
 	}
 
-	id := merchant.ParseUUID(input.ProductID)
+	productId := merchant.ParseUUID(input.ProductID)
 
-	product, err := ws.database.FetchProduct(id)
+	product, err := ws.database.FetchProduct(productId)
 	if err != nil {
 		log.Err(err).Msg("failed to fetch product")
 	}
 	randomSalt := randKey(4)
-	keyName := fmt.Sprintf("sub-%v-%v", randomSalt, input.MerchantID)
+	keyName := fmt.Sprintf("sub-%v-%v", randomSalt, productId)
 	activityId, err := ws.turnkey.CreatePrivateKey(orgId, keyName, tagId)
 	if err != nil {
 		log.Err(err).Msg("failed to create subscription private key")
@@ -346,7 +351,7 @@ func weiToAmount(amt *big.Int) int64 {
 }
 
 // Execute a charge on an AA wallet, currently limited to USDC
-func (ws *WalletService) ExecuteCharge(sender, target, mId, token, key string, amount, chain int64, sponsored bool) error {
+func (ws *WalletService) ExecuteCharge(sender, target, token, key string, amount, chain int64, sponsored bool) error {
 	bundler, err := erc4337.InitialiseBundler(chain)
 	if err != nil {
 		log.Err(err).Msg("failed to initialise bundler")
