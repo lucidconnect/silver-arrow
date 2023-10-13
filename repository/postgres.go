@@ -153,7 +153,7 @@ func (p *DB) CreateProduct(m *models.Product) error {
 
 func (p *DB) FetchProduct(id uuid.UUID) (*models.Product, error) {
 	var product *models.Product
-	if err := p.Db.Where("id = ?", id).Find(&product).Error; err != nil {
+	if err := p.Db.Where("id = ?", id).Preload("Subscriptions").Find(&product).Error; err != nil {
 		return nil, err
 	}
 	return product, nil
