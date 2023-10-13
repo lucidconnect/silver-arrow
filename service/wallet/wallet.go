@@ -273,6 +273,7 @@ func (ws *WalletService) AddSubscription(merchantId uuid.UUID, input model.NewSu
 		Interval:               interval.Nanoseconds(),
 		UserOpHash:             opHash.Hex(),
 		MerchantId:             merchantId.String(),
+		ProductID:              productId,
 		MerchantDepositAddress: product.DepositAddress,
 		NextChargeAt:           nextChargeAt,
 		ExpiresAt:              nextChargeAt,
