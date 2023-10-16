@@ -6,9 +6,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/helicarrierstudio/silver-arrow/repository/models"
+	"github.com/lucidconnect/silver-arrow/repository/models"
+	"github.com/rs/zerolog/log"
 )
 
 var merchantCtxKey = &contextKey{"merchant"}
@@ -26,14 +25,16 @@ func (m *MerchantService) Middleware() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			authorizationValue := r.Header.Get("Authorization")
+			// log.Info().Msgf("merchant public key - %v", authorizationValue)
 			// privateKeyValue := r.Header.Get("Private-Key")
-			signature := r.Header.Get("X-Lucid-Request-Signature")
-			requestHash := r.Header.Get("Lucid-Request-Hash")
-			hash, err := hexutil.Decode(requestHash)
-			if err != nil {
-				next.ServeHTTP(w, r)
-				return
-			}
+			// signature := r.Header.Get("X-Lucid-Request-Signature")
+			// requestHash := r.Header.Get("Lucid-Request-Hash")
+			// hash, err := hexutil.Decode(fmt.Sprintf("0x%v", requestHash))
+			// if err != nil {
+			// 	log.Err(err).Send()
+			// 	next.ServeHTTP(w, r)
+			// 	return
+			// }
 
 			if authorizationValue == "" {
 				next.ServeHTTP(w, r)
@@ -47,26 +48,32 @@ func (m *MerchantService) Middleware() func(http.Handler) http.Handler {
 			}
 			merchant, err := m.repository.FetchMerchantByPublicKey(authorizationValue)
 			if err != nil {
+				log.Err(err).Send()
 				next.ServeHTTP(w, r)
 				return
 			}
 
-			signatureBytes, err := hexutil.Decode(signature)
-			if err != nil {
-				next.ServeHTTP(w, r)
-				return
-			}
+			// signatureBytes, err := hexutil.Decode(signature)
+			// if err != nil {
+			// 	log.Err(err).Send()
+			// 	next.ServeHTTP(w, r)
+			// 	return
+			// }
 
-			pub, err := crypto.SigToPub(hash, signatureBytes)
-			if err != nil {
-				next.ServeHTTP(w, r)
-				return
-			}
+			// pub, err := crypto.SigToPub(hash, signatureBytes)
 
-			if strings.Compare(authorizationValue, hexutil.Encode(crypto.CompressPubkey(pub))) != 0 {
-				next.ServeHTTP(w, r)
-				return
-			}
+			// ethSignedMsg := ecrecover.ToEthSignedMessageHash(hash)
+			// recovered, err := ecrecover.Recover(ethSignedMsg, signatureBytes)
+			// if err != nil {
+			// 	log.Err(err).Send()
+			// 	next.ServeHTTP(w, r)
+			// 	return
+			// }
+
+			// if strings.Compare(authorizationValue, recovered.Hex()) != 0 {
+			// 	next.ServeHTTP(w, r)
+			// 	return
+			// }
 
 			baseCtx := context.WithValue(r.Context(), merchantCtxKey, merchant)
 			r = r.WithContext(baseCtx)

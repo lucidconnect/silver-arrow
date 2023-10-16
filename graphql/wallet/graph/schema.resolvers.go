@@ -12,12 +12,13 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/helicarrierstudio/silver-arrow/erc4337"
-	"github.com/helicarrierstudio/silver-arrow/graphql/wallet/graph/generated"
-	"github.com/helicarrierstudio/silver-arrow/graphql/wallet/graph/model"
-	"github.com/helicarrierstudio/silver-arrow/service/merchant"
-	"github.com/helicarrierstudio/silver-arrow/service/wallet"
+	"github.com/lucidconnect/silver-arrow/erc4337"
+	"github.com/lucidconnect/silver-arrow/graphql/wallet/graph/generated"
+	"github.com/lucidconnect/silver-arrow/graphql/wallet/graph/model"
+	"github.com/lucidconnect/silver-arrow/service/merchant"
+	"github.com/lucidconnect/silver-arrow/service/wallet"
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 )
 
 // AddAccount is the resolver for the addAccount field.
@@ -40,7 +41,8 @@ func (r *mutationResolver) AddSubscription(ctx context.Context, input model.NewS
 	if err != nil {
 		return nil, err
 	}
-	_ = merchant.ID
+	merchantId := merchant.ID
+	log.Info().Msgf("Authenticated Merchant: %v", merchantId)
 	walletService := wallet.NewWalletService(r.Database, r.TurnkeyService)
 	var usePaymaster bool
 	switch os.Getenv("USE_PAYMASTER") {
@@ -49,7 +51,7 @@ func (r *mutationResolver) AddSubscription(ctx context.Context, input model.NewS
 	default:
 		usePaymaster = false
 	}
-	validationData, userOp, err := walletService.AddSubscription(merchant.ID,input, usePaymaster, common.Big0, int64(input.Chain))
+	validationData, userOp, err := walletService.AddSubscription(merchantId, input, usePaymaster, common.Big0, int64(input.Chain))
 	if err != nil {
 		return nil, err
 	}
@@ -103,19 +105,20 @@ func (r *mutationResolver) ValidateSubscription(ctx context.Context, input model
 	if err != nil {
 		return nil, err
 	}
-	merchant, err := merchantService.FetchProduct(subData.MerchantID)
+	product, err := merchantService.FetchProduct(subData.ProductID)
 	if err != nil {
 		return nil, err
 	}
-	target := merchant.ReceivingAddress
+	target := product.ReceivingAddress
 	// x := int64(subData.Amount)
 	// Delay for a few seconds to allow the changes to be propagated onchain
 	time.Sleep(15 * time.Second)
-	err = walletService.ExecuteCharge(subData.WalletAddress, target, subData.MerchantID, subData.Token, key, int64(subData.Amount), chain, usePaymaster)
+	err = walletService.ExecuteCharge(subData.WalletAddress, target, subData.Token, key, int64(subData.Amount), chain, usePaymaster)
 	if err != nil {
 		err = errors.Wrap(err, "ExecuteCharge() - error occurred during first time charge execution - ")
 		return subData, err
 	}
+
 	return subData, nil
 }
 

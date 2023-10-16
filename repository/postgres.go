@@ -2,13 +2,12 @@ package repository
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"os"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/helicarrierstudio/silver-arrow/repository/models"
+	"github.com/lucidconnect/silver-arrow/repository/models"
 	"github.com/rs/zerolog/log"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -101,7 +100,7 @@ func (p *DB) UpdateSubscription(id uuid.UUID, update map[string]interface{}) err
 	if err := p.Db.Model(&subscription).Where("id = ?", id).Updates(update).Error; err != nil {
 		return err
 	}
-	return errors.New("unimplemented")
+	return nil
 }
 
 func (p *DB) FetchDueSubscriptions(days int) ([]models.Subscription, error) {
@@ -154,18 +153,18 @@ func (p *DB) CreateProduct(m *models.Product) error {
 
 func (p *DB) FetchProduct(id uuid.UUID) (*models.Product, error) {
 	var product *models.Product
-	if err := p.Db.Where("id = ?", id).Find(&product).Error; err != nil {
+	if err := p.Db.Where("id = ?", id).Preload("Subscriptions").Find(&product).Error; err != nil {
 		return nil, err
 	}
 	return product, nil
 }
 
 func (p *DB) FetchProductsByOwner(owner string) ([]models.Product, error) {
-	var merchants []models.Product
-	if err := p.Db.Where("owner = ?", owner).Find(&merchants).Error; err != nil {
+	var products []models.Product
+	if err := p.Db.Where("owner = ?", owner).Preload("Subscriptions").Find(&products).Error; err != nil {
 		return nil, err
 	}
-	return merchants, nil
+	return products, nil
 }
 
 func (p *DB) FindSubscriptionByProduct(merchantId string) ([]models.Subscription, error) {

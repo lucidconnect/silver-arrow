@@ -1,4 +1,4 @@
-module github.com/helicarrierstudio/silver-arrow
+module github.com/lucidconnect/silver-arrow
 
 go 1.20
 

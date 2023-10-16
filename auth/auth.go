@@ -14,7 +14,8 @@ func CreateAccessKey() (publicKey, privateKey string, err error) {
 		return
 	}
 
-	publicKey = hexutil.Encode(crypto.CompressPubkey(&pk.PublicKey))
+	publicKey = crypto.PubkeyToAddress(pk.PublicKey).Hex()
+	// publicKey = hexutil.Encode(crypto.CompressPubkey(&pk.PublicKey))
 	privateKey = hexutil.EncodeBig(pk.D)
 	return
 }

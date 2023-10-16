@@ -2,7 +2,7 @@ package migrations
 
 import (
 	"github.com/go-gormigrate/gormigrate/v2"
-	"github.com/helicarrierstudio/silver-arrow/repository/models"
+	"github.com/lucidconnect/silver-arrow/repository/models"
 	"gorm.io/gorm"
 )
 
@@ -17,4 +17,3 @@ var DropPublicKeysColumnFromProductsTable *gormigrate.Migration = &gormigrate.Mi
 		return nil
 	},
 }
-

@@ -17,6 +17,7 @@ type Subscription struct {
 	Interval               int64  `gorm:"not null"`
 	UserOpHash             string `gorm:"index"`
 	MerchantId             string `gorm:"index"`
+	ProductID              uuid.UUID
 	MerchantDepositAddress string
 	ExpiresAt              time.Time `gorm:"index;type:timestamptz"`
 	NextChargeAt           time.Time `gorm:"index;type:timestamptz"`

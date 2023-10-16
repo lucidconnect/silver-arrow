@@ -15,6 +15,7 @@ type Product struct {
 	DepositAddress string    `gorm:"not null"`
 	MerchantID     uuid.UUID
 	CreatedAt      time.Time
+	Subscriptions  []Subscription
 }
 
 type Merchant struct {

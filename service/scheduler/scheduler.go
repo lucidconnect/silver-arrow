@@ -10,10 +10,10 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/ethereum/go-ethereum/common"
-	LucidMerchant "github.com/helicarrierstudio/silver-arrow/abi/LucidMerchant"
-	"github.com/helicarrierstudio/silver-arrow/erc4337"
-	"github.com/helicarrierstudio/silver-arrow/repository"
-	"github.com/helicarrierstudio/silver-arrow/service/wallet"
+	LucidMerchant "github.com/lucidconnect/silver-arrow/abi/LucidMerchant"
+	"github.com/lucidconnect/silver-arrow/erc4337"
+	"github.com/lucidconnect/silver-arrow/repository"
+	"github.com/lucidconnect/silver-arrow/service/wallet"
 	"github.com/pkg/errors"
 )
 
@@ -93,10 +93,10 @@ func (s *Scheduler) SubscriptionJob() {
 	for _, sub := range dueToday {
 		amount := big.NewInt(sub.Amount)
 		wallet := common.HexToAddress(sub.WalletAddress)
-		token := common.HexToAddress(sub.TokenAddress)
+		tokenAddress := common.HexToAddress(sub.TokenAddress)
 		chain := sub.Chain
 
-		balance, err := client.GetErc20TokenBalance(token, wallet)
+		balance, err := client.GetErc20TokenBalance(tokenAddress, wallet)
 		if err != nil {
 			log.Err(err).Send()
 			continue
@@ -111,7 +111,7 @@ func (s *Scheduler) SubscriptionJob() {
 			time.Sleep(15 * time.Second)
 			// get the account
 
-			err = s.walletService.ExecuteCharge(sub.WalletAddress, sub.MerchantDepositAddress, sub.MerchantId, sub.Token, sub.Key.PrivateKeyId, sub.Amount, chain, usePaymaster)
+			err = s.walletService.ExecuteCharge(sub.WalletAddress, sub.MerchantDepositAddress, sub.Token, sub.Key.PrivateKeyId, sub.Amount, chain, usePaymaster)
 			if err != nil {
 				err = errors.Wrapf(err, "ExecuteCharge() - error occurred during charge execution for subscription %v - ", sub.ID)
 				log.Err(err).Send()

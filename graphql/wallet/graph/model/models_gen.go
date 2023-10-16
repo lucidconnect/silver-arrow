@@ -18,7 +18,7 @@ type NewSubscription struct {
 	Token         string     `json:"token"`
 	Amount        int        `json:"amount"`
 	Interval      int        `json:"interval"`
-	MerchantID    string     `json:"merchantId"`
+	ProductID     string     `json:"productId"`
 	WalletAddress string     `json:"walletAddress"`
 	OwnerAddress  string     `json:"ownerAddress"`
 }
@@ -28,7 +28,7 @@ type SubscriptionData struct {
 	Token           string  `json:"token"`
 	Amount          int     `json:"amount"`
 	Interval        int     `json:"interval"`
-	MerchantID      string  `json:"merchantId"`
+	ProductID       string  `json:"productId"`
 	WalletAddress   string  `json:"walletAddress"`
 	SubscriptionKey string  `json:"subscriptionKey"`
 	CreatedAt       *string `json:"createdAt,omitempty"`

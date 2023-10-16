@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/pkg/errors"
-	"github.com/rs/zerolog/log"
 	"time"
 
+	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
+
 	"github.com/google/uuid"
-	"github.com/helicarrierstudio/silver-arrow/graphql/merchant/graph/model"
-	"github.com/helicarrierstudio/silver-arrow/repository"
-	"github.com/helicarrierstudio/silver-arrow/repository/models"
+	"github.com/lucidconnect/silver-arrow/graphql/merchant/graph/model"
+	"github.com/lucidconnect/silver-arrow/repository/models"
 )
 
 func (m *MerchantService) CreateProduct(input model.NewProduct) (*model.Product, error) {
@@ -60,7 +60,7 @@ func (m *MerchantService) FetchProductsByOwner(owner string) ([]*model.Product, 
 
 	for _, v := range ms {
 		ProductID, _ := Base64EncodeUUID(v.ID)
-		subscriptions, err := fetchMerchantSubscriptions(m.repository, ProductID)
+		subscriptions, err := parseMerchantSubscriptions(v.Subscriptions)
 		if err != nil {
 			log.Err(err).Send()
 			continue
@@ -78,13 +78,8 @@ func (m *MerchantService) FetchProductsByOwner(owner string) ([]*model.Product, 
 	return products, nil
 }
 
-func fetchMerchantSubscriptions(repo repository.Database, merchant string) ([]*model.Sub, error) {
+func parseMerchantSubscriptions(subs []models.Subscription) ([]*model.Sub, error) {
 	var subscriptions []*model.Sub
-	subs, err := repo.FindSubscriptionByProduct(merchant)
-	if err != nil {
-		log.Err(err).Send()
-		return nil, err
-	}
 
 	for _, sub := range subs {
 		subscription := &model.Sub{
@@ -105,17 +100,23 @@ func (m *MerchantService) FetchProduct(pid string) (*model.Product, error) {
 	id := ParseUUID(pid)
 	v, _ := m.repository.FetchProduct(id)
 
+	subscriptions, err := parseMerchantSubscriptions(v.Subscriptions)
+	if err != nil {
+		log.Err(err).Send()
+		return nil, err
+	}
 	createdAt := v.CreatedAt.Format(time.RFC3339)
-	merchant := &model.Product{
+	product := &model.Product{
 		Name:             v.Name,
 		Owner:            v.Owner,
 		Chain:            int(v.Chain),
 		ProductID:        pid,
 		ReceivingAddress: v.DepositAddress,
 		CreatedAt:        &createdAt,
+		Subscriptions:    subscriptions,
 	}
 
-	return merchant, nil
+	return product, nil
 }
 
 func Base64EncodeUUID(id uuid.UUID) (string, error) {

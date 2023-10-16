@@ -4,7 +4,7 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/helicarrierstudio/silver-arrow/abi/tokenActions"
+	"github.com/lucidconnect/silver-arrow/abi/tokenActions"
 )
 
 func TransferErc20Action(token, to common.Address, amount *big.Int) ([]byte, error) {

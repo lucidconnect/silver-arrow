@@ -8,9 +8,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/helicarrierstudio/silver-arrow/graphql/merchant/graph/generated"
-	"github.com/helicarrierstudio/silver-arrow/graphql/merchant/graph/model"
-	"github.com/helicarrierstudio/silver-arrow/service/merchant"
+	"github.com/lucidconnect/silver-arrow/graphql/merchant/graph/generated"
+	"github.com/lucidconnect/silver-arrow/graphql/merchant/graph/model"
+	"github.com/lucidconnect/silver-arrow/service/merchant"
 )
 
 // AddProduct is the resolver for the addProduct field.
@@ -68,6 +68,16 @@ func (r *queryResolver) FetchMerchantKey(ctx context.Context, owner string) (str
 		return "", err
 	}
 	return result, nil
+}
+
+// FetchMerchantStats is the resolver for the fetchMerchantStats field.
+func (r *queryResolver) FetchMerchantStats(ctx context.Context, owner string) (*model.MerchantStats, error) {
+	merchantService := merchant.NewMerchantService(r.Database)
+	stats, err := merchantService.SummarizeMerchant(owner)
+	if err != nil {
+		return nil, err
+	}
+	return stats, nil
 }
 
 // Mutation returns generated.MutationResolver implementation.

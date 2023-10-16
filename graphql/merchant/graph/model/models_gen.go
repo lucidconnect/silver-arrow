@@ -7,6 +7,12 @@ type AccessKey struct {
 	PrivateKey string `json:"privateKey"`
 }
 
+type MerchantStats struct {
+	Users         int `json:"users"`
+	Products      int `json:"products"`
+	Subscriptions int `json:"subscriptions"`
+}
+
 type NewProduct struct {
 	Name             string `json:"name"`
 	Owner            string `json:"owner"`

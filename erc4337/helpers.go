@@ -12,7 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
-	Kernel "github.com/helicarrierstudio/silver-arrow/abi/kernel"
+	Kernel "github.com/lucidconnect/silver-arrow/abi/kernel"
 	"github.com/pkg/errors"
 )
 

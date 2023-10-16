@@ -5,7 +5,7 @@ import (
 
 	"github.com/OrlovEvgeny/go-mcache"
 	"github.com/edwingeng/deque/v2"
-	"github.com/helicarrierstudio/silver-arrow/repository/models"
+	"github.com/lucidconnect/silver-arrow/repository/models"
 )
 
 type Queue struct {

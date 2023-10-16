@@ -14,7 +14,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
-	"github.com/helicarrierstudio/silver-arrow/graphql/wallet/graph/model"
+	"github.com/lucidconnect/silver-arrow/graphql/wallet/graph/model"
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -61,7 +61,7 @@ type ComplexityRoot struct {
 		CreatedAt       func(childComplexity int) int
 		ID              func(childComplexity int) int
 		Interval        func(childComplexity int) int
-		MerchantID      func(childComplexity int) int
+		ProductID       func(childComplexity int) int
 		SubscriptionKey func(childComplexity int) int
 		Token           func(childComplexity int) int
 		WalletAddress   func(childComplexity int) int
@@ -185,12 +185,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.SubscriptionData.Interval(childComplexity), true
 
-	case "SubscriptionData.merchantId":
-		if e.complexity.SubscriptionData.MerchantID == nil {
+	case "SubscriptionData.productId":
+		if e.complexity.SubscriptionData.ProductID == nil {
 			break
 		}
 
-		return e.complexity.SubscriptionData.MerchantID(childComplexity), true
+		return e.complexity.SubscriptionData.ProductID(childComplexity), true
 
 	case "SubscriptionData.subscriptionKey":
 		if e.complexity.SubscriptionData.SubscriptionKey == nil {
@@ -357,7 +357,7 @@ input NewSubscription {
 	token: String!
 	amount: Int!
 	interval: Int!
-  merchantId: String!
+  productId: String!
 	walletAddress: String!
   ownerAddress: String!
 }
@@ -377,7 +377,7 @@ type SubscriptionData {
 	token: String!
   amount: Int!
 	interval: Int!
-  merchantId: String!
+  productId: String!
 	walletAddress: String!
   subscriptionKey: String!
   createdAt: String
@@ -397,7 +397,7 @@ func (ec *executionContext) field_Mutation_addAccount_args(ctx context.Context, 
 	var arg0 model.Account
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNAccount2githubᚗcomᚋhelicarrierstudioᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐAccount(ctx, tmp)
+		arg0, err = ec.unmarshalNAccount2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐAccount(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -412,7 +412,7 @@ func (ec *executionContext) field_Mutation_addSubscription_args(ctx context.Cont
 	var arg0 model.NewSubscription
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNNewSubscription2githubᚗcomᚋhelicarrierstudioᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐNewSubscription(ctx, tmp)
+		arg0, err = ec.unmarshalNNewSubscription2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐNewSubscription(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -442,7 +442,7 @@ func (ec *executionContext) field_Mutation_validateSubscription_args(ctx context
 	var arg0 model.SubscriptionValidation
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNSubscriptionValidation2githubᚗcomᚋhelicarrierstudioᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐSubscriptionValidation(ctx, tmp)
+		arg0, err = ec.unmarshalNSubscriptionValidation2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐSubscriptionValidation(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -602,7 +602,7 @@ func (ec *executionContext) _Mutation_addSubscription(ctx context.Context, field
 	}
 	res := resTmp.(*model.ValidationData)
 	fc.Result = res
-	return ec.marshalNValidationData2ᚖgithubᚗcomᚋhelicarrierstudioᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐValidationData(ctx, field.Selections, res)
+	return ec.marshalNValidationData2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐValidationData(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_addSubscription(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -661,7 +661,7 @@ func (ec *executionContext) _Mutation_validateSubscription(ctx context.Context, 
 	}
 	res := resTmp.(*model.SubscriptionData)
 	fc.Result = res
-	return ec.marshalNSubscriptionData2ᚖgithubᚗcomᚋhelicarrierstudioᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐSubscriptionData(ctx, field.Selections, res)
+	return ec.marshalNSubscriptionData2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐSubscriptionData(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_validateSubscription(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -680,8 +680,8 @@ func (ec *executionContext) fieldContext_Mutation_validateSubscription(ctx conte
 				return ec.fieldContext_SubscriptionData_amount(ctx, field)
 			case "interval":
 				return ec.fieldContext_SubscriptionData_interval(ctx, field)
-			case "merchantId":
-				return ec.fieldContext_SubscriptionData_merchantId(ctx, field)
+			case "productId":
+				return ec.fieldContext_SubscriptionData_productId(ctx, field)
 			case "walletAddress":
 				return ec.fieldContext_SubscriptionData_walletAddress(ctx, field)
 			case "subscriptionKey":
@@ -789,7 +789,7 @@ func (ec *executionContext) _Query_fetchSubscriptions(ctx context.Context, field
 	}
 	res := resTmp.([]*model.SubscriptionData)
 	fc.Result = res
-	return ec.marshalNSubscriptionData2ᚕᚖgithubᚗcomᚋhelicarrierstudioᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐSubscriptionDataᚄ(ctx, field.Selections, res)
+	return ec.marshalNSubscriptionData2ᚕᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐSubscriptionDataᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_fetchSubscriptions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -808,8 +808,8 @@ func (ec *executionContext) fieldContext_Query_fetchSubscriptions(ctx context.Co
 				return ec.fieldContext_SubscriptionData_amount(ctx, field)
 			case "interval":
 				return ec.fieldContext_SubscriptionData_interval(ctx, field)
-			case "merchantId":
-				return ec.fieldContext_SubscriptionData_merchantId(ctx, field)
+			case "productId":
+				return ec.fieldContext_SubscriptionData_productId(ctx, field)
 			case "walletAddress":
 				return ec.fieldContext_SubscriptionData_walletAddress(ctx, field)
 			case "subscriptionKey":
@@ -1139,8 +1139,8 @@ func (ec *executionContext) fieldContext_SubscriptionData_interval(ctx context.C
 	return fc, nil
 }
 
-func (ec *executionContext) _SubscriptionData_merchantId(ctx context.Context, field graphql.CollectedField, obj *model.SubscriptionData) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SubscriptionData_merchantId(ctx, field)
+func (ec *executionContext) _SubscriptionData_productId(ctx context.Context, field graphql.CollectedField, obj *model.SubscriptionData) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SubscriptionData_productId(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1153,7 +1153,7 @@ func (ec *executionContext) _SubscriptionData_merchantId(ctx context.Context, fi
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.MerchantID, nil
+		return obj.ProductID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1170,7 +1170,7 @@ func (ec *executionContext) _SubscriptionData_merchantId(ctx context.Context, fi
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SubscriptionData_merchantId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_SubscriptionData_productId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "SubscriptionData",
 		Field:      field,
@@ -3183,7 +3183,7 @@ func (ec *executionContext) unmarshalInputNewSubscription(ctx context.Context, o
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"chain", "nextChargeAt", "token", "amount", "interval", "merchantId", "walletAddress", "ownerAddress"}
+	fieldsInOrder := [...]string{"chain", "nextChargeAt", "token", "amount", "interval", "productId", "walletAddress", "ownerAddress"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -3235,15 +3235,15 @@ func (ec *executionContext) unmarshalInputNewSubscription(ctx context.Context, o
 				return it, err
 			}
 			it.Interval = data
-		case "merchantId":
+		case "productId":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("merchantId"))
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("productId"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.MerchantID = data
+			it.ProductID = data
 		case "walletAddress":
 			var err error
 
@@ -3496,8 +3496,8 @@ func (ec *executionContext) _SubscriptionData(ctx context.Context, sel ast.Selec
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "merchantId":
-			out.Values[i] = ec._SubscriptionData_merchantId(ctx, field, obj)
+		case "productId":
+			out.Values[i] = ec._SubscriptionData_productId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -3901,7 +3901,7 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
-func (ec *executionContext) unmarshalNAccount2githubᚗcomᚋhelicarrierstudioᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐAccount(ctx context.Context, v interface{}) (model.Account, error) {
+func (ec *executionContext) unmarshalNAccount2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐAccount(ctx context.Context, v interface{}) (model.Account, error) {
 	res, err := ec.unmarshalInputAccount(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -3951,7 +3951,7 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 	return res
 }
 
-func (ec *executionContext) unmarshalNNewSubscription2githubᚗcomᚋhelicarrierstudioᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐNewSubscription(ctx context.Context, v interface{}) (model.NewSubscription, error) {
+func (ec *executionContext) unmarshalNNewSubscription2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐNewSubscription(ctx context.Context, v interface{}) (model.NewSubscription, error) {
 	res, err := ec.unmarshalInputNewSubscription(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -3971,11 +3971,11 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	return res
 }
 
-func (ec *executionContext) marshalNSubscriptionData2githubᚗcomᚋhelicarrierstudioᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐSubscriptionData(ctx context.Context, sel ast.SelectionSet, v model.SubscriptionData) graphql.Marshaler {
+func (ec *executionContext) marshalNSubscriptionData2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐSubscriptionData(ctx context.Context, sel ast.SelectionSet, v model.SubscriptionData) graphql.Marshaler {
 	return ec._SubscriptionData(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNSubscriptionData2ᚕᚖgithubᚗcomᚋhelicarrierstudioᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐSubscriptionDataᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.SubscriptionData) graphql.Marshaler {
+func (ec *executionContext) marshalNSubscriptionData2ᚕᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐSubscriptionDataᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.SubscriptionData) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -3999,7 +3999,7 @@ func (ec *executionContext) marshalNSubscriptionData2ᚕᚖgithubᚗcomᚋhelica
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNSubscriptionData2ᚖgithubᚗcomᚋhelicarrierstudioᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐSubscriptionData(ctx, sel, v[i])
+			ret[i] = ec.marshalNSubscriptionData2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐSubscriptionData(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -4019,7 +4019,7 @@ func (ec *executionContext) marshalNSubscriptionData2ᚕᚖgithubᚗcomᚋhelica
 	return ret
 }
 
-func (ec *executionContext) marshalNSubscriptionData2ᚖgithubᚗcomᚋhelicarrierstudioᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐSubscriptionData(ctx context.Context, sel ast.SelectionSet, v *model.SubscriptionData) graphql.Marshaler {
+func (ec *executionContext) marshalNSubscriptionData2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐSubscriptionData(ctx context.Context, sel ast.SelectionSet, v *model.SubscriptionData) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -4029,16 +4029,16 @@ func (ec *executionContext) marshalNSubscriptionData2ᚖgithubᚗcomᚋhelicarri
 	return ec._SubscriptionData(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNSubscriptionValidation2githubᚗcomᚋhelicarrierstudioᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐSubscriptionValidation(ctx context.Context, v interface{}) (model.SubscriptionValidation, error) {
+func (ec *executionContext) unmarshalNSubscriptionValidation2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐSubscriptionValidation(ctx context.Context, v interface{}) (model.SubscriptionValidation, error) {
 	res, err := ec.unmarshalInputSubscriptionValidation(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNValidationData2githubᚗcomᚋhelicarrierstudioᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐValidationData(ctx context.Context, sel ast.SelectionSet, v model.ValidationData) graphql.Marshaler {
+func (ec *executionContext) marshalNValidationData2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐValidationData(ctx context.Context, sel ast.SelectionSet, v model.ValidationData) graphql.Marshaler {
 	return ec._ValidationData(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNValidationData2ᚖgithubᚗcomᚋhelicarrierstudioᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐValidationData(ctx context.Context, sel ast.SelectionSet, v *model.ValidationData) graphql.Marshaler {
+func (ec *executionContext) marshalNValidationData2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐValidationData(ctx context.Context, sel ast.SelectionSet, v *model.ValidationData) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
