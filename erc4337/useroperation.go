@@ -9,6 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
+	"github.com/helicarrierstudio/silver-arrow/erc20"
 	"github.com/pkg/errors"
 	"github.com/rmanzoku/ethutils/ecrecover"
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
@@ -216,7 +217,7 @@ func CreateTransferCallData(toAddress, token string, amount *big.Int) ([]byte, e
 		return nil, err
 	}
 
-	tokenAddress := GetTokenAddres(token)
+	tokenAddress := erc20.GetTokenAddress(token, 80001)
 	callData, err := GetExecuteFnData(accountABI, tokenAddress, common.Big0, erc20TransferData)
 	if err != nil {
 		err = errors.Wrap(err, "CreateTransferCallData(): failed to create final call data")
@@ -250,6 +251,7 @@ func CreateFactoryFnData(enableData []byte, index *big.Int) ([]byte, error) {
 	return callData, nil
 }
 
-func GetTokenAddres(token string) string {
-	return "0x0fa8781a83e46826621b3bc094ea2a0212e71b23"
-}
+// func GetTokenAddres(token string) string {
+
+// 	return "0x0fa8781a83e46826621b3bc094ea2a0212e71b23"
+// }

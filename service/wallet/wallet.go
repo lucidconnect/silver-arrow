@@ -14,6 +14,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/helicarrierstudio/silver-arrow/erc20"
 	"github.com/helicarrierstudio/silver-arrow/erc4337"
 	"github.com/helicarrierstudio/silver-arrow/graphql/wallet/graph/model"
 	"github.com/helicarrierstudio/silver-arrow/repository"
@@ -266,6 +267,7 @@ func (ws *WalletService) AddSubscription(merchantId uuid.UUID, input model.NewSu
 		WalletID:     walletID,
 	}
 
+	tokenAddress := erc20.GetTokenAddress(input.Token, chain)
 	sub := &models.Subscription{
 		Token:                  input.Token,
 		Amount:                 amount.Int64(),
@@ -281,6 +283,7 @@ func (ws *WalletService) AddSubscription(merchantId uuid.UUID, input model.NewSu
 		WalletAddress:          input.WalletAddress,
 		Chain:                  chain,
 		Key:                    *key,
+		TokenAddress:           tokenAddress,
 	}
 
 	err = ws.database.AddSubscription(sub, key)
@@ -358,8 +361,7 @@ func (ws *WalletService) ExecuteCharge(sender, target, token, key string, amount
 		log.Err(err).Msg("failed to initialise bundler")
 		return err
 	}
-
-	erc20Token := erc4337.GetTokenAddres(token)
+	erc20Token := erc20.GetTokenAddress(token, chain)
 	tokenAddress := common.HexToAddress(erc20Token)
 
 	wallet, err := ws.database.FetchAccountByAddress(sender)

@@ -11,6 +11,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/helicarrierstudio/silver-arrow/erc20"
 	"github.com/helicarrierstudio/silver-arrow/erc4337"
 	"github.com/helicarrierstudio/silver-arrow/repository"
 	"github.com/helicarrierstudio/silver-arrow/repository/models"
@@ -70,7 +71,7 @@ func clearTables(db *gorm.DB) {
 	for _, table := range []interface{}{&models.Subscription{}, &models.Key{}, &models.Wallet{}} {
 		log.Info().Msgf("Clearing %v table", getType(table))
 		if err := db.Where("TRUE").Delete(table).Error; err != nil {
-		log.Fatal().Err(err)
+			log.Fatal().Err(err)
 		}
 	}
 }
@@ -164,7 +165,7 @@ func TestTokenAction(t *testing.T) {
 	// 1000000000000000000 = 1 erc20Token
 	// 10000000000000000 = 0.01 erc20Token
 	amount := big.NewInt(1000000)
-	erc20Token := erc4337.GetTokenAddres(token)
+	erc20Token := erc20.GetTokenAddress(token, 80001)
 	tokenAddress := common.HexToAddress(erc20Token)
 
 	data, err := erc4337.TransferErc20Action(tokenAddress, target, amount)

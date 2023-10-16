@@ -93,10 +93,10 @@ func (s *Scheduler) SubscriptionJob() {
 	for _, sub := range dueToday {
 		amount := big.NewInt(sub.Amount)
 		wallet := common.HexToAddress(sub.WalletAddress)
-		token := common.HexToAddress(sub.TokenAddress)
+		tokenAddress := common.HexToAddress(sub.TokenAddress)
 		chain := sub.Chain
 
-		balance, err := client.GetErc20TokenBalance(token, wallet)
+		balance, err := client.GetErc20TokenBalance(tokenAddress, wallet)
 		if err != nil {
 			log.Err(err).Send()
 			continue
