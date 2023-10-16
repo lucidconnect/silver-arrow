@@ -12,11 +12,11 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/helicarrierstudio/silver-arrow/erc4337"
-	"github.com/helicarrierstudio/silver-arrow/graphql/wallet/graph/generated"
-	"github.com/helicarrierstudio/silver-arrow/graphql/wallet/graph/model"
-	"github.com/helicarrierstudio/silver-arrow/service/merchant"
-	"github.com/helicarrierstudio/silver-arrow/service/wallet"
+	"github.com/lucidconnect/silver-arrow/erc4337"
+	"github.com/lucidconnect/silver-arrow/graphql/wallet/graph/generated"
+	"github.com/lucidconnect/silver-arrow/graphql/wallet/graph/model"
+	"github.com/lucidconnect/silver-arrow/service/merchant"
+	"github.com/lucidconnect/silver-arrow/service/wallet"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 )

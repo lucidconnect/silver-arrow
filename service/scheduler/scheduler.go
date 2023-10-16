@@ -10,10 +10,10 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/ethereum/go-ethereum/common"
-	LucidMerchant "github.com/helicarrierstudio/silver-arrow/abi/LucidMerchant"
-	"github.com/helicarrierstudio/silver-arrow/erc4337"
-	"github.com/helicarrierstudio/silver-arrow/repository"
-	"github.com/helicarrierstudio/silver-arrow/service/wallet"
+	LucidMerchant "github.com/lucidconnect/silver-arrow/abi/LucidMerchant"
+	"github.com/lucidconnect/silver-arrow/erc4337"
+	"github.com/lucidconnect/silver-arrow/repository"
+	"github.com/lucidconnect/silver-arrow/service/wallet"
 	"github.com/pkg/errors"
 )
 

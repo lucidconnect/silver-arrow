@@ -5,8 +5,8 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/helicarrierstudio/silver-arrow/repository/models"
-	"github.com/helicarrierstudio/silver-arrow/service/merchant"
+	"github.com/lucidconnect/silver-arrow/repository/models"
+	"github.com/lucidconnect/silver-arrow/service/merchant"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 )

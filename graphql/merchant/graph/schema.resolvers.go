@@ -8,9 +8,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/helicarrierstudio/silver-arrow/graphql/merchant/graph/generated"
-	"github.com/helicarrierstudio/silver-arrow/graphql/merchant/graph/model"
-	"github.com/helicarrierstudio/silver-arrow/service/merchant"
+	"github.com/lucidconnect/silver-arrow/graphql/merchant/graph/generated"
+	"github.com/lucidconnect/silver-arrow/graphql/merchant/graph/model"
+	"github.com/lucidconnect/silver-arrow/service/merchant"
 )
 
 // AddProduct is the resolver for the addProduct field.

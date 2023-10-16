@@ -1,8 +1,8 @@
 package graph
 
 import (
-	"github.com/helicarrierstudio/silver-arrow/repository"
-	"github.com/helicarrierstudio/silver-arrow/service/turnkey"
+	"github.com/lucidconnect/silver-arrow/repository"
+	"github.com/lucidconnect/silver-arrow/service/turnkey"
 )
 
 //go:generate go run github.com/99designs/gqlgen generate

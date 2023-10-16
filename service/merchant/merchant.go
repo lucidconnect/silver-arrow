@@ -2,10 +2,10 @@ package merchant
 
 import (
 	"github.com/google/uuid"
-	"github.com/helicarrierstudio/silver-arrow/auth"
-	"github.com/helicarrierstudio/silver-arrow/graphql/merchant/graph/model"
-	"github.com/helicarrierstudio/silver-arrow/repository"
-	"github.com/helicarrierstudio/silver-arrow/repository/models"
+	"github.com/lucidconnect/silver-arrow/auth"
+	"github.com/lucidconnect/silver-arrow/graphql/merchant/graph/model"
+	"github.com/lucidconnect/silver-arrow/repository"
+	"github.com/lucidconnect/silver-arrow/repository/models"
 	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 )

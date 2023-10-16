@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/helicarrierstudio/silver-arrow/repository/models"
+	"github.com/lucidconnect/silver-arrow/repository/models"
 	"github.com/rs/zerolog/log"
 )
 

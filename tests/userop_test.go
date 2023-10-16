@@ -11,11 +11,11 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/helicarrierstudio/silver-arrow/erc20"
-	"github.com/helicarrierstudio/silver-arrow/erc4337"
-	"github.com/helicarrierstudio/silver-arrow/repository"
-	"github.com/helicarrierstudio/silver-arrow/repository/models"
 	"github.com/joho/godotenv"
+	"github.com/lucidconnect/silver-arrow/erc20"
+	"github.com/lucidconnect/silver-arrow/erc4337"
+	"github.com/lucidconnect/silver-arrow/repository"
+	"github.com/lucidconnect/silver-arrow/repository/models"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
 )

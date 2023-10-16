@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/helicarrierstudio/silver-arrow/repository/models"
+	"github.com/lucidconnect/silver-arrow/repository/models"
 	"github.com/rs/zerolog/log"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"

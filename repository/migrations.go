@@ -2,7 +2,7 @@ package repository
 
 import (
 	"github.com/go-gormigrate/gormigrate/v2"
-	"github.com/helicarrierstudio/silver-arrow/repository/migrations"
+	"github.com/lucidconnect/silver-arrow/repository/migrations"
 	"github.com/rs/zerolog/log"
 )
 

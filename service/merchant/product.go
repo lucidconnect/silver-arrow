@@ -11,8 +11,8 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/google/uuid"
-	"github.com/helicarrierstudio/silver-arrow/graphql/merchant/graph/model"
-	"github.com/helicarrierstudio/silver-arrow/repository/models"
+	"github.com/lucidconnect/silver-arrow/graphql/merchant/graph/model"
+	"github.com/lucidconnect/silver-arrow/repository/models"
 )
 
 func (m *MerchantService) CreateProduct(input model.NewProduct) (*model.Product, error) {

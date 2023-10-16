@@ -8,8 +8,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
-	KernelStorage "github.com/helicarrierstudio/silver-arrow/abi/kernelStorage"
 	"github.com/holiman/uint256"
+	KernelStorage "github.com/lucidconnect/silver-arrow/abi/kernelStorage"
 	"github.com/pkg/errors"
 )
 

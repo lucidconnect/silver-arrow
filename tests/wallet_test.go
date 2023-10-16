@@ -10,10 +10,10 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/google/uuid"
-	"github.com/helicarrierstudio/silver-arrow/erc4337"
-	"github.com/helicarrierstudio/silver-arrow/graphql/wallet/graph/model"
-	"github.com/helicarrierstudio/silver-arrow/repository"
-	"github.com/helicarrierstudio/silver-arrow/service/wallet"
+	"github.com/lucidconnect/silver-arrow/erc4337"
+	"github.com/lucidconnect/silver-arrow/graphql/wallet/graph/model"
+	"github.com/lucidconnect/silver-arrow/repository"
+	"github.com/lucidconnect/silver-arrow/service/wallet"
 	"github.com/stretchr/testify/assert"
 )
 
