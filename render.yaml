@@ -33,11 +33,17 @@ services:
         sync: false
       - key: TURNKEY_KEY
         sync: false
-      - key: TK_PRIVATE_KEY
-        sync: false
       - key: TURNKEY_API_KEY_NAME
         sync: false
       - key: TURNKEY_HOST
         sync: false
       - key: KERNEL_FACTORY_ADDRESS
+        sync: false
+      - key: TK_KEYS_DIR
+        sync: false
+      - key: TK_KEYS_NAME
+        sync: false
+      - key: USE_AUTH
+        sync: false
+      - key: OPTIMISM_NODE_URL
         sync: false
