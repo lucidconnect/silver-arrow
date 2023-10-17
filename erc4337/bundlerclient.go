@@ -265,6 +265,8 @@ func GetNetwork(chainId int64) (string, error) {
 		return ETHEREUM, nil
 	case 5:
 		return GOERLI, nil
+	case 10:
+		return OPTIMISM, nil
 	case 137:
 		return POLYGON, nil
 	case 84531:
