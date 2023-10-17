@@ -1,10 +1,10 @@
 databases:
-  - name: silver-arrow-staging-db
+  - name: silver-arrow-db
     plan: starter
   
 services:
   - type: web
-    name: silver-arrow-staging
+    name: silver-arrow
     env: go
     region: oregon
     buildCommand: ./render-build.sh
@@ -16,8 +16,6 @@ services:
       - key: GITHUB_TOKEN
         sync: false
       - key: GITHUB_USER
-        sync: false
-      - key: POLYGON_MUMBAI_NODE_URL
         sync: false
       - key: PAYMASTER_URL
         sync: false
