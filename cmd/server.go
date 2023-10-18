@@ -10,6 +10,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/joho/godotenv"
+	"github.com/lucidconnect/silver-arrow/erc20"
 	merchant_graph "github.com/lucidconnect/silver-arrow/graphql/merchant/graph"
 	merchant_generated "github.com/lucidconnect/silver-arrow/graphql/merchant/graph/generated"
 	wallet_graph "github.com/lucidconnect/silver-arrow/graphql/wallet/graph"
@@ -93,7 +94,7 @@ func bootstrap() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to establish a database connection")
 	}
-
+	erc20.LoadSupportedTokens()
 }
 
 func loadEnv(app string) {
@@ -122,7 +123,7 @@ func setupJobs(runner *scheduler.Scheduler) {
 		),
 	)
 
-	c.AddFunc("@midnight", func() {
+	c.AddFunc("@hourly", func() {
 		runner.SubscriptionJob()
 	})
 
