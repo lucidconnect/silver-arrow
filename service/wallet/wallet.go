@@ -43,10 +43,8 @@ func NewWalletService(r repository.Database, t *turnkey.TurnkeyService) *WalletS
 
 func (ws *WalletService) AddAccount(input model.Account) error {
 	walletAddress := input.Address
-
 	// Check if account exists
-	w, err := ws.database.FetchAccountByAddress(walletAddress)
-	log.Info().Msgf("found wallet %v", &w)
+	_, err := ws.database.FetchAccountByAddress(walletAddress)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			// create turnkey sub organization
