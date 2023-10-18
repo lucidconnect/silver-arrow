@@ -15,13 +15,12 @@ type Token struct {
 
 var tokenCache = make(map[string]map[int64]string)
 
-func LoadSupportedTokens() error {
+func LoadSupportedTokens(tokenPath string) error {
 	var contents string
 
-	path := "../tokens/tokens.json"
-	log.Info().Msgf("Pulling supported tokens from json file: %v", path)
+	log.Info().Msgf("Pulling supported tokens from json file: %v", tokenPath)
 
-	contentBytes, err := os.ReadFile(path)
+	contentBytes, err := os.ReadFile(tokenPath)
 	if err != nil {
 		log.Fatal().Err(err).Send()
 		return err

@@ -94,7 +94,7 @@ func bootstrap() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to establish a database connection")
 	}
-	erc20.LoadSupportedTokens()
+	erc20.LoadSupportedTokens("tokens/tokens.json")
 }
 
 func loadEnv(app string) {
