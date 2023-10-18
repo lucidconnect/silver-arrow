@@ -18,7 +18,7 @@ var tokenCache = make(map[string]map[int64]string)
 func LoadSupportedTokens() error {
 	var contents string
 
-	path := "tokens/tokens.json"
+	path := "../tokens/tokens.json"
 	log.Info().Msgf("Pulling supported tokens from json file: %v", path)
 
 	contentBytes, err := os.ReadFile(path)
