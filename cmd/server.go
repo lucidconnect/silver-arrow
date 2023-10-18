@@ -123,7 +123,7 @@ func setupJobs(runner *scheduler.Scheduler) {
 		),
 	)
 
-	c.AddFunc("@hourly", func() {
+	c.AddFunc("@midnight", func() {
 		runner.SubscriptionJob()
 	})
 
