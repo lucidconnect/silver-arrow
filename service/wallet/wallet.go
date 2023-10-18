@@ -43,7 +43,6 @@ func NewWalletService(r repository.Database, t *turnkey.TurnkeyService) *WalletS
 
 func (ws *WalletService) AddAccount(input model.Account) error {
 	walletAddress := input.Address
-
 	// Check if account exists
 	_, err := ws.database.FetchAccountByAddress(walletAddress)
 	if err != nil {

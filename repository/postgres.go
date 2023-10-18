@@ -51,7 +51,7 @@ func (p *DB) AddAccount(addressData *models.Wallet) error {
 
 func (p *DB) FetchAccountByAddress(address string) (*models.Wallet, error) {
 	var wallet *models.Wallet
-	err := p.Db.Where("wallet_address = ?", address).Find(&wallet).Error
+	err := p.Db.Where("wallet_address = ?", address).First(&wallet).Error
 	if err != nil {
 		return nil, err
 	}

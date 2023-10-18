@@ -117,6 +117,16 @@ func (s *Scheduler) SubscriptionJob() {
 				log.Err(err).Send()
 				continue
 			}
+			nextChargeAt := time.Now().Add((time.Duration(sub.Interval)))
+
+			update := map[string]interface{}{
+				"expires_at":     nextChargeAt,
+				"next_charge_at": nextChargeAt,
+			}
+			err = s.datastore.UpdateSubscription(sub.ID, update)
+			if err != nil {
+				log.Err(err).Send()
+			}
 		}
 	}
 }

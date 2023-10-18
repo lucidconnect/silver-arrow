@@ -10,6 +10,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/joho/godotenv"
+	"github.com/lucidconnect/silver-arrow/erc20"
 	merchant_graph "github.com/lucidconnect/silver-arrow/graphql/merchant/graph"
 	merchant_generated "github.com/lucidconnect/silver-arrow/graphql/merchant/graph/generated"
 	wallet_graph "github.com/lucidconnect/silver-arrow/graphql/wallet/graph"
@@ -73,7 +74,7 @@ func main() {
 	if port == "" {
 		port = defaultPort
 	}
-	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
+	log.Info().Msgf("connect to http://localhost:%s/ for GraphQL playground", port)
 	if err := http.ListenAndServe(":"+port, router); err != nil {
 		log.Fatal().Err(err).Msg("unable to start the server")
 	}
@@ -93,7 +94,7 @@ func bootstrap() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to establish a database connection")
 	}
-
+	erc20.LoadSupportedTokens("tokens/tokens.json")
 }
 
 func loadEnv(app string) {

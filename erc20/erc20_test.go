@@ -17,7 +17,7 @@ func TestLoadSupportedTokens(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := LoadSupportedTokens(); (err != nil) != tt.wantErr {
+			if err := LoadSupportedTokens("../tokens/tokens.json"); (err != nil) != tt.wantErr {
 				t.Errorf("LoadSupportedTokens() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
@@ -46,7 +46,7 @@ func TestGetTokenAddres(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_ = LoadSupportedTokens()
+			_ = LoadSupportedTokens("../tokens/tokens.json")
 			if got := GetTokenAddress(tt.args.token, tt.args.chain); got != tt.want {
 				t.Errorf("GetTokenAddres() = %v, want %v", got, tt.want)
 			}
