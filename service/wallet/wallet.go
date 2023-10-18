@@ -45,7 +45,8 @@ func (ws *WalletService) AddAccount(input model.Account) error {
 	walletAddress := input.Address
 
 	// Check if account exists
-	_, err := ws.database.FetchAccountByAddress(walletAddress)
+	w, err := ws.database.FetchAccountByAddress(walletAddress)
+	log.Info().Msgf("found wallet %v", &w)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			// create turnkey sub organization
