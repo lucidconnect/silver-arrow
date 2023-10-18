@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"math/big"
+	"os"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -254,7 +255,7 @@ func (v *SessionKeyOwnedValidator) SetExecution(enableData []byte, ownerAccount 
 		return nil, err
 	}
 	copy(selector[:], sel)
-	executorAddress := common.HexToAddress("0x2087C7FfD0d0DAE80a00EE74325aBF3449e0eaf1")
+	executorAddress := common.HexToAddress(os.Getenv("EXECUTOR_ADDRESS"))
 	validatorAddress := v.ValidatorAddress
 	validUntil := big.NewInt(99999999999)
 	validAfter := big.NewInt(0)
