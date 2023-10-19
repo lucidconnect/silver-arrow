@@ -12,7 +12,9 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/lucidconnect/silver-arrow/abi/KernelFactory"
 	Kernel "github.com/lucidconnect/silver-arrow/abi/kernel"
+	KernelStorage "github.com/lucidconnect/silver-arrow/abi/kernelStorage"
 	"github.com/pkg/errors"
 )
 
@@ -62,36 +64,8 @@ func getKernelStorageAbi() string {
 	return kernelABI
 }
 
-func getAccountFactoryAbi() string {
-	factory := `[{
-		"inputs": [
-			{
-				"internalType": "contract IKernelValidator",
-				"name": "_validator",
-				"type": "address"
-			},
-			{
-				"internalType": "bytes",
-				"name": "_data",
-				"type": "bytes"
-			},
-			{
-				"internalType": "uint256",
-				"name": "_index",
-				"type": "uint256"
-			}
-		],
-		"name": "createAccount",
-		"outputs": [
-		{
-			"internalType": "contract EIP1967Proxy",
-			"name": "proxy",
-			"type": "address"
-		}
-		],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	}]`
+func getAccountFactoryAbi(factoryAddress string) string {
+	factory := KernelFactory.KernelFactoryABI
 	return factory
 }
 
@@ -160,19 +134,33 @@ func GetSetExecutionFnData(accountABI, validator, kernel string, enableData []by
 	return payload, nil
 }
 
-func GetCreateAccountFnData(factoryAbi, validator string, enableData []byte, index *big.Int) ([]byte, error) {
-	contractABI, err := abi.JSON(strings.NewReader(factoryAbi))
+func GetCreateAccountFnData(accountImplementation common.Address, enableData []byte, index *big.Int) ([]byte, error) {
+	factory := KernelFactory.KernelFactoryABI
+	factoryAbi, err := abi.JSON(strings.NewReader(factory))
 	if err != nil {
 		err = errors.Wrap(err, "abi.JSON() unable to read contract abi")
 		return nil, err
 	}
-	validatorAddress := common.HexToAddress(validator)
 
-	payload, err := contractABI.Pack("createAccount", validatorAddress, enableData, index)
+	payload, err := factoryAbi.Pack("createAccount", accountImplementation, enableData, index)
 	if err != nil {
 		return nil, err
 	}
 	fmt.Println("acc payload ", payload)
+	return payload, nil
+}
+
+func EncodeKernelStorageWithSelector(selector string, args ...interface{}) ([]byte, error) {
+	kernelStorage := KernelStorage.KernelStorageABI
+	kernelStorageAbi, err := abi.JSON(strings.NewReader(kernelStorage))
+	if err != nil {
+		err = errors.Wrap(err, "abi.JSON() unable to read kernelStorage abi")
+		return nil, err
+	}
+	payload, err := kernelStorageAbi. Pack(selector, args...)
+	if err != nil {
+		return nil, err
+	}
 	return payload, nil
 }
 
@@ -260,7 +248,7 @@ func getCallGasLimit() *big.Int {
 }
 
 func getVerificationGasLimit() *big.Int {
-	return big.NewInt(1573715)
+	return big.NewInt(300000)
 }
 
 func getPreVerificationGas() *big.Int {

@@ -167,8 +167,8 @@ func (v *SessionKeyOwnedValidator) GetEnableData() ([]byte, error) {
 	fmt.Println("valid until ", v.ValidUntil)
 	fmt.Println("valid after ", v.ValidAfter)
 	data = append(data, v.SessionKey.Bytes()...)
-	data = append(data, v.ValidUntil...)
 	data = append(data, v.ValidAfter...)
+	data = append(data, v.ValidUntil...)
 	return data, nil
 }
 
@@ -264,7 +264,6 @@ func (v *SessionKeyOwnedValidator) SetExecution(enableData []byte, ownerAccount 
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("callData", hexutil.Encode(callData))
 	// log.Fatalln("exit")
 
 	return callData, nil
