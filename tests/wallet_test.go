@@ -13,14 +13,16 @@ import (
 	"github.com/lucidconnect/silver-arrow/erc4337"
 	"github.com/lucidconnect/silver-arrow/graphql/wallet/graph/model"
 	"github.com/lucidconnect/silver-arrow/repository"
+	"github.com/lucidconnect/silver-arrow/service/turnkey"
 	"github.com/lucidconnect/silver-arrow/service/wallet"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestAddSubscription(t *testing.T) {
 	r := repository.NewDB(db)
+	tk, _ := turnkey.NewTurnKeyService()
 
-	ws := wallet.NewWalletService(r, nil)
+	ws := wallet.NewWalletService(r, tk)
 	// mId := randKey()
 	pId := "3838hr8hud9dijh3j"
 	key := "0xe81f9f7146470e1e728cc44d22089098de6be6ebe3ca39f21b7b092f09b10cf5"
@@ -28,14 +30,14 @@ func TestAddSubscription(t *testing.T) {
 	owner := crypto.PubkeyToAddress(p.PublicKey).Hex()
 	fmt.Println("owner", owner)
 	newSub := model.NewSubscription{
-		Chain:        80001,
+		Chain:        10,
 		NextChargeAt: nil,
 		Token:        "USDC",
 		Amount:       1,
 		Interval:     30,
-		ProductID:   pId,
+		ProductID:    pId,
 		// WalletAddress: "0x14De44b6100dE479655D752ECD2230D10F8fA061",
-		WalletAddress: "0x6a6F07c5c32F5fb20393a2110B2Bf0925e59571b",
+		WalletAddress: "0xb96442F14ac82E21c333A8bB9b03274Ae26eb79D",
 		OwnerAddress:  "0x85fc2E4425d0DAba7426F50091a384ee05D37Cd2",
 	}
 
@@ -48,7 +50,7 @@ func TestAddSubscription(t *testing.T) {
 	}
 
 	chain := int64(newSub.Chain)
-	_, op, err := ws.AddSubscription(uuid.New(), newSub, usePaymaster, big.NewInt(0), chain)
+	_, op, err := ws.AddSubscription(uuid.MustParse("e0b3849f-5870-4ee1-ab1a-3882c0da7903"), newSub, usePaymaster, big.NewInt(0), chain)
 	if !assert.NoError(t, err) {
 		t.FailNow()
 	}

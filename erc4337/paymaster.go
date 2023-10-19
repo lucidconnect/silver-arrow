@@ -77,6 +77,50 @@ func (nc *Client) RequestGasAndPaymasterAndData(policyId, entryPoint, dummySigna
 
 	// add 130098856
 	// var maxFee, maxPriorityFee *big.Int
+	maxFeePerGas, err := hexutil.DecodeUint64(result.MaxFeePerGas)
+	if err != nil {
+		log.Err(err).Msgf("maxFeePerGas returned from Alchemy %v", result.MaxFeePerGas)
+		return result, err
+	}
+	maxFeePerGas = (maxFeePerGas * 2) / 7
+
+	maxPriorityFee, err := hexutil.DecodeUint64(result.MaxPriorityFeePerGas)
+	if err != nil {
+		log.Err(err).Msgf("maxFeePerGas returned from Alchemy %v", result.MaxFeePerGas)
+		return result, err
+	}
+	maxPriorityFee = (maxPriorityFee * 2) / 7
+
+	result.MaxFeePerGas = hexutil.EncodeUint64(maxFeePerGas)
+	result.MaxPriorityFeePerGas = hexutil.EncodeUint64(maxPriorityFee)
+	fmt.Println("alchemy_requestGasAndPaymasterAndData - ", result)
+	return result, nil
+}
+
+func (nc *Client) RequestPaymasterAndData(policyId, entryPoint, dummySignature string, userop any) (*AlchemyPaymasterResult, error) {
+	result := &AlchemyPaymasterResult{}
+
+	// feeOverride := map[string]string{
+	// 	"maxFeePerGas":         "0x29260CA6A",
+	// 	"maxPriorityFeePerGas": "0x29260CA6A",
+	// }
+	request := AlchemyPaymasterRequest{
+		PolicyId:       policyId,
+		EntryPoint:     entryPoint,
+		DummySignature: dummySignature,
+		UserOperation:  userop,
+		// FeeOverride:    feeOverride,
+	}
+
+	time.Sleep(3 * time.Second)
+	err := nc.p.Client().CallContext(nc.ctx, result, "alchemy_requestPaymasterAndData", request)
+	if err != nil {
+		log.Err(err).Msg("alchemy_requestPaymasterAndData")
+		return nil, err
+	}
+
+	// add 130098856
+	// var maxFee, maxPriorityFee *big.Int
 
 	maxFeePerGasBig, _ := new(big.Int).SetString(result.MaxFeePerGas, 0)
 	_maxFeePerGas := new(big.Int).Mul(maxFeePerGasBig, big.NewInt(10))
@@ -86,11 +130,8 @@ func (nc *Client) RequestGasAndPaymasterAndData(policyId, entryPoint, dummySigna
 	_maxPriorityFee := new(big.Int).Mul(maxPriorityFeeBig, big.NewInt(10))
 	maxPriorityFee := new(big.Int).Div(_maxPriorityFee, big.NewInt(7))
 
-	// maxFee := new(big.Int).SetBytes(hexutil.MustDecode(result.MaxFeePerGas)).Add(big.NewInt(130098856))
-	// maxPriorityFee := new(big.Int).SetBytes(hexutil.MustDecode(result.MaxPriorityFeePerGas)).Add(big.NewInt(130098856))
-
 	result.MaxFeePerGas = hexutil.EncodeBig(maxFeePerGas)
 	result.MaxPriorityFeePerGas = hexutil.EncodeBig(maxPriorityFee)
-	fmt.Println("alchemy_requestGasAndPaymasterAndData - ", result)
+	fmt.Println("alchemy_PaymasterAndData - ", result)
 	return result, nil
 }

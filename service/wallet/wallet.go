@@ -444,27 +444,6 @@ func daysToNanoSeconds(days int64) time.Duration {
 	return time.Duration(secondsInt)
 }
 
-func createValidatorEnableData(publicKey, merchantId, accountAddress string) ([]byte, error) {
-	enableData, err := hexutil.Decode(publicKey)
-	if err != nil {
-		err = errors.Wrap(err, "failed to decode public key hex")
-		return nil, err
-	}
-
-	m := []byte(merchantId)
-	mid := common.LeftPadBytes(m, 32)
-	fmt.Println("length of merchant id", mid)
-	enableData = append(enableData, mid...)
-
-	data, err := erc4337.CreateSetExecutionCallData(enableData, accountAddress)
-	if err != nil {
-		err = errors.Wrap(err, "CreateSetExecutionCallData() - ")
-		return nil, err
-	}
-
-	return data, nil
-}
-
 // creats the calldata that scopes a kernel executor to a validator
 func setValidatorExecutor(sessionKey, validatorAddress, ownerAddress string, chain int64) ([]byte, error) {
 	mode := erc4337.ENABLE_MODE
@@ -489,10 +468,30 @@ func setValidatorExecutor(sessionKey, validatorAddress, ownerAddress string, cha
 func GetContractInitCode(owner common.Address, index *big.Int) ([]byte, error) {
 	initCode := []byte{}
 	factoryAddress := os.Getenv("KERNEL_FACTORY_ADDRESS")
+	implementation := os.Getenv("KERNEL_IMPLEMENTATION_ADDRESS")
+	defaultValidator := os.Getenv("DEFAULT_VALIDATOR")
+
+	kernelImplementation := common.HexToAddress(implementation)
 	// fmt.Println("accountAddress ", accountAddress)
+
+	/** inputs to createAddress
+		- account implementation
+		- calldata:abi.encodeWithSelector(
+	 		KernelStorage.initialize.selector, defaultValidator, abi.encodePacked(owner)),
+		- index
+	*/
+
+	callData, err := erc4337.EncodeKernelStorageWithSelector("initialize", common.HexToAddress(defaultValidator), owner.Bytes())
+
+	fmt.Println("callData",  hexutil.Encode(callData))
+	if err != nil {
+		return nil, err
+	}
+
+	
 	data := owner.Bytes()
 	fmt.Println("enable data ", hexutil.Encode(data))
-	code, err := erc4337.CreateFactoryFnData(owner.Bytes(), index)
+	code, err := erc4337.GetCreateAccountFnData(kernelImplementation, callData, index)
 	if err != nil {
 		return nil, err
 	}

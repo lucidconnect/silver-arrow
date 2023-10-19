@@ -75,11 +75,8 @@ func (b *ERCBundler) CreateUnsignedUserOperation(sender string, initCode, callDa
 			err = errors.Wrap(err, "call to sponsor user op failed")
 			return nil, err
 		}
-
 		callGasLimit = paymaster.CallGasLimit
 		verificationGas = hexutil.EncodeBig(getVerificationGasLimit())
-		xy := hexutil.MustDecode(paymaster.VerificationGasLimit)
-		fmt.Printf("paymaster returned verification gas limit - %v", new(big.Int).SetBytes(xy))
 		// verificationGas = paymaster.VerificationGasLimit
 		// preVerificationGas = hexutil.EncodeBig(getPreVerificationGas())
 		maxPriorityFeePerGas = paymaster.MaxPriorityFeePerGas
@@ -226,32 +223,3 @@ func CreateTransferCallData(toAddress, token string, amount *big.Int) ([]byte, e
 
 	return callData, nil
 }
-
-func CreateSetExecutionCallData(enableData []byte, kernel string) ([]byte, error) {
-	kernelAbi := getKernelStorageAbi()
-	lucidValidator := os.Getenv("LUCID_VALIDATOR")
-	callData, err := GetSetExecutionFnData(kernelAbi, lucidValidator, kernel, enableData)
-	if err != nil {
-		err = errors.Wrap(err, "CreateSetExecutionCallData(): failed to create final call data")
-		return nil, err
-	}
-
-	return callData, nil
-}
-
-func CreateFactoryFnData(enableData []byte, index *big.Int) ([]byte, error) {
-	factoryAbi := getAccountFactoryAbi()
-	defaultValidatorAddress := os.Getenv("DEFAULT_VALIDATOR")
-	callData, err := GetCreateAccountFnData(factoryAbi, defaultValidatorAddress, enableData, index)
-	if err != nil {
-		err = errors.Wrap(err, "CreateFactoryFnData(): failed to create final call data")
-		return nil, err
-	}
-
-	return callData, nil
-}
-
-// func GetTokenAddres(token string) string {
-
-// 	return "0x0fa8781a83e46826621b3bc094ea2a0212e71b23"
-// }
