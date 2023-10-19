@@ -11,6 +11,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/lucidconnect/silver-arrow/abi/EntryPoint"
 	"github.com/lucidconnect/silver-arrow/abi/erc20"
@@ -233,7 +234,8 @@ func (nc *Client) EstimateUserOperationGas(entrypointAddress string, userop map[
 		err = errors.Wrap(err, "eth_estimateUserOperationGas call error")
 		return nil, err
 	}
-
+	pGas, _ := hexutil.DecodeUint64(result.PreVerificationGas)
+	result.PreVerificationGas = hexutil.EncodeUint64(pGas * 2)
 	fmt.Println("eth_estimateUserOperationGas - ", result)
 	return result, nil
 }
