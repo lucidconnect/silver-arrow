@@ -77,22 +77,22 @@ func (nc *Client) RequestGasAndPaymasterAndData(policyId, entryPoint, dummySigna
 
 	// add 130098856
 	// var maxFee, maxPriorityFee *big.Int
-	maxFeePerGas, err := hexutil.DecodeUint64(result.MaxFeePerGas)
-	if err != nil {
-		log.Err(err).Msgf("maxFeePerGas returned from Alchemy %v", result.MaxFeePerGas)
-		return result, err
-	}
-	maxFeePerGas = (maxFeePerGas * 2) / 7
+	// maxFeePerGas, err := hexutil.DecodeUint64(result.MaxFeePerGas)
+	// if err != nil {
+	// 	log.Err(err).Msgf("maxFeePerGas returned from Alchemy %v", result.MaxFeePerGas)
+	// 	return result, err
+	// }
+	// maxFeePerGas = (maxFeePerGas * 2) / 7
 
-	maxPriorityFee, err := hexutil.DecodeUint64(result.MaxPriorityFeePerGas)
-	if err != nil {
-		log.Err(err).Msgf("maxFeePerGas returned from Alchemy %v", result.MaxFeePerGas)
-		return result, err
-	}
-	maxPriorityFee = (maxPriorityFee * 2) / 7
+	// maxPriorityFee, err := hexutil.DecodeUint64(result.MaxPriorityFeePerGas)
+	// if err != nil {
+	// 	log.Err(err).Msgf("maxFeePerGas returned from Alchemy %v", result.MaxFeePerGas)
+	// 	return result, err
+	// }
+	// maxPriorityFee = (maxPriorityFee * 2) / 7
 
-	result.MaxFeePerGas = hexutil.EncodeUint64(maxFeePerGas)
-	result.MaxPriorityFeePerGas = hexutil.EncodeUint64(maxPriorityFee)
+	// result.MaxFeePerGas = hexutil.EncodeUint64(maxFeePerGas)
+	// result.MaxPriorityFeePerGas = hexutil.EncodeUint64(maxPriorityFee)
 	fmt.Println("alchemy_requestGasAndPaymasterAndData - ", result)
 	return result, nil
 }
