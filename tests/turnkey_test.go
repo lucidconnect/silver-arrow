@@ -6,7 +6,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/lucidconnect/silver-arrow/erc4337"
+	"github.com/lucidconnect/silver-arrow/service/erc4337"
 	"github.com/lucidconnect/silver-arrow/service/turnkey"
 	"github.com/rmanzoku/ethutils/ecrecover"
 	"github.com/stretchr/testify/assert"

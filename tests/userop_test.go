@@ -5,6 +5,7 @@ import (
 	"math/big"
 	"os"
 	"reflect"
+	"strconv"
 	"testing"
 
 	"github.com/rs/zerolog/log"
@@ -13,17 +14,18 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/joho/godotenv"
 	"github.com/lucidconnect/silver-arrow/erc20"
-	"github.com/lucidconnect/silver-arrow/erc4337"
 	"github.com/lucidconnect/silver-arrow/repository"
 	"github.com/lucidconnect/silver-arrow/repository/models"
+	"github.com/lucidconnect/silver-arrow/service/erc4337"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
 )
 
 var (
 	nodeUrl, entrypointAddress, paymasterUrl string
+	defaultChain                             int64
 	db                                       *gorm.DB
-	nodeClient                               *erc4337.Client
+	// nodeClient                               *erc4337.Client
 )
 
 func TestMain(m *testing.M) {
@@ -36,15 +38,26 @@ func TestMain(m *testing.M) {
 		log.Fatal().Err(err)
 	}
 
+	chain := os.Getenv("DEFAULT_CHAIN")
+	defaultChain, err = strconv.ParseInt(chain, 10, 64)
+	if err != nil {
+		panic(err)
+	}
+
+	network, err := erc4337.GetNetwork(defaultChain)
+	if err != nil {
+		panic(err)
+	}
 	// seedWalletsTable(db)
+	nodeUrl = os.Getenv(fmt.Sprintf("%s_NODE_URL", network))
+
 	entrypointAddress = os.Getenv("ENTRY_POINT")
-	nodeUrl = os.Getenv("NODE_URL")
 	paymasterUrl = os.Getenv("PAYMASTER_URL")
 
-	nodeClient, err = erc4337.Dial(nodeUrl, paymasterUrl)
-	if err != nil {
-		log.Fatal().Err(err)
-	}
+	// nodeClient, err = erc4337.Dial(nodeUrl, paymasterUrl)
+	// if err != nil {
+	// 	log.Fatal().Err(err)
+	// }
 
 	exitVal := m.Run()
 	// clearTables(db)
@@ -77,14 +90,16 @@ func clearTables(db *gorm.DB) {
 }
 
 func TestGetUserOperationByHash(t *testing.T) {
-	nodeClient, err := erc4337.Dial(nodeUrl, "")
+	// nodeClient, err := erc4337.Dial(nodeUrl, "")
+	// if !assert.NoError(t, err) {
+	// 	t.FailNow()
+	// }
+	ercBundler, err := erc4337.NewAlchemyService(defaultChain)
 	if !assert.NoError(t, err) {
 		t.FailNow()
 	}
-	ercBundler := erc4337.NewERCBundler(entrypointAddress, nodeClient)
-
 	useropshash := "0x28b45cf378c23fbdbbcb4f4c4d085791eb6d660214ff4a2402e40fd1c73751c6"
-	_, err = ercBundler.GetUserOp(useropshash)
+	_, err = ercBundler.GetUserOperationByHash(useropshash)
 	if !assert.NoError(t, err) {
 		t.FailNow()
 	}
@@ -112,9 +127,9 @@ func TestValidator(t *testing.T) {
 	mode := erc4337.ENABLE_MODE
 	chainId := 80001
 
-	ercBundler := erc4337.NewERCBundler(entrypointAddress, nodeClient)
+	ercBundler, _ := erc4337.NewAlchemyService(defaultChain)
 
-	nonce, err := ercBundler.AccountNonce(sender)
+	nonce, err := ercBundler.GetAccountNonce(common.HexToAddress(sender))
 	if !assert.NoError(t, err) {
 		t.FailNow()
 	}
@@ -146,7 +161,7 @@ func TestValidator(t *testing.T) {
 
 	op["signature"] = hexutil.Encode(sig)
 
-	opHash, err := ercBundler.SendUserOp(op)
+	opHash, err := ercBundler.SendUserOperation(op)
 	fmt.Println("user operation hash -", opHash)
 	if !assert.NoError(t, err) {
 		t.FailNow()
@@ -159,7 +174,7 @@ func TestTokenAction(t *testing.T) {
 	target := common.HexToAddress("0xB77ce6ec08B85DcC468B94Cea7Cc539a3BbF9510")
 	token := "USDC"
 
-	ercBundler := erc4337.NewERCBundler(entrypointAddress, nodeClient)
+	ercBundler, _ := erc4337.NewAlchemyService(defaultChain)
 
 	// 1000000000000000000 = 1 ether
 	// 1000000000000000000 = 1 erc20Token
@@ -173,7 +188,7 @@ func TestTokenAction(t *testing.T) {
 		t.FailNow()
 	}
 
-	nonce, err := ercBundler.AccountNonce(sender)
+	nonce, err := ercBundler.GetAccountNonce(common.HexToAddress(sender))
 	if !assert.NoError(t, err) {
 		t.FailNow()
 	}
@@ -192,7 +207,7 @@ func TestTokenAction(t *testing.T) {
 	assert.NoError(t, err)
 	op["signature"] = hexutil.Encode(sig)
 	// send user operation
-	opHash, err := ercBundler.SendUserOp(op)
+	opHash, err := ercBundler.SendUserOperation(op)
 	if !assert.NoError(t, err) {
 		t.FailNow()
 	}
