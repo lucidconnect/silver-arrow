@@ -12,9 +12,9 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/lucidconnect/silver-arrow/erc4337"
 	"github.com/lucidconnect/silver-arrow/graphql/wallet/graph/generated"
 	"github.com/lucidconnect/silver-arrow/graphql/wallet/graph/model"
+	"github.com/lucidconnect/silver-arrow/service/erc4337"
 	"github.com/lucidconnect/silver-arrow/service/merchant"
 	"github.com/lucidconnect/silver-arrow/service/wallet"
 	"github.com/pkg/errors"

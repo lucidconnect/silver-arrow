@@ -1,17 +1,13 @@
 package erc4337
 
 import (
-	"crypto/ecdsa"
 	"fmt"
 	"math/big"
 	"strings"
 
-	"github.com/rs/zerolog/log"
-
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/lucidconnect/silver-arrow/abi/KernelFactory"
 	Kernel "github.com/lucidconnect/silver-arrow/abi/kernel"
 	KernelStorage "github.com/lucidconnect/silver-arrow/abi/kernelStorage"
@@ -19,54 +15,98 @@ import (
 )
 
 /**
+Types
+*/
 
- */
+var (
+	SUDO_MODE      = "0x00000000"
+	VALIDATOR_MODE = "0x00000001"
+	ENABLE_MODE    = "0x00000002"
+)
 
-func getKernelStorageAbi() string {
-	kernelABI := `[{
-		"inputs": [
-			{
-				"internalType": "bytes4",
-				"name": "_selector",
-				"type": "bytes4"
-			},
-			{
-				"internalType": "address",
-				"name": "_executor",
-				"type": "address"
-			},
-			{
-				"internalType": "contract IKernelValidator",
-				"name": "_validator",
-				"type": "address"
-			},
-			{
-				"internalType": "uint48",
-				"name": "_validUntil",
-				"type": "uint48"
-			},
-			{
-				"internalType": "uint48",
-				"name": "_validAfter",
-				"type": "uint48"
-			},
-			{
-				"internalType": "bytes",
-				"name": "_enableData",
-				"type": "bytes"
-			}
-		],
-		"name": "setExecution",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	}]`
-	return kernelABI
+type RpcError struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+	Data    any    `json:"data"`
 }
 
-func getAccountFactoryAbi(factoryAddress string) string {
-	factory := KernelFactory.KernelFactoryABI
-	return factory
+type GasEstimateResult struct {
+	PreVerificationGas   string `json:"preVerificationGas"`
+	VerificationGasLimit string `json:"verificationGasLimit"`
+	CallGasLimit         string `json:"callGasLimit"`
+}
+
+type UserOperation struct {
+	Sender               string `json:"sender"`
+	Nonce                string `json:"nonce"`
+	InitCode             string `json:"initCode"`
+	CallData             string `json:"callData"`
+	CallGasLimit         string `json:"callGasLimit"`
+	VerificationGasLimit string `json:"verificationGasLimit"`
+	PreVerificationGas   string `json:"preVerificationGas"`
+	MaxFeePerGas         string `json:"maxFeePerGas"`
+	MaxPriorityFeePerGas string `json:"maxPriorityFeePerGas"`
+	PaymasterAndData     string `json:"paymasterAndData"`
+	Signature            string `json:"signature"`
+}
+
+type PaymasterResult struct {
+	PaymasterAndData     string `json:"paymasterAndData"`
+	PreVerificationGas   string `json:"preVerificationGas"`
+	VerificationGasLimit string `json:"verificationGasLimit"`
+	CallGasLimit         string `json:"callGasLimit"`
+}
+
+type AlchemyPaymasterRequest struct {
+	PolicyId       string `json:"policyId"`
+	EntryPoint     string `json:"entryPoint"`
+	DummySignature string `json:"dummySignature"`
+	UserOperation  any    `json:"userOperation"`
+	FeeOverride    any    `json:"feeOverride"`
+}
+type AlchemyPaymasterResult struct {
+	PaymasterAndData     string      `json:"paymasterAndData"`
+	PreVerificationGas   string      `json:"preVerificationGas"`
+	VerificationGasLimit string      `json:"verificationGasLimit"`
+	CallGasLimit         string      `json:"callGasLimit"`
+	MaxFeePerGas         string      `json:"maxFeePerGas"`
+	MaxPriorityFeePerGas string      `json:"maxPriorityFeePerGas"`
+	Error                ErrorObject `json:"error"`
+}
+
+type ErrorObject struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+	Data    any    `json:"data"`
+}
+
+func newUserOp(userop map[string]any) UserOperation {
+	sender, _ := userop["sender"].(string)
+	nonce, _ := userop["nonce"].(string)
+	initCode, _ := userop["initCode"].(string)
+	callGasLimit, _ := userop["callGasLimit"].(string)
+	verificationGasLimit, _ := userop["verificationGasLimit"].(string)
+	preVerificationGas, _ := userop["preVerificationGas"].(string)
+
+	maxFeePerGas, _ := userop["maxFeePerGas"].(string)
+	maxPriorityFeePerGas, _ := userop["maxPriorityFeePerGas"].(string)
+	paymasterAndData, _ := userop["paymasterAndData"].(string)
+	signature, _ := userop["signature"].(string)
+	callData, _ := userop["callData"].(string)
+
+	return UserOperation{
+		Sender:               sender,
+		Nonce:                nonce,
+		InitCode:             initCode,
+		CallGasLimit:         callGasLimit,
+		VerificationGasLimit: verificationGasLimit,
+		PreVerificationGas:   preVerificationGas,
+		MaxFeePerGas:         maxFeePerGas,
+		MaxPriorityFeePerGas: maxPriorityFeePerGas,
+		PaymasterAndData:     paymasterAndData,
+		Signature:            signature,
+		CallData:             callData,
+	}
 }
 
 // This wil be encoded as the data passed into the execute function
@@ -157,7 +197,7 @@ func EncodeKernelStorageWithSelector(selector string, args ...interface{}) ([]by
 		err = errors.Wrap(err, "abi.JSON() unable to read kernelStorage abi")
 		return nil, err
 	}
-	payload, err := kernelStorageAbi. Pack(selector, args...)
+	payload, err := kernelStorageAbi.Pack(selector, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -233,26 +273,8 @@ func GetEntryPointAddress() common.Address {
 	return common.HexToAddress(entrypointAddress)
 }
 
-func (b *ERCBundler) getContractInitCode(address common.Address) []byte {
-	code, err := b.client.GetAccountCode(address)
-	if err != nil {
-		log.Err(err).Msg("Oops! could not fetch account code")
-		return nil
-	}
-	fmt.Println("Account code - ", code)
-	return code
-}
-
-func getCallGasLimit() *big.Int {
-	return big.NewInt(70000)
-}
-
 func getVerificationGasLimit() *big.Int {
 	return big.NewInt(300000)
-}
-
-func getPreVerificationGas() *big.Int {
-	return big.NewInt(89925)
 }
 
 func getMaxFeePerGas() *big.Int {
@@ -261,13 +283,4 @@ func getMaxFeePerGas() *big.Int {
 
 func getMaxPriorityFeePerGas() *big.Int {
 	return big.NewInt(3079999999)
-}
-
-func getSigningKey(privateKey string) (*ecdsa.PrivateKey, error) {
-	privKey, err := crypto.HexToECDSA(privateKey[2:])
-	if err != nil {
-		err = errors.Wrapf(err, "private key parse failure, %v", privateKey)
-		return nil, err
-	}
-	return privKey, nil
 }

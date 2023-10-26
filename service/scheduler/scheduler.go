@@ -11,8 +11,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	LucidMerchant "github.com/lucidconnect/silver-arrow/abi/LucidMerchant"
-	"github.com/lucidconnect/silver-arrow/erc4337"
 	"github.com/lucidconnect/silver-arrow/repository"
+	"github.com/lucidconnect/silver-arrow/service/erc4337"
 	"github.com/lucidconnect/silver-arrow/service/wallet"
 	"github.com/pkg/errors"
 )
@@ -20,9 +20,9 @@ import (
 var defaultChain int64
 
 type Scheduler struct {
-	bundler       *erc4337.ERCBundler
 	queue         repository.Queuer
 	datastore     repository.Database
+	bundler       *erc4337.AlchemyService
 	walletService *wallet.WalletService
 }
 
@@ -34,7 +34,7 @@ func NewScheduler(data repository.Database, wallet *wallet.WalletService) *Sched
 		panic(err)
 	}
 
-	bundler, err := erc4337.InitialiseBundler(defaultChain)
+	bundler, err := erc4337.NewAlchemyService(defaultChain)
 	if err != nil {
 		panic(err)
 	}
@@ -66,7 +66,7 @@ func (s *Scheduler) SubscriptionJob() {
 		log.Err(err).Send()
 	}
 
-	client := s.bundler.GetClient()
+	// client := s.bundler.GetClient()
 
 	// loop through subsDueIn3 and check if the account has enough to cover the sub
 	for _, sub := range subsDueIn3 {
@@ -75,7 +75,7 @@ func (s *Scheduler) SubscriptionJob() {
 		token := common.HexToAddress(sub.TokenAddress)
 		// chain := sub.Chain
 
-		balance, err := client.GetErc20TokenBalance(token, wallet)
+		balance, err := s.bundler.GetErc20TokenBalance(token, wallet)
 		if err != nil {
 			log.Err(err).Send()
 			continue
@@ -96,7 +96,7 @@ func (s *Scheduler) SubscriptionJob() {
 		tokenAddress := common.HexToAddress(sub.TokenAddress)
 		chain := sub.Chain
 
-		balance, err := client.GetErc20TokenBalance(tokenAddress, wallet)
+		balance, err := s.bundler.GetErc20TokenBalance(tokenAddress, wallet)
 		if err != nil {
 			log.Err(err).Send()
 			continue
@@ -139,7 +139,7 @@ func getAccountNonce(address string) *big.Int {
 // and fetches the address for the given MerchantId
 func (s *Scheduler) fetchMerchantAddress(merchantId string) (string, error) {
 	contractAddress := os.Getenv("MERCHANT_CONTRACT")
-	backend := s.bundler.GetClient().GetEthClient()
+	backend := s.bundler.GetEthBackend()
 
 	l, err := LucidMerchant.NewLucidMerchant(common.HexToAddress(contractAddress), backend)
 	if err != nil {

@@ -15,10 +15,12 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/lucidconnect/silver-arrow/erc20"
-	"github.com/lucidconnect/silver-arrow/erc4337"
+
+	// "github.com/lucidconnect/silver-arrow/erc4337"
 	"github.com/lucidconnect/silver-arrow/graphql/wallet/graph/model"
 	"github.com/lucidconnect/silver-arrow/repository"
 	"github.com/lucidconnect/silver-arrow/repository/models"
+	"github.com/lucidconnect/silver-arrow/service/erc4337"
 	"github.com/lucidconnect/silver-arrow/service/merchant"
 	"github.com/lucidconnect/silver-arrow/service/turnkey"
 	"github.com/pkg/errors"
@@ -125,13 +127,14 @@ func convertMapToStruct(m map[string]interface{}, s interface{}) error {
 }
 
 func (ws *WalletService) ValidateSubscription(userop map[string]any, chain int64) (*model.SubscriptionData, string, error) {
-	bundler, err := erc4337.InitialiseBundler(chain)
+	// bundler, err := erc4337.InitialiseBundler(chain)
+	bundler, err := erc4337.NewAlchemyService(chain)
 	if err != nil {
 		log.Err(err).Msg("failed to initialise bundler")
 		return nil, "", err
 	}
 
-	opHash, err := bundler.SendUserOp(userop)
+	opHash, err := bundler.SendUserOperation(userop)
 	if err != nil {
 		log.Err(err).Msg("failed to send user op")
 		return nil, "", err
@@ -214,7 +217,7 @@ func (ws *WalletService) AddSubscription(merchantId uuid.UUID, input model.NewSu
 		return nil, nil, err
 	}
 
-	bundler, err := erc4337.InitialiseBundler(chain)
+	bundler, err := erc4337.NewAlchemyService(chain)
 	if err != nil {
 		log.Err(err).Msg("failed to initialise bundler")
 		return nil, nil, err
@@ -233,7 +236,7 @@ func (ws *WalletService) AddSubscription(merchantId uuid.UUID, input model.NewSu
 		}
 		nonce = common.Big0
 	} else {
-		nonce, err = bundler.AccountNonce(input.WalletAddress)
+		nonce, err = bundler.GetAccountNonce(common.HexToAddress(input.WalletAddress))
 		if err != nil {
 			log.Err(err).Send()
 			return nil, nil, err
@@ -355,7 +358,7 @@ func weiToAmount(amt *big.Int) int64 {
 
 // Execute a charge on an AA wallet, currently limited to USDC
 func (ws *WalletService) ExecuteCharge(sender, target, token, key string, amount, chain int64, sponsored bool) error {
-	bundler, err := erc4337.InitialiseBundler(chain)
+	bundler, err := erc4337.NewAlchemyService(chain)
 	if err != nil {
 		log.Err(err).Msg("failed to initialise bundler")
 		return err
@@ -380,7 +383,7 @@ func (ws *WalletService) ExecuteCharge(sender, target, token, key string, amount
 		return err
 	}
 
-	nonce, err := bundler.AccountNonce(sender)
+	nonce, err := bundler.GetAccountNonce(common.HexToAddress(sender))
 	if err != nil {
 		log.Err(err).Send()
 		return err
@@ -427,7 +430,7 @@ func (ws *WalletService) ExecuteCharge(sender, target, token, key string, amount
 	}
 	op["signature"] = sig.ParseSignature(erc4337.VALIDATOR_MODE)
 
-	opHash, err := bundler.SendUserOp(op)
+	opHash, err := bundler.SendUserOperation(op)
 	if err != nil {
 		log.Err(err).Send()
 		return err
@@ -483,12 +486,11 @@ func GetContractInitCode(owner common.Address, index *big.Int) ([]byte, error) {
 
 	callData, err := erc4337.EncodeKernelStorageWithSelector("initialize", common.HexToAddress(defaultValidator), owner.Bytes())
 
-	fmt.Println("callData",  hexutil.Encode(callData))
+	fmt.Println("callData", hexutil.Encode(callData))
 	if err != nil {
 		return nil, err
 	}
 
-	
 	data := owner.Bytes()
 	fmt.Println("enable data ", hexutil.Encode(data))
 	code, err := erc4337.GetCreateAccountFnData(kernelImplementation, callData, index)
@@ -503,14 +505,14 @@ func GetContractInitCode(owner common.Address, index *big.Int) ([]byte, error) {
 }
 
 func (ws *WalletService) isAccountDeployed(address string, chain int64) bool {
-	bundler, err := erc4337.InitialiseBundler(chain)
+	bundler, err := erc4337.NewAlchemyService(chain)
 	if err != nil {
 		err = errors.Wrap(err, "failed to initialise bundler")
 		log.Panic().Err(err).Send()
 		return false
 	}
 
-	code, err := bundler.GetClient().GetAccountCode(common.HexToAddress(address))
+	code, err := bundler.GetAccountCode(common.HexToAddress(address))
 	if err != nil {
 		log.Err(err).Send()
 		return false
