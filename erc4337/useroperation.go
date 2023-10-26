@@ -76,9 +76,7 @@ func (b *ERCBundler) CreateUnsignedUserOperation(sender string, initCode, callDa
 			return nil, err
 		}
 		callGasLimit = paymaster.CallGasLimit
-		verificationGas = hexutil.EncodeBig(getVerificationGasLimit())
-		// verificationGas = paymaster.VerificationGasLimit
-		// preVerificationGas = hexutil.EncodeBig(getPreVerificationGas())
+		verificationGas = paymaster.VerificationGasLimit
 		maxPriorityFeePerGas = paymaster.MaxPriorityFeePerGas
 		preVerificationGas = paymaster.PreVerificationGas
 		maxFeePerGas = paymaster.MaxFeePerGas
