@@ -7,12 +7,13 @@ import (
 	"os"
 	"testing"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/google/uuid"
-	"github.com/lucidconnect/silver-arrow/erc4337"
 	"github.com/lucidconnect/silver-arrow/graphql/wallet/graph/model"
 	"github.com/lucidconnect/silver-arrow/repository"
+	"github.com/lucidconnect/silver-arrow/service/erc4337"
 	"github.com/lucidconnect/silver-arrow/service/turnkey"
 	"github.com/lucidconnect/silver-arrow/service/wallet"
 	"github.com/stretchr/testify/assert"
@@ -92,7 +93,7 @@ func TestSignature(t *testing.T) {
 	target := "0xB77ce6ec08B85DcC468B94Cea7Cc539a3BbF9510"
 	token := "USDC"
 
-	ercBundler := erc4337.NewERCBundler(entrypointAddress, nodeClient)
+	ercBundler, _ := erc4337.NewAlchemyService(defaultChain)
 
 	amount := big.NewInt(1000000)
 	data, err := erc4337.CreateTransferCallData(target, token, amount)
@@ -100,7 +101,7 @@ func TestSignature(t *testing.T) {
 		t.FailNow()
 	}
 
-	nonce, _ := ercBundler.AccountNonce(sender)
+	nonce, _ := ercBundler.GetAccountNonce(common.HexToAddress(sender))
 	key := "0xe81f9f7146470e1e728cc44d22089098de6be6ebe3ca39f21b7b092f09b10cf5"
 
 	chainId := 80001

@@ -75,5 +75,5 @@ func Test_uint256(t *testing.T) {
 }
 
 func Test_EnableSignature(t *testing.T) {
-	
+
 }
