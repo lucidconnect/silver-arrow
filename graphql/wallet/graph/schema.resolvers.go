@@ -144,14 +144,13 @@ func (r *mutationResolver) CancelSubscription(ctx context.Context, id string) (s
 
 // FetchSubscriptions is the resolver for the fetchSubscriptions field.
 func (r *queryResolver) FetchSubscriptions(ctx context.Context, account string) ([]*model.SubscriptionData, error) {
-	merchant, err := getAuthenticatedAndActiveMerchant(ctx)
+	ws := wallet.NewWalletService(r.Database, r.TurnkeyService)
+	subs, err := ws.FetchSubscriptions(account)
 	if err != nil {
+		err = errors.New("failed to fetch subscriptions")
 		return nil, err
 	}
-	_ = merchant.ID
-
-	_ = wallet.NewWalletService(r.Database, r.TurnkeyService)
-	panic(fmt.Errorf("not implemented: FetchSubscriptions - fetchSubscriptions"))
+	return subs, nil
 }
 
 // Mutation returns generated.MutationResolver implementation.

@@ -5,7 +5,6 @@ import (
 	"math/big"
 	"math/rand"
 	"os"
-	"reflect"
 	"time"
 
 	"github.com/google/uuid"
@@ -97,32 +96,6 @@ func (ws *WalletService) AddAccount(input model.Account) error {
 		}
 	}
 
-	return nil
-}
-
-type userOp struct {
-	CallData             string `json:"callData"`
-	CallGasLimit         string `json:"callGasLimit"`
-	InitCode             string `json:"initCode"`
-	MaxFeePerGas         string `json:"maxFeePerGas"`
-	MaxPriorityFeePerGas string `json:"maxPriorityFeePerGas"`
-	Nonce                string `json:"nonce"`
-	PaymasterAndData     string `json:"paymasterAndData"`
-	PreVerificationGas   string `json:"preVerificationGas"`
-	Sender               string `json:"sender"`
-	Signature            string `json:"signature"`
-	VerificationGasLimit string `json:"verificationGasLimit"`
-}
-
-func convertMapToStruct(m map[string]interface{}, s interface{}) error {
-	stValue := reflect.ValueOf(s).Elem()
-	sType := stValue.Type()
-	for i := 0; i < sType.NumField(); i++ {
-		field := sType.Field(i)
-		if value, ok := m[field.Name]; ok {
-			stValue.Field(i).Set(reflect.ValueOf(value))
-		}
-	}
 	return nil
 }
 
@@ -300,6 +273,32 @@ func (ws *WalletService) AddSubscription(merchantId uuid.UUID, input model.NewSu
 	}, op, nil
 }
 
+func (w *WalletService) FetchSubscriptions(walletAddress string) ([]*model.SubscriptionData, error) {
+	var subData []*model.SubscriptionData
+
+	subs, err := w.database.FetchWalletSubscriptions(walletAddress)
+	if err != nil {
+		log.Err(err).Msgf("error while fetching subscriotions for %v", walletAddress)
+		return nil, err
+	}
+
+	for _, v := range subs {
+		interval := nanoSecondsToDay(v.Interval)
+		createdAt := v.CreatedAt.Format("dd:mm:yyyy")
+		sd := &model.SubscriptionData{
+			ID:        v.ID.String(),
+			Token:     v.Token,
+			Amount:    int(v.Amount),
+			Interval:  int(interval),
+			ProductID: v.ProductID.String(),
+			CreatedAt: &createdAt,
+		}
+		subData = append(subData, sd)
+	}
+
+	return subData, nil
+}
+
 func amountToWei(amount any) (*big.Int, error) {
 	etherInWei := new(big.Int)
 	etherInWei.SetString("1000000000000000000", 10)
@@ -443,8 +442,16 @@ func (ws *WalletService) ExecuteCharge(sender, target, token, key string, amount
 }
 
 func daysToNanoSeconds(days int64) time.Duration {
-	secondsInt := days * 24 * 60 * 60 * 1e9
-	return time.Duration(secondsInt)
+	nanoSsecondsInt := days * 24 * 60 * 60 * 1e9
+	return time.Duration(nanoSsecondsInt)
+}
+
+func nanoSecondsToDay(ns int64) int64 {
+	interval := time.Duration(ns)
+	hours := interval.Hours()
+
+	days := hours / 24
+	return int64(days)
 }
 
 // creats the calldata that scopes a kernel executor to a validator

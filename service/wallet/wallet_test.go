@@ -14,6 +14,10 @@ func Test_daysToNanoSeconds(t *testing.T) {
 	duration := daysToNanoSeconds(28)
 	fmt.Println(duration.Nanoseconds())
 	assert.Equal(t, time.Duration(2419200000000000), duration)
+
+	days := nanoSecondsToDay(2419200000000000)
+	fmt.Println(days)
+	assert.Equal(t, int64(28), days)
 }
 
 func Test_amountToWei(t *testing.T) {
