@@ -5,8 +5,10 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/lucidconnect/silver-arrow/auth"
 	"github.com/lucidconnect/silver-arrow/repository/models"
-	"github.com/lucidconnect/silver-arrow/service/merchant"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 )
@@ -18,7 +20,7 @@ func getAuthenticatedAndActiveMerchant(ctx context.Context) (*models.Merchant, e
 		return &models.Merchant{}, nil
 	}
 
-	merchant, err := merchant.ForContext(ctx)
+	merchant, err := auth.ForContext(ctx)
 	if err != nil {
 		err = errors.Wrapf(err, "merchant authorization failed %v", ctx)
 		log.Err(err).Send()
@@ -26,4 +28,20 @@ func getAuthenticatedAndActiveMerchant(ctx context.Context) (*models.Merchant, e
 	}
 
 	return merchant, nil
+}
+
+func validateSignature(rawString, signature, pk string) error{
+	raw := []byte(rawString)
+	hash := crypto.Keccak256(raw)
+	sigBytes := (hexutil.MustDecode(signature))
+	pub, err := crypto.SigToPub(hash, sigBytes)
+	if err != nil {
+		return err
+	}
+
+	recoveredAddress := crypto.PubkeyToAddress(*pub)
+	if recoveredAddress.Hex() != pk {
+		return errors.New("invalid signature")
+	}
+	return nil
 }

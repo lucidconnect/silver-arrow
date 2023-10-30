@@ -12,6 +12,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/lucidconnect/silver-arrow/auth"
 	"github.com/lucidconnect/silver-arrow/graphql/wallet/graph/generated"
 	"github.com/lucidconnect/silver-arrow/graphql/wallet/graph/model"
 	"github.com/lucidconnect/silver-arrow/service/erc4337"
@@ -42,7 +43,21 @@ func (r *mutationResolver) AddSubscription(ctx context.Context, input model.NewS
 		return nil, err
 	}
 	merchantId := merchant.ID
+	signature, err := auth.SignatureContext(ctx, merchant.PublicKey)
+	if err != nil {
+		return nil, err
+	}
 	log.Info().Msgf("Authenticated Merchant: %v", merchantId)
+	// validate signature
+	// amount:token:interval:productId
+	signatureCheck := fmt.Sprintf("%v", input.Amount) + ":" + input.Token + ":" + fmt.Sprintf("%v", input.Interval) + ":" + input.ProductID
+	err = validateSignature(signatureCheck, signature, merchant.PublicKey)
+	if err != nil {
+		log.Err(err).Ctx(ctx).Send()
+		err = errors.New("request signature is invalid")
+		return nil, err
+	}
+	
 	walletService := wallet.NewWalletService(r.Database, r.TurnkeyService)
 	var usePaymaster bool
 	switch os.Getenv("USE_PAYMASTER") {

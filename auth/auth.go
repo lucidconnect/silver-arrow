@@ -1,12 +1,76 @@
 package auth
 
 import (
+	"context"
 	"encoding/binary"
 	"errors"
+	"net/http"
+	"strings"
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/lucidconnect/silver-arrow/repository"
+	"github.com/lucidconnect/silver-arrow/repository/models"
+	"github.com/rs/zerolog/log"
 )
+
+var merchantCtxKey = &contextKey{"merchant"}
+
+var authSignatureCtxKey = &contextKey{"authSignature"}
+
+type contextKey struct {
+	name string
+}
+
+func Middleware(db repository.DB) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			authorizationValue := r.Header.Get("Authorization")
+			// log.Info().Msgf("merchant public key - %v", authorizationValue)
+			signature := r.Header.Get("X-Lucid-Request-Signature")
+			if authorizationValue == "" {
+				next.ServeHTTP(w, r)
+				return
+			}
+			if strings.HasPrefix(authorizationValue, "Bearer ") {
+				authorizationValue = authorizationValue[7:]
+			} else {
+				next.ServeHTTP(w, r)
+				return
+			}
+			merchant, err := db.FetchMerchantByPublicKey(authorizationValue)
+			if err != nil {
+				log.Err(err).Send()
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			merchantCtx := context.WithValue(r.Context(), merchantCtxKey, merchant)
+			r = r.WithContext(merchantCtx)
+
+			signatureCtx := context.WithValue(r.Context(), authSignatureCtxKey, signature)
+			r = r.WithContext(signatureCtx)
+
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+func ForContext(ctx context.Context) (*models.Merchant, error) {
+	raw, _ := ctx.Value(merchantCtxKey).(*models.Merchant)
+	if raw == nil {
+		return nil, errors.New("invalid token")
+	}
+	return raw, nil
+}
+
+func SignatureContext(ctx context.Context, pk string) (string, error) {
+	raw, _ := ctx.Value(authSignatureCtxKey).(string)
+	if raw == "" {
+		return "", errors.New("invalid signature")
+	}
+	return raw, nil
+}
 
 func CreateAccessKey() (publicKey, privateKey string, err error) {
 	pk, err := crypto.GenerateKey()

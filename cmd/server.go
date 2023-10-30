@@ -10,6 +10,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/joho/godotenv"
+	"github.com/lucidconnect/silver-arrow/auth"
 	"github.com/lucidconnect/silver-arrow/erc20"
 	merchant_graph "github.com/lucidconnect/silver-arrow/graphql/merchant/graph"
 	merchant_generated "github.com/lucidconnect/silver-arrow/graphql/merchant/graph/generated"
@@ -17,7 +18,6 @@ import (
 	wallet_generated "github.com/lucidconnect/silver-arrow/graphql/wallet/graph/generated"
 	"github.com/lucidconnect/silver-arrow/logger"
 	"github.com/lucidconnect/silver-arrow/repository"
-	"github.com/lucidconnect/silver-arrow/service/merchant"
 	"github.com/lucidconnect/silver-arrow/service/scheduler"
 	"github.com/lucidconnect/silver-arrow/service/turnkey"
 	"github.com/lucidconnect/silver-arrow/service/wallet"
@@ -49,9 +49,8 @@ func main() {
 		log.Panic().Err(err).Send()
 	}
 	walletService := wallet.NewWalletService(database, tunkeyService)
-	merchantService := merchant.NewMerchantService(database)
 
-	router.Use(merchantService.Middleware())
+	router.Use(auth.Middleware(*database))
 
 	jobRunner := scheduler.NewScheduler(database, walletService)
 	setupJobs(jobRunner)
