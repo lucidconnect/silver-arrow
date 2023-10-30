@@ -13,7 +13,7 @@ import (
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
 
-func CreateTransferCallData(toAddress, token string, amount *big.Int) ([]byte, error) {
+func CreateTransferCallData(toAddress, token string, chain int64, amount *big.Int) ([]byte, error) {
 	accountABI := getAccountABI()
 
 	if token == "ETH" {
@@ -33,7 +33,7 @@ func CreateTransferCallData(toAddress, token string, amount *big.Int) ([]byte, e
 		return nil, err
 	}
 
-	tokenAddress := erc20.GetTokenAddress(token, 80001)
+	tokenAddress := erc20.GetTokenAddress(token, chain)
 	callData, err := GetExecuteFnData(accountABI, tokenAddress, common.Big0, erc20TransferData)
 	if err != nil {
 		err = errors.Wrap(err, "CreateTransferCallData(): failed to create final call data")

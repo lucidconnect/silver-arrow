@@ -438,7 +438,65 @@ func (ws *WalletService) ExecuteCharge(sender, target, token, key string, amount
 	// TODO: use the userop hash to create a reciept for the transsaction
 	fmt.Println("user operation hash -", opHash) // 0x28b45cf378c23fbdbbcb4f4c4d085791eb6d660214ff4a2402e40fd1c73751c6 0xfcd3b481cc3ba345fcf24c777463baf60dbb1f7475ca297b9259d020044565be
 	return nil
+}
 
+// Transfer tokens from a smart wallet,
+// authorised by the user's EOA. This is necessary to provide users an interface to move assets
+// while this method also works for erc20 tokens, note that USDc is the primary supported token
+// hence, using this method to transfer othet tokens with higher decimals will result in unexpected behavior
+func (ws *WalletService) InitiateTransfer(sender, target, token string, amount, chain int64, sponsored bool) error {
+	var callData []byte
+	var transferAmount *big.Int
+
+	bundler, err := erc4337.NewAlchemyService(chain)
+	if err != nil {
+		log.Err(err).Msg("failed to initialise bundler")
+		return err
+	}
+	// detect if token is a native token, if it isn't, return the token address on the required chain.
+	if isNativeToken(token, chain) {
+		transferAmount, err = amountToWei(amount)
+		if err != nil {
+			err = errors.Wrapf(err, "conveerting amount to minor factor failed - %v")
+			return err
+		}
+	} else {
+		transferAmount, err = amountToMwei(amount)
+		if err != nil {
+			err = errors.Wrapf(err, "conveerting amount to minor factor failed - %v")
+			return err
+		}
+	}
+
+	callData, err = erc4337.CreateTransferCallData(target, token, chain, transferAmount)
+	if err != nil {
+		err = errors.Wrapf(err, "creating transfer call data failed")
+		return err
+	}
+
+	nonce, err := bundler.GetAccountNonce(common.HexToAddress(sender))
+	if err != nil {
+		err = errors.Wrapf(err, "fetching account nonce failed for acoount - %v", sender)
+		return err
+	}
+	userop, err := bundler.CreateUnsignedUserOperation(sender, nil, callData, nonce, sponsored, chain)
+	if err != nil {
+		err = errors.Wrapf(err, "creating userop failed")
+		return err
+	}
+	fmt.Println(userop)
+
+	// userophash has to be returned for the user to sign
+	return nil
+}
+
+// helper function to identify if a token is noative, this helps to properly create a user operation to send tokens
+func isNativeToken(token string, chain int64) bool {
+	nativeToken := erc20.GetNativeToken(chain)
+	if token != nativeToken {
+		return false
+	}
+	return true
 }
 
 func daysToNanoSeconds(days int64) time.Duration {

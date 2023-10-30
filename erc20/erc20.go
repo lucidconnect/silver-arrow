@@ -41,6 +41,18 @@ func GetTokenAddress(token string, chain int64) string {
 	return tokenAddress
 }
 
+func GetNativeToken(chain int64) string {
+	var token string
+
+	switch chain {
+	case 10:
+		token = "ETH"
+	case 80001:
+		token = "MATIC"
+	}
+	return token
+}
+
 func initFromJsonString(jsonString string) {
 	var tokens []Token
 	if err := json.Unmarshal([]byte(jsonString), &tokens); err != nil {

@@ -26,7 +26,7 @@ func Test_SendUseropWithPaymaster(t *testing.T) {
 	nonce, _ := node.GetAccountNonce(common.HexToAddress(sender))
 
 	amount := big.NewInt(0)
-	data, err := erc4337.CreateTransferCallData(target, token, amount)
+	data, err := erc4337.CreateTransferCallData(target, token, int64(chainId), amount)
 	if !assert.NoError(t, err) {
 		t.FailNow()
 	}
