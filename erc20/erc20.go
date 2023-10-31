@@ -8,9 +8,10 @@ import (
 )
 
 type Token struct {
-	Name    string `json:"name"`
-	Chain   int64  `json:"chain"`
-	Address string `json:"address"`
+	Name        string `json:"name"`
+	Chain       int64  `json:"chain"`
+	Address     string `json:"address"`
+	MinorFactor int64  `json:"minorFactor"`
 }
 
 var tokenCache = make(map[string]map[int64]string)

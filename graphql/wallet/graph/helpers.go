@@ -30,7 +30,7 @@ func getAuthenticatedAndActiveMerchant(ctx context.Context) (*models.Merchant, e
 	return merchant, nil
 }
 
-func validateSignature(rawString, signature, pk string) error{
+func validateSignature(rawString, signature, pk string) error {
 	raw := []byte(rawString)
 	hash := crypto.Keccak256(raw)
 	sigBytes := (hexutil.MustDecode(signature))

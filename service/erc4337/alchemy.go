@@ -287,7 +287,7 @@ func (bs *AlchemyService) GetMaxPriorityFee() (string, error) {
 	return hexutil.EncodeUint64(maxPriorityFee), nil
 }
 
-// SendUserOperation sends a user operation to an alt mempool
+// SendUserOperation sends a user operation to an alt mempool and returns the userop hash if call is successful
 func (bs *AlchemyService) SendUserOperation(userop map[string]any) (string, error) {
 	var result string
 	// log.Debug().Msgf("user op", userop)

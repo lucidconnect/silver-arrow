@@ -9,8 +9,10 @@ type Query {
 type Mutation {
   addAccount(input: Account!): String!
   addSubscription(input: NewSubscription!): ValidationData!
-  validateSubscription(input: SubscriptionValidation!): SubscriptionData!
+  validateSubscription(input: RequestValidation!): SubscriptionData!
   cancelSubscription(id: String!): String!
+  initiateTransferRequest(input: NewTransferRequest!): ValidationData!
+  validateTransferRequest(input: RequestValidation!): TransactionData!
 }
 
 # account creation
@@ -32,7 +34,7 @@ input NewSubscription {
   ownerAddress: String!
 }
 
-input SubscriptionValidation {
+input RequestValidation {
   chain: Int!
   userOpHash: String!
   signedMessage: String!
@@ -51,6 +53,23 @@ type SubscriptionData {
 	walletAddress: String!
   subscriptionKey: String!
   createdAt: String
+}
+
+input NewTransferRequest {
+  chain: Int!
+  token: String!
+  amount: Float!
+  sender: String!
+  target: String!
+}
+
+type TransactionData {
+  chain: Int!
+  token: String
+  Amount: Float
+  Recipient: String
+  TransactionHash: String!
+  BlockExplorerLink: String!
 }
 
 scalar Time

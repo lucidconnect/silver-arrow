@@ -2,6 +2,7 @@ package wallet
 
 import (
 	"fmt"
+	"math"
 	"math/big"
 	"math/rand"
 	"os"
@@ -51,14 +52,14 @@ func (ws *WalletService) AddAccount(input model.Account) error {
 			// create turnkey sub organization
 			activityId, err := ws.turnkey.CreateSubOrganization("", walletAddress)
 			if err != nil {
-				log.Err(err).Send()
+				log.Err(err).Caller().Send()
 				return err
 			}
 
 			result, err := ws.turnkey.GetActivity("", activityId)
 			fmt.Println("result: ", result)
 			if err != nil {
-				log.Err(err).Send()
+				log.Err(err).Caller().Send()
 				return err
 			}
 
@@ -66,13 +67,13 @@ func (ws *WalletService) AddAccount(input model.Account) error {
 			tag := fmt.Sprintf("key-tag-%s", input.Address)
 			tagActivity, err := ws.turnkey.CreatePrivateKeyTag(orgId, tag)
 			if err != nil {
-				log.Err(err).Send()
+				log.Err(err).Caller().Send()
 				return err
 			}
 
 			tagResult, err := ws.turnkey.GetActivity(orgId, tagActivity)
 			if err != nil {
-				log.Err(err).Send()
+				log.Err(err).Caller().Send()
 				return err
 			}
 
@@ -87,11 +88,11 @@ func (ws *WalletService) AddAccount(input model.Account) error {
 
 			err = ws.database.AddAccount(wallet)
 			if err != nil {
-				log.Err(err).Send()
+				log.Err(err).Caller().Send()
 				return err
 			}
 		} else {
-			log.Err(err).Send()
+			log.Err(err).Caller().Send()
 			return err
 		}
 	}
@@ -141,13 +142,13 @@ func (ws *WalletService) ValidateSubscription(userop map[string]any, chain int64
 	update := map[string]interface{}{"active": true}
 	err = ws.database.UpdateSubscription(result.ID, update)
 	if err != nil {
-		log.Err(err).Send()
+		log.Err(err).Caller().Send()
 		return nil, "", err
 	}
 	// get the signing key
 	signingKey, err := ws.database.GetSubscriptionKey(result.Key.PublicKey)
 	if err != nil {
-		log.Err(err).Send()
+		log.Err(err).Caller().Send()
 		return nil, "", err
 	}
 	return subData, signingKey, nil
@@ -180,13 +181,13 @@ func (ws *WalletService) AddSubscription(merchantId uuid.UUID, input model.NewSu
 
 	result, err := ws.turnkey.GetActivity(orgId, activityId)
 	if err != nil {
-		log.Err(err).Send()
+		log.Err(err).Caller().Send()
 		return nil, nil, err
 	}
 	privateKeyID, sessionKey, err := turnkey.GetPrivateKeyIdFromResult(result)
 	// sessionKey, signingKey, err := CreateAccessKey()
 	if err != nil {
-		log.Err(err).Send()
+		log.Err(err).Caller().Send()
 		return nil, nil, err
 	}
 
@@ -204,14 +205,14 @@ func (ws *WalletService) AddSubscription(merchantId uuid.UUID, input model.NewSu
 	if !isAccountDeployed {
 		initCode, err = GetContractInitCode(common.HexToAddress(input.OwnerAddress), index)
 		if err != nil {
-			log.Err(err).Send()
+			log.Err(err).Caller().Send()
 			return nil, nil, err
 		}
 		nonce = common.Big0
 	} else {
 		nonce, err = bundler.GetAccountNonce(common.HexToAddress(input.WalletAddress))
 		if err != nil {
-			log.Err(err).Send()
+			log.Err(err).Caller().Send()
 			return nil, nil, err
 		}
 	}
@@ -231,7 +232,7 @@ func (ws *WalletService) AddSubscription(merchantId uuid.UUID, input model.NewSu
 	entrypoint := erc4337.GetEntryPointAddress()
 	operation, err := userop.New(op)
 	if err != nil {
-		log.Err(err).Send()
+		log.Err(err).Caller().Send()
 		return nil, nil, err
 	}
 	opHash := operation.GetUserOpHash(entrypoint, big.NewInt(int64(input.Chain)))
@@ -263,7 +264,7 @@ func (ws *WalletService) AddSubscription(merchantId uuid.UUID, input model.NewSu
 
 	err = ws.database.AddSubscription(sub, key)
 	if err != nil {
-		log.Err(err).Send()
+		log.Err(err).Caller().Send()
 		return nil, nil, err
 	}
 
@@ -367,7 +368,7 @@ func (ws *WalletService) ExecuteCharge(sender, target, token, key string, amount
 
 	wallet, err := ws.database.FetchAccountByAddress(sender)
 	if err != nil {
-		log.Err(err).Send()
+		log.Err(err).Caller().Send()
 		return err
 	}
 	org := wallet.TurnkeySubOrgID
@@ -384,20 +385,20 @@ func (ws *WalletService) ExecuteCharge(sender, target, token, key string, amount
 
 	nonce, err := bundler.GetAccountNonce(common.HexToAddress(sender))
 	if err != nil {
-		log.Err(err).Send()
+		log.Err(err).Caller().Send()
 		return err
 	}
 
 	op, err := bundler.CreateUnsignedUserOperation(sender, nil, data, nonce, sponsored, chain)
 	if err != nil {
-		log.Err(err).Send()
+		log.Err(err).Caller().Send()
 		return err
 	}
 	// fmt.Println("user operation", op)
 
 	operation, err := userop.New(op)
 	if err != nil {
-		log.Err(err).Send()
+		log.Err(err).Caller().Send()
 		return err
 	}
 
@@ -412,26 +413,26 @@ func (ws *WalletService) ExecuteCharge(sender, target, token, key string, amount
 	fmt.Println("Signing user op with key - ", key)
 	turnkeyActivityId, err := ws.turnkey.SignMessage(org, key, message)
 	if err != nil {
-		log.Err(err).Send()
+		log.Err(err).Caller().Send()
 		return err
 	}
 
 	result, err := ws.turnkey.GetActivity(org, turnkeyActivityId)
 	if err != nil {
-		log.Err(err).Send()
+		log.Err(err).Caller().Send()
 		return err
 	}
 
 	sig, err := turnkey.ExctractTurnkeySignatureFromResult(result)
 	if err != nil {
-		log.Err(err).Send()
+		log.Err(err).Caller().Send()
 		return err
 	}
 	op["signature"] = sig.ParseSignature(erc4337.VALIDATOR_MODE)
 
 	opHash, err := bundler.SendUserOperation(op)
 	if err != nil {
-		log.Err(err).Send()
+		log.Err(err).Caller().Send()
 		return err
 	}
 
@@ -444,61 +445,78 @@ func (ws *WalletService) ExecuteCharge(sender, target, token, key string, amount
 // authorised by the user's EOA. This is necessary to provide users an interface to move assets
 // while this method also works for erc20 tokens, note that USDc is the primary supported token
 // hence, using this method to transfer othet tokens with higher decimals will result in unexpected behavior
-func (ws *WalletService) InitiateTransfer(sender, target, token string, amount, chain int64, sponsored bool) error {
+func (ws *WalletService) InitiateTransfer(sender, target, token string, amount float64, chain int64, sponsored bool) (*model.ValidationData, map[string]any, error) {
 	var callData []byte
-	var transferAmount *big.Int
 
 	bundler, err := erc4337.NewAlchemyService(chain)
 	if err != nil {
 		log.Err(err).Msg("failed to initialise bundler")
-		return err
-	}
-	// detect if token is a native token, if it isn't, return the token address on the required chain.
-	if isNativeToken(token, chain) {
-		transferAmount, err = amountToWei(amount)
-		if err != nil {
-			err = errors.Wrapf(err, "conveerting amount to minor factor failed - %v")
-			return err
-		}
-	} else {
-		transferAmount, err = amountToMwei(amount)
-		if err != nil {
-			err = errors.Wrapf(err, "conveerting amount to minor factor failed - %v")
-			return err
-		}
+		return nil, nil, err
 	}
 
+	transferAmount := parseTransferAmount(token, chain, amount)
 	callData, err = erc4337.CreateTransferCallData(target, token, chain, transferAmount)
 	if err != nil {
 		err = errors.Wrapf(err, "creating transfer call data failed")
-		return err
+		return nil, nil, err
 	}
 
 	nonce, err := bundler.GetAccountNonce(common.HexToAddress(sender))
 	if err != nil {
 		err = errors.Wrapf(err, "fetching account nonce failed for acoount - %v", sender)
-		return err
+		return nil, nil, err
 	}
-	userop, err := bundler.CreateUnsignedUserOperation(sender, nil, callData, nonce, sponsored, chain)
+	op, err := bundler.CreateUnsignedUserOperation(sender, nil, callData, nonce, sponsored, chain)
 	if err != nil {
 		err = errors.Wrapf(err, "creating userop failed")
-		return err
+		return nil, nil, err
 	}
-	fmt.Println(userop)
+	// fmt.Println(userop)
 
+	entrypoint := erc4337.GetEntryPointAddress()
+	operation, err := userop.New(op)
+	if err != nil {
+		log.Err(err).Caller().Send()
+		return nil, nil, err
+	}
+	opHash := operation.GetUserOpHash(entrypoint, big.NewInt(chain))
+
+	vd := &model.ValidationData{
+		UserOpHash: opHash.Hex(),
+	}
 	// userophash has to be returned for the user to sign
-	return nil
+	return vd, op, nil
 }
-
-// helper function to identify if a token is noative, this helps to properly create a user operation to send tokens
-func isNativeToken(token string, chain int64) bool {
-	nativeToken := erc20.GetNativeToken(chain)
-	if token != nativeToken {
-		return false
+func (ws *WalletService) ValidateTransfer(userop map[string]any, chain int64) (*model.TransactionData, error) {
+	bundler, err := erc4337.NewAlchemyService(chain)
+	if err != nil {
+		log.Err(err).Caller().Send()
+		return nil, err
 	}
-	return true
-}
 
+	opHash, err := bundler.SendUserOperation(userop)
+	if err != nil {
+		log.Err(err).Caller().Send()
+		return nil, err
+	}
+
+	// Fetch transaction hash
+	useropResult, err := bundler.GetUserOperationByHash(opHash)
+	if err != nil {
+		log.Err(err).Caller().Send()
+		return nil, err
+	}
+
+	transactionHash := useropResult["transactionHash"].(string)
+
+	transactionDetails := &model.TransactionData{
+		Chain: int(chain),
+		TransactionHash: transactionHash,
+	}
+
+	return transactionDetails, nil
+
+}
 func daysToNanoSeconds(days int64) time.Duration {
 	nanoSsecondsInt := days * 24 * 60 * 60 * 1e9
 	return time.Duration(nanoSsecondsInt)
@@ -579,7 +597,7 @@ func (ws *WalletService) isAccountDeployed(address string, chain int64) bool {
 
 	code, err := bundler.GetAccountCode(common.HexToAddress(address))
 	if err != nil {
-		log.Err(err).Send()
+		log.Err(err).Caller().Send()
 		return false
 	}
 	fmt.Println("Code ", code)
@@ -599,4 +617,17 @@ func randKey(length int) string {
 	}
 	// fmt.Println(key)
 	return hexutil.Encode(key)
+}
+
+func parseTransferAmount(token string, chain int64, amount float64) *big.Int {
+	var divisor int
+	if token == "USDC" || token == "USDT" {
+		divisor = 6
+	} else {
+		divisor = 18
+	}
+	minorFactor := math.Pow10(divisor)
+	parsedAmount := int64(amount * minorFactor)
+
+	return big.NewInt(parsedAmount)
 }
