@@ -23,6 +23,20 @@ type NewSubscription struct {
 	OwnerAddress  string     `json:"ownerAddress"`
 }
 
+type NewTransferRequest struct {
+	Chain  int     `json:"chain"`
+	Token  string  `json:"token"`
+	Amount float64 `json:"amount"`
+	Sender string  `json:"sender"`
+	Target string  `json:"target"`
+}
+
+type RequestValidation struct {
+	Chain         int    `json:"chain"`
+	UserOpHash    string `json:"userOpHash"`
+	SignedMessage string `json:"signedMessage"`
+}
+
 type SubscriptionData struct {
 	ID              string  `json:"id"`
 	Token           string  `json:"token"`
@@ -34,10 +48,13 @@ type SubscriptionData struct {
 	CreatedAt       *string `json:"createdAt,omitempty"`
 }
 
-type SubscriptionValidation struct {
-	Chain         int    `json:"chain"`
-	UserOpHash    string `json:"userOpHash"`
-	SignedMessage string `json:"signedMessage"`
+type TransactionData struct {
+	Chain             int      `json:"chain"`
+	Token             *string  `json:"token,omitempty"`
+	Amount            *float64 `json:"Amount,omitempty"`
+	Recipient         *string  `json:"Recipient,omitempty"`
+	TransactionHash   string   `json:"TransactionHash"`
+	BlockExplorerLink string   `json:"BlockExplorerLink"`
 }
 
 type ValidationData struct {

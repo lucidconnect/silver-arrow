@@ -16,7 +16,7 @@ import (
 func CreateTransferCallData(toAddress, token string, chain int64, amount *big.Int) ([]byte, error) {
 	accountABI := getAccountABI()
 
-	if token == "ETH" {
+	if isNativeToken(token, chain) {
 		callData, err := GetExecuteFnData(accountABI, toAddress, amount, nil)
 		if err != nil {
 			err = errors.Wrap(err, "CreateTransferCallData(): failed to create final call data")
@@ -83,4 +83,10 @@ func SignUserOp(op map[string]any, key, mode string, merchantId []byte, chain in
 	fmt.Println("hash - ", hexutil.Encode(opHash[:]))
 
 	return signature, ecrecover.ToEthSignedMessageHash(hash), nil
+}
+
+// helper function to identify if a token is noative, this helps to properly create a user operation to send tokens
+func isNativeToken(token string, chain int64) bool {
+	nativeToken := erc20.GetNativeToken(chain)
+	return token == nativeToken
 }

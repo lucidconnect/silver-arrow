@@ -89,3 +89,43 @@ func Test_amountToWei(t *testing.T) {
 // 		})
 // 	}
 // }
+
+func Test_parseTransferAmount(t *testing.T) {
+	type args struct {
+		token  string
+		chain  int64
+		amount float64
+	}
+	tests := []struct {
+		name string
+		args args
+		want *big.Int
+	}{
+		// TODO: Add test cases.
+		{
+			"USDC",
+			args{
+				"USDC",
+				10,
+				149.99,
+			},
+			big.NewInt(149990000),
+		},
+		{
+			"ETH",
+			args{
+				"ETH",
+				10,
+				0.8239,
+			},
+			big.NewInt(823900000000000000),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := parseTransferAmount(tt.args.token, tt.args.chain, tt.args.amount); got != tt.want {
+				t.Errorf("parseTransferAmount() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

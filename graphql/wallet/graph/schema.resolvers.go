@@ -57,7 +57,7 @@ func (r *mutationResolver) AddSubscription(ctx context.Context, input model.NewS
 		err = errors.New("request signature is invalid")
 		return nil, err
 	}
-	
+
 	walletService := wallet.NewWalletService(r.Database, r.TurnkeyService)
 	var usePaymaster bool
 	switch os.Getenv("USE_PAYMASTER") {
@@ -79,7 +79,7 @@ func (r *mutationResolver) AddSubscription(ctx context.Context, input model.NewS
 }
 
 // ValidateSubscription is the resolver for the validateSubscription field.
-func (r *mutationResolver) ValidateSubscription(ctx context.Context, input model.SubscriptionValidation) (*model.SubscriptionData, error) {
+func (r *mutationResolver) ValidateSubscription(ctx context.Context, input model.RequestValidation) (*model.SubscriptionData, error) {
 	merch, err := getAuthenticatedAndActiveMerchant(ctx)
 	if err != nil {
 		return nil, err
@@ -140,6 +140,66 @@ func (r *mutationResolver) ValidateSubscription(ctx context.Context, input model
 // CancelSubscription is the resolver for the cancelSubscription field.
 func (r *mutationResolver) CancelSubscription(ctx context.Context, id string) (string, error) {
 	panic(fmt.Errorf("not implemented: CancelSubscription - cancelSubscription"))
+}
+
+// InitiateTransferRequest is the resolver for the initiateTransferRequest field.
+func (r *mutationResolver) InitiateTransferRequest(ctx context.Context, input model.NewTransferRequest) (*model.ValidationData, error) {
+	var sponsored bool
+	switch os.Getenv("USE_PAYMASTER") {
+	case "TRUE":
+		sponsored = true
+	default:
+		sponsored = false
+	}
+
+	walletService := wallet.NewWalletService(r.Database, nil)
+	validationData, userop, err := walletService.InitiateTransfer(input.Sender, input.Target, input.Token, input.Amount, int64(input.Chain), sponsored)
+	if err != nil {
+		log.Err(err).Send()
+		return nil, errors.New("internal server error")
+	}
+
+	err = r.Cache.Set(validationData.UserOpHash, userop)
+	if err != nil {
+		return nil, err
+	}
+
+	return validationData, nil
+}
+
+// ValidateTransferRequest is the resolver for the validateTransferRequest field.
+func (r *mutationResolver) ValidateTransferRequest(ctx context.Context, input model.RequestValidation) (*model.TransactionData, error) {
+	opInterface, err := r.Cache.Get(input.UserOpHash)
+	if err != nil {
+		log.Err(err).Send()
+		return nil, errors.New("internal server error")
+	}
+	op, _ := opInterface.(map[string]any)
+	sig, err := hexutil.Decode(erc4337.SUDO_MODE)
+	if err != nil {
+		log.Err(err).Send()
+		return nil, errors.New("internal server error")
+	}
+	partialSig, err := hexutil.Decode(input.SignedMessage)
+	if err != nil {
+		log.Err(err).Caller().Send()
+		return nil, errors.New("invalid signature format")
+	}
+	fmt.Println("partial signature - ", partialSig)
+	sig = append(sig, partialSig...)
+	op["signature"] = hexutil.Encode(sig)
+
+	chain := int64(input.Chain)
+
+	walletService := wallet.NewWalletService(r.Database, nil)
+
+	td, err := walletService.ValidateTransfer(op, chain)
+	if err != nil {
+		log.Err(err).Caller().Send()
+		return nil, errors.New("internal server error")
+	}
+
+	return td, nil
 }
 
 // FetchSubscriptions is the resolver for the fetchSubscriptions field.
