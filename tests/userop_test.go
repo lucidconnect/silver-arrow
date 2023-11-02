@@ -7,12 +7,14 @@ import (
 	"reflect"
 	"strconv"
 	"testing"
+	"time"
 
 	"github.com/rs/zerolog/log"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/joho/godotenv"
+	"github.com/lucidconnect/silver-arrow/auth"
 	"github.com/lucidconnect/silver-arrow/erc20"
 	"github.com/lucidconnect/silver-arrow/repository"
 	"github.com/lucidconnect/silver-arrow/repository/models"
@@ -121,9 +123,10 @@ curl --location 'https://api.stackup.sh/v1/node/fc4b8aee3102327ddd59941bfa616d63
 func TestValidator(t *testing.T) {
 	sender := "0x3D073632A7a29b2AdcbF12D2712fA3E72fABc3dD"
 	key := "" // sensitive private key, need better test flow
-	sessionKey := "0x6574f281AAaA788cf89e5269E9c842E50c5713fe"
+	// sessionKey := "0x6574f281AAaA788cf89e5269E9c842E50c5713fe"
 	// privKey := "0xc1fce60cfb4b32bf4584e577904d806f8c5af28104d34e9923466eb8ca6faeff"
-	validatorAddress := "0x40ACEE1113697bdeE3077493896Fa759d1b3e255"
+	validatorAddress := "0xc621C75900dbF0234dD7c9be8f8A3bCA7433E3E8"
+	sessionKey, privKey, _ := auth.CreateAccessKey()
 	mode := erc4337.ENABLE_MODE
 	chainId := 80001
 
@@ -162,6 +165,41 @@ func TestValidator(t *testing.T) {
 	op["signature"] = hexutil.Encode(sig)
 
 	opHash, err := ercBundler.SendUserOperation(op)
+	fmt.Println("user operation hash -", opHash)
+	if !assert.NoError(t, err) {
+		t.FailNow()
+	}
+	time.Sleep(8 * time.Second)
+	fmt.Println("----------------------")
+
+	nonce2, err := ercBundler.GetAccountNonce(common.HexToAddress(sender))
+	if !assert.NoError(t, err) {
+		t.FailNow()
+	}
+
+	target := "0xB77ce6ec08B85DcC468B94Cea7Cc539a3BbF9510"
+
+	amount := big.NewInt(0)
+	data, err := erc4337.TransferErc20Action(common.HexToAddress("0x0FA8781a83E46826621b3BC094Ea2A0212e71B23"), common.HexToAddress(target), amount)
+	if !assert.NoError(t, err) {
+		t.FailNow()
+	}
+
+	op, err = ercBundler.CreateUnsignedUserOperation(sender, nil, data, nonce2, true, int64(chainId))
+	assert.NoError(t, err)
+	if !assert.NoError(t, err) {
+		t.FailNow()
+	}
+
+	sig, _, err = erc4337.SignUserOp(op, privKey, erc4337.VALIDATOR_MODE, nil, int64(chainId))
+	if !assert.NoError(t, err) {
+		t.FailNow()
+	}
+	fmt.Println(hexutil.Encode(sig))
+
+	op["signature"] = hexutil.Encode(sig)
+
+	opHash, err = ercBundler.SendUserOperation(op)
 	fmt.Println("user operation hash -", opHash)
 	if !assert.NoError(t, err) {
 		t.FailNow()
