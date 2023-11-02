@@ -114,7 +114,7 @@ func (a *AlchemyService) CreateUnsignedUserOperation(sender string, initCode, ca
 	var paymasterAndData, maxFeePerGas, maxPriorityFeePerGas string
 	tok := make([]byte, 65)
 	rand.Read(tok)
-	dummySignature := hexutil.Encode(tok)
+	dummySignature := "0x00000001d16b1fd2d2703b7214bee4a66979f386e1f1af9cd48629d3c5a436b567941cc43125a5d744bae0fe0fbf32144f6c2f9ccdc25c6e28d464953297cea608c748cc1c"
 	o := map[string]any{
 		"sender":   sender,
 		"nonce":    hexutil.EncodeBig(nonce),
