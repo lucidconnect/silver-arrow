@@ -1,6 +1,7 @@
 package graph
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -14,8 +15,10 @@ func Test_validateSignature(t *testing.T) {
 	if !assert.NoError(t, err) {
 		t.FailNow()
 	}
-	text := "hello world"
-	signature := simpleSign(text, sk)
+	rawString := fmt.Sprintf("%v", 1) + ":" + "USDC" + ":" + fmt.Sprintf("%v", 1) + ":" + "r6u7GNcDRhCx-49KGOdovg"
+
+	signature := simpleSign(rawString, sk)
+
 	type args struct {
 		rawString string
 		signature string
@@ -30,7 +33,7 @@ func Test_validateSignature(t *testing.T) {
 		{
 			"simple sign",
 			args{
-				text,
+				rawString,
 				signature,
 				pk,
 			},
@@ -48,9 +51,9 @@ func Test_validateSignature(t *testing.T) {
 
 func simpleSign(text, sk string) string {
 	privateKey, err := crypto.HexToECDSA(sk[2:])
-	if err !=nil {
+	if err != nil {
 		panic(err)
-	} 
+	}
 
 	raw := []byte(text)
 	digest := crypto.Keccak256(raw)
