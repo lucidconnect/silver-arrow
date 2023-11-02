@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -78,9 +79,19 @@ func CreateAccessKey() (publicKey, privateKey string, err error) {
 		return
 	}
 
-	publicKey = crypto.PubkeyToAddress(pk.PublicKey).Hex()
-	// publicKey = hexutil.Encode(crypto.CompressPubkey(&pk.PublicKey))
 	privateKey = hexutil.EncodeBig(pk.D)
+
+	raw := []byte("text")
+	digest := crypto.Keccak256(raw)
+
+	sig, _ := simpleSign(digest, privateKey)
+
+	publicKey, err = simpleRecover(digest, sig)
+	if err != nil {
+		return
+	}
+	// publicKey = crypto.PubkeyToAddress(pk.PublicKey).Hex()
+	// publicKey = hexutil.Encode(crypto.CompressPubkey(&pk.PublicKey))
 	return
 }
 
@@ -103,4 +114,40 @@ func CreateaWhitelistData(merchantId uint32, key []byte) ([]byte, error) {
 	whitelistData = append(whitelistData, tmp...)
 
 	return whitelistData, nil
+}
+
+func simpleSign(digest []byte, key string) (string, error) {
+	privateKey, err := crypto.HexToECDSA(key[2:])
+	if err != nil {
+		return "", err
+	}
+
+	// raw := []byte(text)
+	// digest := crypto.Keccak256(raw)
+
+	signature, err := crypto.Sign(digest, privateKey)
+	if err != nil {
+		return "", err
+	}
+	return hexutil.Encode(signature), nil
+}
+
+func simpleRecover(digest []byte, signature string) (string, error) {
+	signatureBytes := (hexutil.MustDecode(signature))
+
+	pbk, err := crypto.Ecrecover(digest, signatureBytes)
+	if err != nil {
+		return "", err
+	}
+	pub, err := crypto.UnmarshalPubkey(pbk)
+	if err != nil {
+		return "", err
+	}
+
+	publicKey := hexutil.Encode(crypto.CompressPubkey(pub))
+	fmt.Println("compressed public key - ", publicKey)
+
+	recoveredAddress := crypto.PubkeyToAddress(*pub)
+
+	return recoveredAddress.Hex(), nil
 }

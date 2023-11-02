@@ -2,6 +2,7 @@ package graph
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"strconv"
 
@@ -34,12 +35,19 @@ func validateSignature(rawString, signature, pk string) error {
 	raw := []byte(rawString)
 	hash := crypto.Keccak256(raw)
 	sigBytes := (hexutil.MustDecode(signature))
-	pub, err := crypto.SigToPub(hash, sigBytes)
-	if err != nil {
-		return err
-	}
+	pbk, _ := crypto.Ecrecover(hash, sigBytes)
+
+	pub, _ := crypto.UnmarshalPubkey(pbk)
+	// pub, err := crypto.SigToPub(hash, sigBytes)
+	// if err != nil {
+	// 	return err
+	// }
+
+	fmt.Println("pk -", pk)
 
 	recoveredAddress := crypto.PubkeyToAddress(*pub)
+	fmt.Println(recoveredAddress)
+
 	if recoveredAddress.Hex() != pk {
 		return errors.New("invalid signature")
 	}
