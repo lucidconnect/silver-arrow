@@ -41,14 +41,16 @@ type RequestValidation struct {
 }
 
 type SubscriptionData struct {
-	ID              string  `json:"id"`
-	Token           string  `json:"token"`
-	Amount          int     `json:"amount"`
-	Interval        int     `json:"interval"`
-	ProductID       string  `json:"productId"`
-	WalletAddress   string  `json:"walletAddress"`
-	SubscriptionKey string  `json:"subscriptionKey"`
-	CreatedAt       *string `json:"createdAt,omitempty"`
+	ID                  string  `json:"id"`
+	Token               string  `json:"token"`
+	Amount              int     `json:"amount"`
+	Interval            int     `json:"interval"`
+	ProductID           string  `json:"productId"`
+	WalletAddress       string  `json:"walletAddress"`
+	SubscriptionKey     string  `json:"subscriptionKey"`
+	CreatedAt           *string `json:"createdAt,omitempty"`
+	TransactionHash     *string `json:"transactionHash,omitempty"`
+	TransactionExplorer *string `json:"transactionExplorer,omitempty"`
 }
 
 type SubscriptionMod struct {
@@ -57,12 +59,9 @@ type SubscriptionMod struct {
 }
 
 type TransactionData struct {
-	Chain             int      `json:"chain"`
-	Token             *string  `json:"token,omitempty"`
-	Amount            *float64 `json:"Amount,omitempty"`
-	Recipient         *string  `json:"Recipient,omitempty"`
-	TransactionHash   string   `json:"TransactionHash"`
-	BlockExplorerLink string   `json:"BlockExplorerLink"`
+	Chain             int    `json:"chain"`
+	TransactionHash   string `json:"TransactionHash"`
+	BlockExplorerLink string `json:"BlockExplorerLink"`
 }
 
 type ValidationData struct {

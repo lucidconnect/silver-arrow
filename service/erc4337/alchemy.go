@@ -318,13 +318,21 @@ func (bs *AlchemyService) SendUserOperation(userop map[string]any) (string, erro
 func (bs *AlchemyService) GetUserOperationByHash(userophash string) (map[string]any, error) {
 	var result map[string]any
 
-	err := bs.backend.Client().CallContext(bs.ctx, &result, "eth_getUserOperationByHash", userophash)
-	if err != nil {
-		err = errors.Wrap(err, "eth_getUserOperationByHash call error")
-		return nil, err
+	backOffOperation := func() error {
+		err := bs.backend.Client().CallContext(bs.ctx, &result, "eth_getUserOperationByHash", userophash)
+		if err != nil {
+			err = errors.Wrap(err, "eth_getUserOperationByHash call error")
+			log.Err(err).Send()
+		}
+		return err
 	}
 
-	// log.Debug().Msgf("user operation - ", result)
+	err := backoff.Retry(backOffOperation, backoff.NewExponentialBackOff())
+	if err != nil {
+		err = errors.Wrap(err, "eth_sendUserOperation call error")
+		return result, err
+	}
+	log.Debug().Msgf("user operation - %v", result)
 	return result, nil
 }
 

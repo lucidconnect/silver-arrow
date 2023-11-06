@@ -111,7 +111,7 @@ func (s *Scheduler) SubscriptionJob() {
 			time.Sleep(15 * time.Second)
 			// get the account
 
-			err = s.walletService.ExecuteCharge(sub.WalletAddress, sub.MerchantDepositAddress, sub.Token, sub.Key.PrivateKeyId, sub.Amount, chain, usePaymaster)
+			_, err = s.walletService.ExecuteCharge(sub.WalletAddress, sub.MerchantDepositAddress, sub.Token, sub.Key.PrivateKeyId, sub.Amount, chain, usePaymaster)
 			if err != nil {
 				err = errors.Wrapf(err, "ExecuteCharge() - error occurred during charge execution for subscription %v - ", sub.ID)
 				log.Err(err).Send()
