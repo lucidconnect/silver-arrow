@@ -109,7 +109,7 @@ func (p *DB) FetchDueSubscriptions(days int) ([]models.Subscription, error) {
 	startInterval := time.Now().Add(time.Duration(days) * 24 * time.Hour)
 	endInterval := startInterval.Add(24 * time.Hour)
 
-	err := p.Db.Where("expires_at >= ? AND expires_at <= ?", startInterval, endInterval).Preload("Key").Find(&subscriptions).Error
+	err := p.Db.Where("active = ? AND expires_at >= ? AND expires_at <= ?", true, startInterval, endInterval).Preload("Key").Find(&subscriptions).Error
 	if err != nil {
 		return nil, err
 	}
@@ -133,6 +133,14 @@ func (p *DB) GetSecretKey(publicKey string) (string, error) {
 func (p *DB) FindSubscriptionByHash(hash string) (*models.Subscription, error) {
 	var subscription *models.Subscription
 	if err := p.Db.Where("user_op_hash = ?", hash).Preload("Key").Find(&subscription).Error; err != nil {
+		return nil, err
+	}
+	return subscription, nil
+}
+
+func (p *DB) FindSubscriptionById(id uuid.UUID) (*models.Subscription, error) {
+	var subscription *models.Subscription
+	if err := p.Db.Where("id = ?", id).Preload("Key").Find(&subscription).Error; err != nil {
 		return nil, err
 	}
 	return subscription, nil
