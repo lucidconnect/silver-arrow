@@ -3,6 +3,9 @@
 package model
 
 import (
+	"fmt"
+	"io"
+	"strconv"
 	"time"
 )
 
@@ -48,6 +51,11 @@ type SubscriptionData struct {
 	CreatedAt       *string `json:"createdAt,omitempty"`
 }
 
+type SubscriptionMod struct {
+	SubscriptionID string       `json:"subscriptionId"`
+	Toggle         StatusToggle `json:"toggle"`
+}
+
 type TransactionData struct {
 	Chain             int      `json:"chain"`
 	Token             *string  `json:"token,omitempty"`
@@ -59,4 +67,47 @@ type TransactionData struct {
 
 type ValidationData struct {
 	UserOpHash string `json:"userOpHash"`
+}
+
+type StatusToggle string
+
+const (
+	StatusToggleCancel  StatusToggle = "cancel"
+	StatusToggleDisable StatusToggle = "disable"
+	StatusToggleEnable  StatusToggle = "enable"
+)
+
+var AllStatusToggle = []StatusToggle{
+	StatusToggleCancel,
+	StatusToggleDisable,
+	StatusToggleEnable,
+}
+
+func (e StatusToggle) IsValid() bool {
+	switch e {
+	case StatusToggleCancel, StatusToggleDisable, StatusToggleEnable:
+		return true
+	}
+	return false
+}
+
+func (e StatusToggle) String() string {
+	return string(e)
+}
+
+func (e *StatusToggle) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = StatusToggle(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid StatusToggle", str)
+	}
+	return nil
+}
+
+func (e StatusToggle) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }

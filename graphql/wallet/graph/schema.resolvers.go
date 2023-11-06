@@ -137,9 +137,36 @@ func (r *mutationResolver) ValidateSubscription(ctx context.Context, input model
 	return subData, nil
 }
 
-// CancelSubscription is the resolver for the cancelSubscription field.
-func (r *mutationResolver) CancelSubscription(ctx context.Context, id string) (string, error) {
-	panic(fmt.Errorf("not implemented: CancelSubscription - cancelSubscription"))
+// ModifySubscriptionState is the resolver for the modifySubscriptionState field.
+func (r *mutationResolver) ModifySubscriptionState(ctx context.Context, input model.SubscriptionMod) (string, error) {
+	var err error
+	var result string
+	walletService := wallet.NewWalletService(r.Database, nil)
+
+	switch input.Toggle {
+	case model.StatusToggleCancel:
+		// cancel subscription
+		result, err = walletService.CancelSubscription(input.SubscriptionID)
+		if err != nil {
+			log.Err(err).Send()
+			return "", err
+		}
+	case model.StatusToggleDisable:
+		// temporary disbale
+		result, err = walletService.DisableSubscription(input.SubscriptionID)
+		if err != nil {
+			log.Err(err).Send()
+			return "", err
+		}
+	case model.StatusToggleEnable:
+		// reenable subscription
+		result, err = walletService.EnableSubscription(input.SubscriptionID)
+		if err != nil {
+			log.Err(err).Send()
+			return "", err
+		}
+	}
+	return result, err
 }
 
 // InitiateTransferRequest is the resolver for the initiateTransferRequest field.

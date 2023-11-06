@@ -139,7 +139,7 @@ func (ws *WalletService) ValidateSubscription(userop map[string]any, chain int64
 	}
 	fmt.Println("subscription result - ", result)
 
-	update := map[string]interface{}{"active": true}
+	update := map[string]interface{}{"active": true, "updated_at": time.Now()}
 	err = ws.database.UpdateSubscription(result.ID, update)
 	if err != nil {
 		log.Err(err).Caller().Send()
@@ -510,7 +510,7 @@ func (ws *WalletService) ValidateTransfer(userop map[string]any, chain int64) (*
 	transactionHash := useropResult["transactionHash"].(string)
 
 	transactionDetails := &model.TransactionData{
-		Chain: int(chain),
+		Chain:           int(chain),
 		TransactionHash: transactionHash,
 	}
 
@@ -606,6 +606,73 @@ func (ws *WalletService) isAccountDeployed(address string, chain int64) bool {
 		return false
 	}
 	return true
+}
+
+// TODO: not finished
+// CancelSubscription will remove the subscription key from the wallet
+func (ws *WalletService) CancelSubscription(subscriptionId string) (string, error) {
+	id, err := uuid.Parse(subscriptionId)
+	if err != nil {
+		err = errors.Wrapf(err, "parsing subscription id %v failed", subscriptionId)
+		log.Err(err).Send()
+		return "", err
+	}
+	_, err = ws.database.FindSubscriptionById(id)
+	if err != nil {
+		err = errors.Wrapf(err, "failed to fetch subscription %v", subscriptionId)
+		log.Err(err).Send()
+	}
+
+	// ws.database.DeactivateSubscription()
+	return "", errors.New("unimplemented")
+}
+
+// DisableSubscription only toggles a subscription status to inactive
+func (ws *WalletService) DisableSubscription(subscriptionId string) (string, error) {
+	id, err := uuid.Parse(subscriptionId)
+	if err != nil {
+		err = errors.Wrapf(err, "parsing subscription id %v failed", subscriptionId)
+		log.Err(err).Send()
+		return "", fmt.Errorf("could not disable subscription with id %v", subscriptionId)
+	}
+
+	update := map[string]any{
+		"active":     false,
+		"updated_at": time.Now(),
+	}
+
+	err = ws.database.UpdateSubscription(id, update)
+	if err != nil {
+		err = errors.Wrapf(err, "modifying subscription status failed for sub %v ", subscriptionId)
+		log.Err(err).Send()
+		return "", fmt.Errorf("could not disable subscription with id %v", subscriptionId)
+	}
+
+	return subscriptionId, nil
+}
+
+// Enable subscriptions reactivates a disabled subscription, won't work for cancelled subscriptions
+func (ws *WalletService) EnableSubscription(subscriptionId string) (string, error) {
+	id, err := uuid.Parse(subscriptionId)
+	if err != nil {
+		err = errors.Wrapf(err, "parsing subscription id %v failed", subscriptionId)
+		log.Err(err).Send()
+		return "", fmt.Errorf("could not enable subscription with id %v", subscriptionId)
+	}
+
+	update := map[string]any{
+		"active":     true,
+		"updated_at": time.Now(),
+	}
+
+	err = ws.database.UpdateSubscription(id, update)
+	if err != nil {
+		err = errors.Wrapf(err, "modifying subscription status failed for sub %v ", subscriptionId)
+		log.Err(err).Send()
+		return "", fmt.Errorf("could not enable subscription with id %v", subscriptionId)
+	}
+
+	return subscriptionId, nil
 }
 
 func randKey(length int) string {

@@ -13,6 +13,7 @@ type Database interface {
 	FetchWalletSubscriptions(address string) ([]models.Subscription, error)
 	FetchDueSubscriptions(days int) ([]models.Subscription, error)
 	FindSubscriptionByHash(hash string) (*models.Subscription, error)
+	FindSubscriptionById(id uuid.UUID) (*models.Subscription, error) 
 	UpdateSubscription(uuid.UUID, map[string]interface{}) error
 	DeactivateSubscription(id uint) error
 	AddSubscriptionKey(*models.Key) error
