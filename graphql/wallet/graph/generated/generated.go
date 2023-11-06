@@ -48,8 +48,8 @@ type ComplexityRoot struct {
 	Mutation struct {
 		AddAccount              func(childComplexity int, input model.Account) int
 		AddSubscription         func(childComplexity int, input model.NewSubscription) int
-		CancelSubscription      func(childComplexity int, id string) int
 		InitiateTransferRequest func(childComplexity int, input model.NewTransferRequest) int
+		ModifySubscriptionState func(childComplexity int, input model.SubscriptionMod) int
 		ValidateSubscription    func(childComplexity int, input model.RequestValidation) int
 		ValidateTransferRequest func(childComplexity int, input model.RequestValidation) int
 	}
@@ -87,7 +87,7 @@ type MutationResolver interface {
 	AddAccount(ctx context.Context, input model.Account) (string, error)
 	AddSubscription(ctx context.Context, input model.NewSubscription) (*model.ValidationData, error)
 	ValidateSubscription(ctx context.Context, input model.RequestValidation) (*model.SubscriptionData, error)
-	CancelSubscription(ctx context.Context, id string) (string, error)
+	ModifySubscriptionState(ctx context.Context, input model.SubscriptionMod) (string, error)
 	InitiateTransferRequest(ctx context.Context, input model.NewTransferRequest) (*model.ValidationData, error)
 	ValidateTransferRequest(ctx context.Context, input model.RequestValidation) (*model.TransactionData, error)
 }
@@ -134,18 +134,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.AddSubscription(childComplexity, args["input"].(model.NewSubscription)), true
 
-	case "Mutation.cancelSubscription":
-		if e.complexity.Mutation.CancelSubscription == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_cancelSubscription_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.CancelSubscription(childComplexity, args["id"].(string)), true
-
 	case "Mutation.initiateTransferRequest":
 		if e.complexity.Mutation.InitiateTransferRequest == nil {
 			break
@@ -157,6 +145,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.InitiateTransferRequest(childComplexity, args["input"].(model.NewTransferRequest)), true
+
+	case "Mutation.modifySubscriptionState":
+		if e.complexity.Mutation.ModifySubscriptionState == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_modifySubscriptionState_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.ModifySubscriptionState(childComplexity, args["input"].(model.SubscriptionMod)), true
 
 	case "Mutation.validateSubscription":
 		if e.complexity.Mutation.ValidateSubscription == nil {
@@ -311,6 +311,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputNewSubscription,
 		ec.unmarshalInputNewTransferRequest,
 		ec.unmarshalInputRequestValidation,
+		ec.unmarshalInputSubscriptionMod,
 	)
 	first := true
 
@@ -420,7 +421,7 @@ type Mutation {
   addAccount(input: Account!): String!
   addSubscription(input: NewSubscription!): ValidationData!
   validateSubscription(input: RequestValidation!): SubscriptionData!
-  cancelSubscription(id: String!): String!
+  modifySubscriptionState(input: SubscriptionMod!): String!
   initiateTransferRequest(input: NewTransferRequest!): ValidationData!
   validateTransferRequest(input: RequestValidation!): TransactionData!
 }
@@ -473,6 +474,17 @@ input NewTransferRequest {
   target: String!
 }
 
+input SubscriptionMod {
+  subscriptionId: String!
+  toggle: StatusToggle!
+}
+
+enum StatusToggle {
+  cancel
+  disable
+  enable
+}
+
 type TransactionData {
   chain: Int!
   token: String
@@ -520,21 +532,6 @@ func (ec *executionContext) field_Mutation_addSubscription_args(ctx context.Cont
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_cancelSubscription_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["id"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["id"] = arg0
-	return args, nil
-}
-
 func (ec *executionContext) field_Mutation_initiateTransferRequest_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -542,6 +539,21 @@ func (ec *executionContext) field_Mutation_initiateTransferRequest_args(ctx cont
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 		arg0, err = ec.unmarshalNNewTransferRequest2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐNewTransferRequest(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_modifySubscriptionState_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.SubscriptionMod
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNSubscriptionMod2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐSubscriptionMod(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -835,8 +847,8 @@ func (ec *executionContext) fieldContext_Mutation_validateSubscription(ctx conte
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_cancelSubscription(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_cancelSubscription(ctx, field)
+func (ec *executionContext) _Mutation_modifySubscriptionState(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_modifySubscriptionState(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -849,7 +861,7 @@ func (ec *executionContext) _Mutation_cancelSubscription(ctx context.Context, fi
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CancelSubscription(rctx, fc.Args["id"].(string))
+		return ec.resolvers.Mutation().ModifySubscriptionState(rctx, fc.Args["input"].(model.SubscriptionMod))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -866,7 +878,7 @@ func (ec *executionContext) _Mutation_cancelSubscription(ctx context.Context, fi
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_cancelSubscription(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_modifySubscriptionState(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -883,7 +895,7 @@ func (ec *executionContext) fieldContext_Mutation_cancelSubscription(ctx context
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_cancelSubscription_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_modifySubscriptionState_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -3892,6 +3904,44 @@ func (ec *executionContext) unmarshalInputRequestValidation(ctx context.Context,
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputSubscriptionMod(ctx context.Context, obj interface{}) (model.SubscriptionMod, error) {
+	var it model.SubscriptionMod
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"subscriptionId", "toggle"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "subscriptionId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("subscriptionId"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SubscriptionID = data
+		case "toggle":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("toggle"))
+			data, err := ec.unmarshalNStatusToggle2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐStatusToggle(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Toggle = data
+		}
+	}
+
+	return it, nil
+}
+
 // endregion **************************** input.gotpl *****************************
 
 // region    ************************** interface.gotpl ***************************
@@ -3940,9 +3990,9 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "cancelSubscription":
+		case "modifySubscriptionState":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_cancelSubscription(ctx, field)
+				return ec._Mutation_modifySubscriptionState(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -4627,6 +4677,16 @@ func (ec *executionContext) unmarshalNRequestValidation2githubᚗcomᚋlucidconn
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalNStatusToggle2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐStatusToggle(ctx context.Context, v interface{}) (model.StatusToggle, error) {
+	var res model.StatusToggle
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNStatusToggle2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐStatusToggle(ctx context.Context, sel ast.SelectionSet, v model.StatusToggle) graphql.Marshaler {
+	return v
+}
+
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {
 	res, err := graphql.UnmarshalString(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -4698,6 +4758,11 @@ func (ec *executionContext) marshalNSubscriptionData2ᚖgithubᚗcomᚋlucidconn
 		return graphql.Null
 	}
 	return ec._SubscriptionData(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNSubscriptionMod2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐSubscriptionMod(ctx context.Context, v interface{}) (model.SubscriptionMod, error) {
+	res, err := ec.unmarshalInputSubscriptionMod(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalNTransactionData2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐTransactionData(ctx context.Context, sel ast.SelectionSet, v model.TransactionData) graphql.Marshaler {

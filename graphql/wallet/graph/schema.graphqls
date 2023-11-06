@@ -10,7 +10,7 @@ type Mutation {
   addAccount(input: Account!): String!
   addSubscription(input: NewSubscription!): ValidationData!
   validateSubscription(input: RequestValidation!): SubscriptionData!
-  cancelSubscription(id: String!): String!
+  modifySubscriptionState(input: SubscriptionMod!): String!
   initiateTransferRequest(input: NewTransferRequest!): ValidationData!
   validateTransferRequest(input: RequestValidation!): TransactionData!
 }
@@ -61,6 +61,17 @@ input NewTransferRequest {
   amount: Float!
   sender: String!
   target: String!
+}
+
+input SubscriptionMod {
+  subscriptionId: String!
+  toggle: StatusToggle!
+}
+
+enum StatusToggle {
+  cancel
+  disable
+  enable
 }
 
 type TransactionData {
