@@ -59,22 +59,21 @@ type ComplexityRoot struct {
 	}
 
 	SubscriptionData struct {
-		Amount          func(childComplexity int) int
-		CreatedAt       func(childComplexity int) int
-		ID              func(childComplexity int) int
-		Interval        func(childComplexity int) int
-		ProductID       func(childComplexity int) int
-		SubscriptionKey func(childComplexity int) int
-		Token           func(childComplexity int) int
-		WalletAddress   func(childComplexity int) int
+		Amount              func(childComplexity int) int
+		CreatedAt           func(childComplexity int) int
+		ID                  func(childComplexity int) int
+		Interval            func(childComplexity int) int
+		ProductID           func(childComplexity int) int
+		SubscriptionKey     func(childComplexity int) int
+		Token               func(childComplexity int) int
+		TransactionExplorer func(childComplexity int) int
+		TransactionHash     func(childComplexity int) int
+		WalletAddress       func(childComplexity int) int
 	}
 
 	TransactionData struct {
-		Amount            func(childComplexity int) int
 		BlockExplorerLink func(childComplexity int) int
 		Chain             func(childComplexity int) int
-		Recipient         func(childComplexity int) int
-		Token             func(childComplexity int) int
 		TransactionHash   func(childComplexity int) int
 	}
 
@@ -243,19 +242,26 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.SubscriptionData.Token(childComplexity), true
 
+	case "SubscriptionData.transactionExplorer":
+		if e.complexity.SubscriptionData.TransactionExplorer == nil {
+			break
+		}
+
+		return e.complexity.SubscriptionData.TransactionExplorer(childComplexity), true
+
+	case "SubscriptionData.transactionHash":
+		if e.complexity.SubscriptionData.TransactionHash == nil {
+			break
+		}
+
+		return e.complexity.SubscriptionData.TransactionHash(childComplexity), true
+
 	case "SubscriptionData.walletAddress":
 		if e.complexity.SubscriptionData.WalletAddress == nil {
 			break
 		}
 
 		return e.complexity.SubscriptionData.WalletAddress(childComplexity), true
-
-	case "TransactionData.Amount":
-		if e.complexity.TransactionData.Amount == nil {
-			break
-		}
-
-		return e.complexity.TransactionData.Amount(childComplexity), true
 
 	case "TransactionData.BlockExplorerLink":
 		if e.complexity.TransactionData.BlockExplorerLink == nil {
@@ -270,20 +276,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.TransactionData.Chain(childComplexity), true
-
-	case "TransactionData.Recipient":
-		if e.complexity.TransactionData.Recipient == nil {
-			break
-		}
-
-		return e.complexity.TransactionData.Recipient(childComplexity), true
-
-	case "TransactionData.token":
-		if e.complexity.TransactionData.Token == nil {
-			break
-		}
-
-		return e.complexity.TransactionData.Token(childComplexity), true
 
 	case "TransactionData.TransactionHash":
 		if e.complexity.TransactionData.TransactionHash == nil {
@@ -464,6 +456,8 @@ type SubscriptionData {
 	walletAddress: String!
   subscriptionKey: String!
   createdAt: String
+  transactionHash: String
+  transactionExplorer: String
 }
 
 input NewTransferRequest {
@@ -487,9 +481,6 @@ enum StatusToggle {
 
 type TransactionData {
   chain: Int!
-  token: String
-  Amount: Float
-  Recipient: String
   TransactionHash: String!
   BlockExplorerLink: String!
 }
@@ -829,6 +820,10 @@ func (ec *executionContext) fieldContext_Mutation_validateSubscription(ctx conte
 				return ec.fieldContext_SubscriptionData_subscriptionKey(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_SubscriptionData_createdAt(ctx, field)
+			case "transactionHash":
+				return ec.fieldContext_SubscriptionData_transactionHash(ctx, field)
+			case "transactionExplorer":
+				return ec.fieldContext_SubscriptionData_transactionExplorer(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type SubscriptionData", field.Name)
 		},
@@ -1002,12 +997,6 @@ func (ec *executionContext) fieldContext_Mutation_validateTransferRequest(ctx co
 			switch field.Name {
 			case "chain":
 				return ec.fieldContext_TransactionData_chain(ctx, field)
-			case "token":
-				return ec.fieldContext_TransactionData_token(ctx, field)
-			case "Amount":
-				return ec.fieldContext_TransactionData_Amount(ctx, field)
-			case "Recipient":
-				return ec.fieldContext_TransactionData_Recipient(ctx, field)
 			case "TransactionHash":
 				return ec.fieldContext_TransactionData_TransactionHash(ctx, field)
 			case "BlockExplorerLink":
@@ -1085,6 +1074,10 @@ func (ec *executionContext) fieldContext_Query_fetchSubscriptions(ctx context.Co
 				return ec.fieldContext_SubscriptionData_subscriptionKey(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_SubscriptionData_createdAt(ctx, field)
+			case "transactionHash":
+				return ec.fieldContext_SubscriptionData_transactionHash(ctx, field)
+			case "transactionExplorer":
+				return ec.fieldContext_SubscriptionData_transactionExplorer(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type SubscriptionData", field.Name)
 		},
@@ -1581,6 +1574,88 @@ func (ec *executionContext) fieldContext_SubscriptionData_createdAt(ctx context.
 	return fc, nil
 }
 
+func (ec *executionContext) _SubscriptionData_transactionHash(ctx context.Context, field graphql.CollectedField, obj *model.SubscriptionData) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SubscriptionData_transactionHash(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TransactionHash, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SubscriptionData_transactionHash(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SubscriptionData",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SubscriptionData_transactionExplorer(ctx context.Context, field graphql.CollectedField, obj *model.SubscriptionData) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SubscriptionData_transactionExplorer(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TransactionExplorer, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SubscriptionData_transactionExplorer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SubscriptionData",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _TransactionData_chain(ctx context.Context, field graphql.CollectedField, obj *model.TransactionData) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_TransactionData_chain(ctx, field)
 	if err != nil {
@@ -1620,129 +1695,6 @@ func (ec *executionContext) fieldContext_TransactionData_chain(ctx context.Conte
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _TransactionData_token(ctx context.Context, field graphql.CollectedField, obj *model.TransactionData) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_TransactionData_token(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Token, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_TransactionData_token(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "TransactionData",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _TransactionData_Amount(ctx context.Context, field graphql.CollectedField, obj *model.TransactionData) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_TransactionData_Amount(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Amount, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*float64)
-	fc.Result = res
-	return ec.marshalOFloat2ᚖfloat64(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_TransactionData_Amount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "TransactionData",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Float does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _TransactionData_Recipient(ctx context.Context, field graphql.CollectedField, obj *model.TransactionData) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_TransactionData_Recipient(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Recipient, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_TransactionData_Recipient(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "TransactionData",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -4154,6 +4106,10 @@ func (ec *executionContext) _SubscriptionData(ctx context.Context, sel ast.Selec
 			}
 		case "createdAt":
 			out.Values[i] = ec._SubscriptionData_createdAt(ctx, field, obj)
+		case "transactionHash":
+			out.Values[i] = ec._SubscriptionData_transactionHash(ctx, field, obj)
+		case "transactionExplorer":
+			out.Values[i] = ec._SubscriptionData_transactionExplorer(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -4193,12 +4149,6 @@ func (ec *executionContext) _TransactionData(ctx context.Context, sel ast.Select
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "token":
-			out.Values[i] = ec._TransactionData_token(ctx, field, obj)
-		case "Amount":
-			out.Values[i] = ec._TransactionData_Amount(ctx, field, obj)
-		case "Recipient":
-			out.Values[i] = ec._TransactionData_Recipient(ctx, field, obj)
 		case "TransactionHash":
 			out.Values[i] = ec._TransactionData_TransactionHash(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -5070,22 +5020,6 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	}
 	res := graphql.MarshalBoolean(*v)
 	return res
-}
-
-func (ec *executionContext) unmarshalOFloat2ᚖfloat64(ctx context.Context, v interface{}) (*float64, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := graphql.UnmarshalFloatContext(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalOFloat2ᚖfloat64(ctx context.Context, sel ast.SelectionSet, v *float64) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	res := graphql.MarshalFloatContext(*v)
-	return graphql.WrapContextMarshaler(ctx, res)
 }
 
 func (ec *executionContext) unmarshalOString2ᚖstring(ctx context.Context, v interface{}) (*string, error) {

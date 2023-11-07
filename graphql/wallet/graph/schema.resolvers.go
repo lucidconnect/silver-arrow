@@ -13,6 +13,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/lucidconnect/silver-arrow/auth"
+	"github.com/lucidconnect/silver-arrow/erc20"
 	"github.com/lucidconnect/silver-arrow/graphql/wallet/graph/generated"
 	"github.com/lucidconnect/silver-arrow/graphql/wallet/graph/model"
 	"github.com/lucidconnect/silver-arrow/service/erc4337"
@@ -128,11 +129,19 @@ func (r *mutationResolver) ValidateSubscription(ctx context.Context, input model
 	// x := int64(subData.Amount)
 	// Delay for a few seconds to allow the changes to be propagated onchain
 	time.Sleep(15 * time.Second)
-	err = walletService.ExecuteCharge(subData.WalletAddress, target, subData.Token, key, int64(subData.Amount), chain, usePaymaster)
+	transactionHash, err := walletService.ExecuteCharge(subData.WalletAddress, target, subData.Token, key, int64(subData.Amount), chain, usePaymaster)
 	if err != nil {
 		err = errors.Wrap(err, "ExecuteCharge() - error occurred during first time charge execution - ")
 		return subData, err
 	}
+	explorer, err := erc20.GetChainExplorer(chain)
+	if err != nil {
+		log.Err(err).Send()
+	}
+	transactionDetails := fmt.Sprintf("%v/tx/%v", explorer, transactionHash)
+
+	subData.TransactionHash = &transactionHash
+	subData.TransactionExplorer = &transactionDetails
 
 	return subData, nil
 }

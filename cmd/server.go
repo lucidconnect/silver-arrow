@@ -94,6 +94,7 @@ func bootstrap() {
 		log.Fatal().Err(err).Msg("failed to establish a database connection")
 	}
 	erc20.LoadSupportedTokens("tokens/tokens.json")
+	erc20.LoadSupportedChains("tokens/chains.json")
 }
 
 func loadEnv(app string) {

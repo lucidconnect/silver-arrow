@@ -357,49 +357,56 @@ func weiToAmount(amt *big.Int) int64 {
 }
 
 // Execute a charge on an AA wallet, currently limited to USDC
-func (ws *WalletService) ExecuteCharge(sender, target, token, key string, amount, chain int64, sponsored bool) error {
+func (ws *WalletService) ExecuteCharge(sender, target, token, key string, amount, chain int64, sponsored bool) (string, error) {
 	bundler, err := erc4337.NewAlchemyService(chain)
 	if err != nil {
-		log.Err(err).Msg("failed to initialise bundler")
-		return err
+		err = errors.Wrap(err, "initialising alchemy service failed")
+		log.Err(err).Send()
+		return "", err
 	}
 	erc20Token := erc20.GetTokenAddress(token, chain)
 	tokenAddress := common.HexToAddress(erc20Token)
 
 	wallet, err := ws.database.FetchAccountByAddress(sender)
 	if err != nil {
+		err = errors.Wrapf(err, "smart account lookup for address [%v] failed", sender)
 		log.Err(err).Caller().Send()
-		return err
+		return "", fmt.Errorf("sender address [%v] not found", sender)
 	}
 	org := wallet.TurnkeySubOrgID
 
 	actualAmount, err := amountToMwei(amount)
 	if err != nil {
-		return err
+		err = errors.Wrapf(err, "converting amount [%v] to wei value failed", amount)
+		log.Err(err).Caller().Send()
+		return "", fmt.Errorf("internal server error")
 	}
 	data, err := erc4337.TransferErc20Action(tokenAddress, common.HexToAddress(target), actualAmount)
 	if err != nil {
-		err = errors.Wrap(err, "TransferErc20Action() - ")
-		return err
+		err = errors.Wrap(err, "creating TransferErc20Action call data failed")
+		log.Err(err).Caller().Send()
+		return "", fmt.Errorf("internal server error")
 	}
 
 	nonce, err := bundler.GetAccountNonce(common.HexToAddress(sender))
 	if err != nil {
+		err = errors.Wrapf(err, "error occured fetching nonce for account [%v]", sender)
 		log.Err(err).Caller().Send()
-		return err
+		return "", fmt.Errorf("internal server error")
 	}
 
 	op, err := bundler.CreateUnsignedUserOperation(sender, nil, data, nonce, sponsored, chain)
 	if err != nil {
+		err = errors.Wrapf(err, "error occured creating user operation for account [%v]", sender)
 		log.Err(err).Caller().Send()
-		return err
+		return "", fmt.Errorf("internal server error")
 	}
-	// fmt.Println("user operation", op)
 
 	operation, err := userop.New(op)
 	if err != nil {
+		err = errors.Wrapf(err, "error occured creating user operation for account [%v]", sender)
 		log.Err(err).Caller().Send()
-		return err
+		return "", fmt.Errorf("internal server error")
 	}
 
 	entrypoint := erc4337.GetEntryPointAddress()
@@ -413,32 +420,45 @@ func (ws *WalletService) ExecuteCharge(sender, target, token, key string, amount
 	fmt.Println("Signing user op with key - ", key)
 	turnkeyActivityId, err := ws.turnkey.SignMessage(org, key, message)
 	if err != nil {
+		err = errors.Wrapf(err, "turnkey failed to sign user operation for account [%v], keyId: [%v]", sender, key)
 		log.Err(err).Caller().Send()
-		return err
+		return "", fmt.Errorf("internal server error")
 	}
 
 	result, err := ws.turnkey.GetActivity(org, turnkeyActivityId)
 	if err != nil {
+		err = errors.Wrapf(err, "fetching turnkey activity failed, activityId: [%v]", turnkeyActivityId)
 		log.Err(err).Caller().Send()
-		return err
+		return "", fmt.Errorf("internal server error")
 	}
 
 	sig, err := turnkey.ExctractTurnkeySignatureFromResult(result)
 	if err != nil {
+		err = errors.Wrap(err, "failed to extract signature from turnkey result")
 		log.Err(err).Caller().Send()
-		return err
+		return "", fmt.Errorf("internal server error")
 	}
 	op["signature"] = sig.ParseSignature(erc4337.VALIDATOR_MODE)
 
 	opHash, err := bundler.SendUserOperation(op)
 	if err != nil {
+		err = errors.Wrap(err, "sending user op failed")
 		log.Err(err).Caller().Send()
-		return err
+		return "", fmt.Errorf("internal server error")
 	}
 
 	// TODO: use the userop hash to create a reciept for the transsaction
 	fmt.Println("user operation hash -", opHash) // 0x28b45cf378c23fbdbbcb4f4c4d085791eb6d660214ff4a2402e40fd1c73751c6 0xfcd3b481cc3ba345fcf24c777463baf60dbb1f7475ca297b9259d020044565be
-	return nil
+
+	// Fetch transaction hash
+	useropResult, err := bundler.GetUserOperationByHash(opHash)
+	if err != nil {
+		err = errors.Wrap(err, "fetching the transction hash failed")
+		log.Err(err).Caller().Send()
+	}
+
+	transactionHash := useropResult["transactionHash"].(string)
+	return transactionHash, err
 }
 
 // Transfer tokens from a smart wallet,
@@ -509,9 +529,16 @@ func (ws *WalletService) ValidateTransfer(userop map[string]any, chain int64) (*
 
 	transactionHash := useropResult["transactionHash"].(string)
 
+	explorer, err := erc20.GetChainExplorer(chain)
+	if err != nil {
+		log.Err(err).Send()
+	}
+	blockExplorerTx := fmt.Sprintf("%v/tx/%v", explorer, transactionHash)
+
 	transactionDetails := &model.TransactionData{
 		Chain:           int(chain),
 		TransactionHash: transactionHash,
+		BlockExplorerLink: blockExplorerTx,
 	}
 
 	return transactionDetails, nil

@@ -53,6 +53,8 @@ type SubscriptionData {
 	walletAddress: String!
   subscriptionKey: String!
   createdAt: String
+  transactionHash: String
+  transactionExplorer: String
 }
 
 input NewTransferRequest {
@@ -76,9 +78,6 @@ enum StatusToggle {
 
 type TransactionData {
   chain: Int!
-  token: String
-  Amount: Float
-  Recipient: String
   TransactionHash: String!
   BlockExplorerLink: String!
 }
