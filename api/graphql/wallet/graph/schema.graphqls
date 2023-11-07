@@ -7,11 +7,14 @@ type Query {
 }
 
 type Mutation {
+  # frontend sdk
   addAccount(input: Account!): String!
-  addSubscription(input: NewSubscription!): ValidationData!
-  validateSubscription(input: RequestValidation!): SubscriptionData!
+  createPaymentIntent(input: PaymentIntent!): String!
+  validatePaymentIntent(input: RequestValidation!): TransactionData!
+
+  # user's dashboard ops
   modifySubscriptionState(input: SubscriptionMod!): String!
-  initiateTransferRequest(input: NewTransferRequest!): ValidationData!
+  initiateTransferRequest(input: NewTransferRequest!): String!
   validateTransferRequest(input: RequestValidation!): TransactionData!
 }
 
@@ -22,16 +25,18 @@ input Account {
   signer: String
 }
 
-# subscription data
-input NewSubscription {
+# payment data
+input PaymentIntent {
+  type: PaymentType!
+  email: String
   chain: Int!
-  nextChargeAt: Time
-	token: String!
-	amount: Int!
-	interval: Int!
+  token: String!
+  amount: Int!
+  interval: Int!
   productId: String!
-	walletAddress: String!
   ownerAddress: String!
+  walletAddress: String!
+  firstChargeNow: Boolean!
 }
 
 input RequestValidation {
@@ -59,6 +64,22 @@ type SubscriptionData {
   transactionExplorer: String
 }
 
+type TransactionData {
+  id: ID
+  type: PaymentType!
+  chain: Int!
+	token: String!
+  amount: Int!
+	interval: Int
+  reference: String!
+  productId: String
+	walletAddress: String!
+  subscriptionKey: String
+  createdAt: String
+  transactionHash: String
+  transactionExplorer: String
+}
+
 input NewTransferRequest {
   chain: Int!
   token: String!
@@ -78,10 +99,9 @@ enum StatusToggle {
   enable
 }
 
-type TransactionData {
-  chain: Int!
-  TransactionHash: String!
-  BlockExplorerLink: String!
+enum PaymentType {
+  single
+  recurring
 }
 
 scalar Time

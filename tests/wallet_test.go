@@ -32,7 +32,6 @@ func TestAddSubscription(t *testing.T) {
 	fmt.Println("owner", owner)
 	newSub := model.NewSubscription{
 		Chain:        10,
-		NextChargeAt: nil,
 		Token:        "USDC",
 		Amount:       1,
 		Interval:     30,
