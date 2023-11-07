@@ -11,7 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/google/uuid"
-	"github.com/lucidconnect/silver-arrow/graphql/wallet/graph/model"
+	"github.com/lucidconnect/silver-arrow/api/graphql/wallet/graph/model"
 	"github.com/lucidconnect/silver-arrow/repository"
 	"github.com/lucidconnect/silver-arrow/service/erc4337"
 	"github.com/lucidconnect/silver-arrow/service/turnkey"

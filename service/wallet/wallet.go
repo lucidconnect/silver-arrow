@@ -17,7 +17,7 @@ import (
 	"github.com/lucidconnect/silver-arrow/erc20"
 
 	// "github.com/lucidconnect/silver-arrow/erc4337"
-	"github.com/lucidconnect/silver-arrow/graphql/wallet/graph/model"
+	"github.com/lucidconnect/silver-arrow/api/graphql/wallet/graph/model"
 	"github.com/lucidconnect/silver-arrow/repository"
 	"github.com/lucidconnect/silver-arrow/repository/models"
 	"github.com/lucidconnect/silver-arrow/service/erc4337"

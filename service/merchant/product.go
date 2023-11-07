@@ -11,7 +11,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/google/uuid"
-	"github.com/lucidconnect/silver-arrow/graphql/merchant/graph/model"
+	"github.com/lucidconnect/silver-arrow/api/graphql/merchant/graph/model"
 	"github.com/lucidconnect/silver-arrow/repository/models"
 )
 

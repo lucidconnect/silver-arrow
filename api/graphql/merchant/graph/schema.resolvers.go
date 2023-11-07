@@ -8,8 +8,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/lucidconnect/silver-arrow/graphql/merchant/graph/generated"
-	"github.com/lucidconnect/silver-arrow/graphql/merchant/graph/model"
+	"github.com/lucidconnect/silver-arrow/api/graphql/merchant/graph/generated"
+	"github.com/lucidconnect/silver-arrow/api/graphql/merchant/graph/model"
 	"github.com/lucidconnect/silver-arrow/service/merchant"
 )
 

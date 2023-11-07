@@ -13,7 +13,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
-	"github.com/lucidconnect/silver-arrow/graphql/merchant/graph/model"
+	"github.com/lucidconnect/silver-arrow/api/graphql/merchant/graph/model"
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -514,7 +514,7 @@ func (ec *executionContext) field_Mutation_addProduct_args(ctx context.Context, 
 	var arg0 model.NewProduct
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNNewProduct2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐNewProduct(ctx, tmp)
+		arg0, err = ec.unmarshalNNewProduct2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋapiᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐNewProduct(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -544,7 +544,7 @@ func (ec *executionContext) field_Mutation_updateProduct_args(ctx context.Contex
 	var arg0 model.ProductUpdate
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNProductUpdate2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐProductUpdate(ctx, tmp)
+		arg0, err = ec.unmarshalNProductUpdate2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋapiᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐProductUpdate(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -914,7 +914,7 @@ func (ec *executionContext) _Mutation_addProduct(ctx context.Context, field grap
 	}
 	res := resTmp.(*model.Product)
 	fc.Result = res
-	return ec.marshalNProduct2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐProduct(ctx, field.Selections, res)
+	return ec.marshalNProduct2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋapiᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐProduct(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_addProduct(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -987,7 +987,7 @@ func (ec *executionContext) _Mutation_updateProduct(ctx context.Context, field g
 	}
 	res := resTmp.(*model.Product)
 	fc.Result = res
-	return ec.marshalNProduct2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐProduct(ctx, field.Selections, res)
+	return ec.marshalNProduct2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋapiᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐProduct(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateProduct(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1060,7 +1060,7 @@ func (ec *executionContext) _Mutation_createAccessKey(ctx context.Context, field
 	}
 	res := resTmp.(*model.AccessKey)
 	fc.Result = res
-	return ec.marshalNAccessKey2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐAccessKey(ctx, field.Selections, res)
+	return ec.marshalNAccessKey2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋapiᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐAccessKey(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createAccessKey(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1382,7 +1382,7 @@ func (ec *executionContext) _Product_subscriptions(ctx context.Context, field gr
 	}
 	res := resTmp.([]*model.Sub)
 	fc.Result = res
-	return ec.marshalOSub2ᚕᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐSubᚄ(ctx, field.Selections, res)
+	return ec.marshalOSub2ᚕᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋapiᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐSubᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Product_subscriptions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1481,7 +1481,7 @@ func (ec *executionContext) _Query_fetchOneProduct(ctx context.Context, field gr
 	}
 	res := resTmp.(*model.Product)
 	fc.Result = res
-	return ec.marshalNProduct2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐProduct(ctx, field.Selections, res)
+	return ec.marshalNProduct2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋapiᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐProduct(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_fetchOneProduct(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1554,7 +1554,7 @@ func (ec *executionContext) _Query_fetchProducts(ctx context.Context, field grap
 	}
 	res := resTmp.([]*model.Product)
 	fc.Result = res
-	return ec.marshalNProduct2ᚕᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐProductᚄ(ctx, field.Selections, res)
+	return ec.marshalNProduct2ᚕᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋapiᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐProductᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_fetchProducts(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1682,7 +1682,7 @@ func (ec *executionContext) _Query_fetchMerchantStats(ctx context.Context, field
 	}
 	res := resTmp.(*model.MerchantStats)
 	fc.Result = res
-	return ec.marshalNMerchantStats2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐMerchantStats(ctx, field.Selections, res)
+	return ec.marshalNMerchantStats2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋapiᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐMerchantStats(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_fetchMerchantStats(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4746,11 +4746,11 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
-func (ec *executionContext) marshalNAccessKey2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐAccessKey(ctx context.Context, sel ast.SelectionSet, v model.AccessKey) graphql.Marshaler {
+func (ec *executionContext) marshalNAccessKey2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋapiᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐAccessKey(ctx context.Context, sel ast.SelectionSet, v model.AccessKey) graphql.Marshaler {
 	return ec._AccessKey(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNAccessKey2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐAccessKey(ctx context.Context, sel ast.SelectionSet, v *model.AccessKey) graphql.Marshaler {
+func (ec *executionContext) marshalNAccessKey2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋapiᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐAccessKey(ctx context.Context, sel ast.SelectionSet, v *model.AccessKey) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -4790,11 +4790,11 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 	return res
 }
 
-func (ec *executionContext) marshalNMerchantStats2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐMerchantStats(ctx context.Context, sel ast.SelectionSet, v model.MerchantStats) graphql.Marshaler {
+func (ec *executionContext) marshalNMerchantStats2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋapiᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐMerchantStats(ctx context.Context, sel ast.SelectionSet, v model.MerchantStats) graphql.Marshaler {
 	return ec._MerchantStats(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNMerchantStats2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐMerchantStats(ctx context.Context, sel ast.SelectionSet, v *model.MerchantStats) graphql.Marshaler {
+func (ec *executionContext) marshalNMerchantStats2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋapiᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐMerchantStats(ctx context.Context, sel ast.SelectionSet, v *model.MerchantStats) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -4804,16 +4804,16 @@ func (ec *executionContext) marshalNMerchantStats2ᚖgithubᚗcomᚋlucidconnect
 	return ec._MerchantStats(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNNewProduct2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐNewProduct(ctx context.Context, v interface{}) (model.NewProduct, error) {
+func (ec *executionContext) unmarshalNNewProduct2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋapiᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐNewProduct(ctx context.Context, v interface{}) (model.NewProduct, error) {
 	res, err := ec.unmarshalInputNewProduct(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNProduct2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐProduct(ctx context.Context, sel ast.SelectionSet, v model.Product) graphql.Marshaler {
+func (ec *executionContext) marshalNProduct2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋapiᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐProduct(ctx context.Context, sel ast.SelectionSet, v model.Product) graphql.Marshaler {
 	return ec._Product(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNProduct2ᚕᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐProductᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Product) graphql.Marshaler {
+func (ec *executionContext) marshalNProduct2ᚕᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋapiᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐProductᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Product) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -4837,7 +4837,7 @@ func (ec *executionContext) marshalNProduct2ᚕᚖgithubᚗcomᚋlucidconnectᚋ
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNProduct2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐProduct(ctx, sel, v[i])
+			ret[i] = ec.marshalNProduct2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋapiᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐProduct(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -4857,7 +4857,7 @@ func (ec *executionContext) marshalNProduct2ᚕᚖgithubᚗcomᚋlucidconnectᚋ
 	return ret
 }
 
-func (ec *executionContext) marshalNProduct2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐProduct(ctx context.Context, sel ast.SelectionSet, v *model.Product) graphql.Marshaler {
+func (ec *executionContext) marshalNProduct2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋapiᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐProduct(ctx context.Context, sel ast.SelectionSet, v *model.Product) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -4867,7 +4867,7 @@ func (ec *executionContext) marshalNProduct2ᚖgithubᚗcomᚋlucidconnectᚋsil
 	return ec._Product(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNProductUpdate2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐProductUpdate(ctx context.Context, v interface{}) (model.ProductUpdate, error) {
+func (ec *executionContext) unmarshalNProductUpdate2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋapiᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐProductUpdate(ctx context.Context, v interface{}) (model.ProductUpdate, error) {
 	res, err := ec.unmarshalInputProductUpdate(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -4887,7 +4887,7 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	return res
 }
 
-func (ec *executionContext) marshalNSub2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐSub(ctx context.Context, sel ast.SelectionSet, v *model.Sub) graphql.Marshaler {
+func (ec *executionContext) marshalNSub2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋapiᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐSub(ctx context.Context, sel ast.SelectionSet, v *model.Sub) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -5192,7 +5192,7 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	return res
 }
 
-func (ec *executionContext) marshalOSub2ᚕᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐSubᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Sub) graphql.Marshaler {
+func (ec *executionContext) marshalOSub2ᚕᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋapiᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐSubᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Sub) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -5219,7 +5219,7 @@ func (ec *executionContext) marshalOSub2ᚕᚖgithubᚗcomᚋlucidconnectᚋsilv
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNSub2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐSub(ctx, sel, v[i])
+			ret[i] = ec.marshalNSub2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋapiᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐSub(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
