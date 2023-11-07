@@ -324,6 +324,12 @@ func (bs *AlchemyService) GetUserOperationByHash(userophash string) (map[string]
 			err = errors.Wrap(err, "eth_getUserOperationByHash call error")
 			log.Err(err).Send()
 		}
+
+		if result == nil {
+			err = errors.New("null rpc result")
+			log.Debug().Err(err).Send()
+		}
+
 		return err
 	}
 
