@@ -3,7 +3,7 @@ package merchant
 import (
 	"github.com/google/uuid"
 	"github.com/lucidconnect/silver-arrow/auth"
-	"github.com/lucidconnect/silver-arrow/graphql/merchant/graph/model"
+	"github.com/lucidconnect/silver-arrow/api/graphql/merchant/graph/model"
 	"github.com/lucidconnect/silver-arrow/repository"
 	"github.com/lucidconnect/silver-arrow/repository/models"
 	"github.com/rs/zerolog/log"
