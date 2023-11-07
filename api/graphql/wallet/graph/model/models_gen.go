@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"strconv"
-	"time"
 )
 
 type Account struct {
@@ -15,23 +14,25 @@ type Account struct {
 	Signer  *string `json:"signer,omitempty"`
 }
 
-type NewSubscription struct {
-	Chain         int        `json:"chain"`
-	NextChargeAt  *time.Time `json:"nextChargeAt,omitempty"`
-	Token         string     `json:"token"`
-	Amount        int        `json:"amount"`
-	Interval      int        `json:"interval"`
-	ProductID     string     `json:"productId"`
-	WalletAddress string     `json:"walletAddress"`
-	OwnerAddress  string     `json:"ownerAddress"`
-}
-
 type NewTransferRequest struct {
 	Chain  int     `json:"chain"`
 	Token  string  `json:"token"`
 	Amount float64 `json:"amount"`
 	Sender string  `json:"sender"`
 	Target string  `json:"target"`
+}
+
+type PaymentIntent struct {
+	Type           PaymentType `json:"type"`
+	Email          *string     `json:"email,omitempty"`
+	Chain          int         `json:"chain"`
+	Token          string      `json:"token"`
+	Amount         int         `json:"amount"`
+	Interval       int         `json:"interval"`
+	ProductID      string      `json:"productId"`
+	OwnerAddress   string      `json:"ownerAddress"`
+	WalletAddress  string      `json:"walletAddress"`
+	FirstChargeNow bool        `json:"firstChargeNow"`
 }
 
 type RequestValidation struct {
@@ -59,13 +60,64 @@ type SubscriptionMod struct {
 }
 
 type TransactionData struct {
-	Chain             int    `json:"chain"`
-	TransactionHash   string `json:"TransactionHash"`
-	BlockExplorerLink string `json:"BlockExplorerLink"`
+	ID                  *string     `json:"id,omitempty"`
+	Type                PaymentType `json:"type"`
+	Chain               int         `json:"chain"`
+	Token               string      `json:"token"`
+	Amount              int         `json:"amount"`
+	Interval            *int        `json:"interval,omitempty"`
+	Reference           string      `json:"reference"`
+	ProductID           *string     `json:"productId,omitempty"`
+	WalletAddress       string      `json:"walletAddress"`
+	SubscriptionKey     *string     `json:"subscriptionKey,omitempty"`
+	CreatedAt           *string     `json:"createdAt,omitempty"`
+	TransactionHash     *string     `json:"transactionHash,omitempty"`
+	TransactionExplorer *string     `json:"transactionExplorer,omitempty"`
 }
 
 type ValidationData struct {
 	UserOpHash string `json:"userOpHash"`
+}
+
+type PaymentType string
+
+const (
+	PaymentTypeSingle    PaymentType = "single"
+	PaymentTypeRecurring PaymentType = "recurring"
+)
+
+var AllPaymentType = []PaymentType{
+	PaymentTypeSingle,
+	PaymentTypeRecurring,
+}
+
+func (e PaymentType) IsValid() bool {
+	switch e {
+	case PaymentTypeSingle, PaymentTypeRecurring:
+		return true
+	}
+	return false
+}
+
+func (e PaymentType) String() string {
+	return string(e)
+}
+
+func (e *PaymentType) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = PaymentType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid PaymentType", str)
+	}
+	return nil
+}
+
+func (e PaymentType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 type StatusToggle string

@@ -100,7 +100,7 @@ func (ws *WalletService) AddAccount(input model.Account) error {
 	return nil
 }
 
-func (ws *WalletService) ValidateSubscription(userop map[string]any, chain int64) (*model.SubscriptionData, string, error) {
+func (ws *WalletService) ValidateSubscription(userop map[string]any, chain int64) (*model.TransactionData, string, error) {
 	// bundler, err := erc4337.InitialiseBundler(chain)
 	bundler, err := erc4337.NewAlchemyService(chain)
 	if err != nil {
@@ -128,12 +128,13 @@ func (ws *WalletService) ValidateSubscription(userop map[string]any, chain int64
 	token := result.Token
 	createdAt := result.CreatedAt.Format(time.RFC3339)
 	amount := int(result.Amount)
-	subData := &model.SubscriptionData{
-		ID:            result.Key.PublicKey,
+	interval := int(result.Interval)
+	subData := &model.TransactionData{
+		// ID:            result.Key.PublicKey,
 		Token:         token,
 		Amount:        amount,
-		Interval:      int(result.Interval),
-		ProductID:     productId,
+		Interval:      &interval,
+		ProductID:     &productId,
 		WalletAddress: result.WalletAddress,
 		CreatedAt:     &createdAt,
 	}
@@ -536,9 +537,9 @@ func (ws *WalletService) ValidateTransfer(userop map[string]any, chain int64) (*
 	blockExplorerTx := fmt.Sprintf("%v/tx/%v", explorer, transactionHash)
 
 	transactionDetails := &model.TransactionData{
-		Chain:           int(chain),
-		TransactionHash: transactionHash,
-		BlockExplorerLink: blockExplorerTx,
+		Chain:               int(chain),
+		TransactionHash:     &transactionHash,
+		TransactionExplorer: &blockExplorerTx,
 	}
 
 	return transactionDetails, nil

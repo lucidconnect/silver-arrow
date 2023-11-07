@@ -12,10 +12,10 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/lucidconnect/silver-arrow/auth"
-	"github.com/lucidconnect/silver-arrow/erc20"
 	"github.com/lucidconnect/silver-arrow/api/graphql/wallet/graph/generated"
 	"github.com/lucidconnect/silver-arrow/api/graphql/wallet/graph/model"
+	"github.com/lucidconnect/silver-arrow/auth"
+	"github.com/lucidconnect/silver-arrow/erc20"
 	"github.com/lucidconnect/silver-arrow/service/erc4337"
 	"github.com/lucidconnect/silver-arrow/service/merchant"
 	"github.com/lucidconnect/silver-arrow/service/wallet"
@@ -37,16 +37,16 @@ func (r *mutationResolver) AddAccount(ctx context.Context, input model.Account) 
 	return address.Hex(), nil
 }
 
-// AddSubscription is the resolver for the addSubscription field.
-func (r *mutationResolver) AddSubscription(ctx context.Context, input model.NewSubscription) (*model.ValidationData, error) {
+// CreatePaymentIntent is the resolver for the createPaymentIntent field.
+func (r *mutationResolver) CreatePaymentIntent(ctx context.Context, input model.PaymentIntent) (string, error) {
 	merchant, err := getAuthenticatedAndActiveMerchant(ctx)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	merchantId := merchant.ID
 	signature, err := auth.SignatureContext(ctx, merchant.PublicKey)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	log.Info().Msgf("Authenticated Merchant: %v", merchantId)
 	// validate signature
@@ -56,7 +56,7 @@ func (r *mutationResolver) AddSubscription(ctx context.Context, input model.NewS
 	if err != nil {
 		log.Err(err).Ctx(ctx).Send()
 		err = errors.New("request signature is invalid")
-		return nil, err
+		return "", err
 	}
 
 	walletService := wallet.NewWalletService(r.Database, r.TurnkeyService)
@@ -67,20 +67,39 @@ func (r *mutationResolver) AddSubscription(ctx context.Context, input model.NewS
 	default:
 		usePaymaster = false
 	}
-	validationData, userOp, err := walletService.AddSubscription(merchantId, input, usePaymaster, common.Big0, int64(input.Chain))
-	if err != nil {
-		return nil, err
+	var useropHash string
+
+	switch input.Type {
+	case model.PaymentTypeRecurring:
+		newSubscription := model.NewSubscription{
+			Chain:         input.Chain,
+			Token:         input.Token,
+			Email:         *input.Email,
+			Amount:        input.Amount,
+			Interval:      input.Interval,
+			ProductID:     input.ProductID,
+			WalletAddress: input.WalletAddress,
+			OwnerAddress:  input.OwnerAddress,
+		}
+		validationData, userOp, err := walletService.AddSubscription(merchantId, newSubscription, usePaymaster, common.Big0, int64(input.Chain))
+		if err != nil {
+			return "", err
+		}
+		fmt.Println("Userop hash", validationData.UserOpHash)
+		err = r.Cache.Set(validationData.UserOpHash, userOp)
+		if err != nil {
+			return "", err
+		}
+		useropHash = validationData.UserOpHash
+	default:
+		return "", errors.New("unsupported payment type")
 	}
-	fmt.Println("Userop hash", validationData.UserOpHash)
-	err = r.Cache.Set(validationData.UserOpHash, userOp)
-	if err != nil {
-		return nil, err
-	}
-	return validationData, nil
+
+	return useropHash, nil
 }
 
-// ValidateSubscription is the resolver for the validateSubscription field.
-func (r *mutationResolver) ValidateSubscription(ctx context.Context, input model.RequestValidation) (*model.SubscriptionData, error) {
+// ValidatePaymentIntent is the resolver for the validatePaymentIntent field.
+func (r *mutationResolver) ValidatePaymentIntent(ctx context.Context, input model.RequestValidation) (*model.TransactionData, error) {
 	merch, err := getAuthenticatedAndActiveMerchant(ctx)
 	if err != nil {
 		return nil, err
@@ -121,7 +140,7 @@ func (r *mutationResolver) ValidateSubscription(ctx context.Context, input model
 	if err != nil {
 		return nil, err
 	}
-	product, err := merchantService.FetchProduct(subData.ProductID)
+	product, err := merchantService.FetchProduct(*subData.ProductID)
 	if err != nil {
 		return nil, err
 	}
@@ -179,7 +198,7 @@ func (r *mutationResolver) ModifySubscriptionState(ctx context.Context, input mo
 }
 
 // InitiateTransferRequest is the resolver for the initiateTransferRequest field.
-func (r *mutationResolver) InitiateTransferRequest(ctx context.Context, input model.NewTransferRequest) (*model.ValidationData, error) {
+func (r *mutationResolver) InitiateTransferRequest(ctx context.Context, input model.NewTransferRequest) (string, error) {
 	var sponsored bool
 	switch os.Getenv("USE_PAYMASTER") {
 	case "TRUE":
@@ -192,15 +211,15 @@ func (r *mutationResolver) InitiateTransferRequest(ctx context.Context, input mo
 	validationData, userop, err := walletService.InitiateTransfer(input.Sender, input.Target, input.Token, input.Amount, int64(input.Chain), sponsored)
 	if err != nil {
 		log.Err(err).Send()
-		return nil, errors.New("internal server error")
+		return "", errors.New("internal server error")
 	}
 
 	err = r.Cache.Set(validationData.UserOpHash, userop)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	return validationData, nil
+	return validationData.UserOpHash, nil
 }
 
 // ValidateTransferRequest is the resolver for the validateTransferRequest field.
