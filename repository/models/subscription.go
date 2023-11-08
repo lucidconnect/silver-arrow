@@ -17,7 +17,7 @@ type Subscription struct {
 	Interval               int64     `gorm:"not null"`
 	UserOpHash             string    `gorm:"index"`
 	MerchantId             string    `gorm:"index"`
-	ProductID              uuid.UUID
+	ProductID              uuid.UUID `gorm:"index"`
 	MerchantDepositAddress string
 	ExpiresAt              time.Time `gorm:"index;type:timestamptz"`
 	NextChargeAt           time.Time `gorm:"index;type:timestamptz"`
@@ -45,10 +45,11 @@ type Payment struct {
 	Status          string    `gorm:"not null"`
 	Amount          int64     `gorm:"not null"`
 	Source          string
+	WalletID        uuid.UUID
 	Reference       string
 	UserOpHash      string
 	Destination     string
-	SubscriptionId  uuid.UUID `gorm:"index"`
+	SubscriptionID  uuid.UUID
 	TransactionHash string
 	BlockExplorerTx string
 }
