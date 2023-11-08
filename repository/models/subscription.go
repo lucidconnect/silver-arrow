@@ -40,16 +40,22 @@ func (s *Subscription) BeforeCreate(tx *gorm.DB) (err error) {
 type Payment struct {
 	ID              uuid.UUID `gorm:"primaryKey"`
 	Type            string    `gorm:"not null"`
-	Chain           string    `gorm:"not null"`
+	Chain           int64     `gorm:"not null"`
 	Token           string    `gorm:"not null"`
 	Status          string    `gorm:"not null"`
 	Amount          int64     `gorm:"not null"`
 	Source          string
-	WalletID        uuid.UUID
-	Reference       string
+	WalletID        uuid.UUID `gorm:"not null"`
+	ProductID       uuid.UUID `gorm:"not null"`
+	Reference       uuid.UUID `gorm:"not null"`
 	UserOpHash      string
 	Destination     string
 	SubscriptionID  uuid.UUID
 	TransactionHash string
 	BlockExplorerTx string
+}
+
+func (p *Payment) BeforeCreate(tx *gorm.DB) (err error) {
+	p.ID = uuid.New()
+	return
 }
