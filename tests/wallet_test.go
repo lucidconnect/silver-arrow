@@ -23,7 +23,7 @@ func TestAddSubscription(t *testing.T) {
 	r := repository.NewDB(db)
 	tk, _ := turnkey.NewTurnKeyService()
 
-	ws := wallet.NewWalletService(r, tk)
+	ws := wallet.NewWalletService(r, tk, defaultChain)
 	// mId := randKey()
 	pId := "3838hr8hud9dijh3j"
 	key := "0xe81f9f7146470e1e728cc44d22089098de6be6ebe3ca39f21b7b092f09b10cf5"
@@ -62,9 +62,8 @@ func TestAddSubscription(t *testing.T) {
 	op["signature"] = hexutil.Encode(sig)
 	fmt.Println(op["signature"])
 
-	data, sKey, err := ws.ValidateSubscription(op, chain)
+	data, err := ws.ValidateSubscription(op, chain)
 	assert.NotEmpty(t, data)
-	assert.NotEmpty(t, sKey)
 	assert.NoError(t, err)
 
 	// target := "0xB77ce6ec08B85DcC468B94Cea7Cc539a3BbF9510"

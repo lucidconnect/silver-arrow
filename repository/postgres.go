@@ -26,7 +26,7 @@ func SetupDatabase(dbconn *sql.DB) (*gorm.DB, error) {
 	}
 
 	// ...
-	if err = db.AutoMigrate(models.Wallet{}, models.Merchant{}, models.Key{}, models.Subscription{}, models.Product{}); err != nil {
+	if err = db.AutoMigrate(models.Payment{}, models.Wallet{}, models.Merchant{}, models.Key{}, models.Subscription{}, models.Product{}); err != nil {
 		log.Fatal().Err(err).Msg("Error migrating database models")
 	}
 	// db.Model(&models.Subscription{}).
@@ -236,6 +236,22 @@ func (p *DB) FindPaymentById(id uuid.UUID) (*models.Payment, error) {
 	return payment, nil
 }
 
+func (p *DB) FindPaymentByReference(reference uuid.UUID) (*models.Payment, error) {
+	var payment *models.Payment
+	if err := p.Db.Where("reference = ? ", reference).First(&payment).Error; err != nil {
+		return nil, err
+	}
+	return payment, nil
+}
+
+func (p *DB) FindPaymentByUseropHash(hash string) (*models.Payment, error) {
+	var payment *models.Payment
+	if err := p.Db.Where("user_op_hash = ? ", hash).First(&payment).Error; err != nil {
+		return nil, err
+	}
+	return payment, nil
+}
+
 func (p *DB) FindAllPaymentsByWallet(address string) ([]models.Payment, error) {
 	var wallet models.Wallet
 
@@ -249,7 +265,7 @@ func (p *DB) FindAllPaymentsByWallet(address string) ([]models.Payment, error) {
 func (p *DB) FetchAllPaymentsByProduct(productId uuid.UUID) ([]models.Payment, error) {
 	var subscriptions []models.Subscription
 	var payments []models.Payment
-	if err := p.Db.Where("product_id = ?",productId).Preload("Payments").Find(&subscriptions).Error; err != nil {
+	if err := p.Db.Where("product_id = ?", productId).Preload("Payments").Find(&subscriptions).Error; err != nil {
 		return nil, err
 	}
 
