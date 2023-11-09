@@ -7,12 +7,15 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 
 	"github.com/ethereum/go-ethereum/common"
 	LucidMerchant "github.com/lucidconnect/silver-arrow/abi/LucidMerchant"
 	"github.com/lucidconnect/silver-arrow/repository"
+	"github.com/lucidconnect/silver-arrow/repository/models"
 	"github.com/lucidconnect/silver-arrow/service/erc4337"
+	"github.com/lucidconnect/silver-arrow/service/turnkey"
 	"github.com/lucidconnect/silver-arrow/service/wallet"
 	"github.com/pkg/errors"
 )
@@ -20,13 +23,12 @@ import (
 var defaultChain int64
 
 type Scheduler struct {
-	queue         repository.Queuer
-	datastore     repository.Database
-	bundler       *erc4337.AlchemyService
-	walletService *wallet.WalletService
+	queue     repository.Queuer
+	datastore repository.Database
+	bundler   *erc4337.AlchemyService
 }
 
-func NewScheduler(data repository.Database, wallet *wallet.WalletService) *Scheduler {
+func NewScheduler(data repository.Database) *Scheduler {
 	queue := repository.NewDeque()
 	chain := os.Getenv("DEFAULT_CHAIN")
 	defaultChain, err := strconv.ParseInt(chain, 10, 64)
@@ -39,22 +41,14 @@ func NewScheduler(data repository.Database, wallet *wallet.WalletService) *Sched
 		panic(err)
 	}
 	return &Scheduler{
-		queue:         queue,
-		bundler:       bundler,
-		datastore:     data,
-		walletService: wallet,
+		queue:     queue,
+		bundler:   bundler,
+		datastore: data,
 	}
 }
 
 // create a valid the user op and add it to a queue
 func (s *Scheduler) SubscriptionJob() {
-	var usePaymaster bool
-	switch os.Getenv("USE_PAYMASTER") {
-	case "TRUE":
-		usePaymaster = true
-	default:
-		usePaymaster = false
-	}
 	// read from the database and fetch subscriptions expiring in 3 days
 	subsDueIn3, err := s.datastore.FetchDueSubscriptions(3)
 	if err != nil {
@@ -94,7 +88,6 @@ func (s *Scheduler) SubscriptionJob() {
 		amount := big.NewInt(sub.Amount)
 		wallet := common.HexToAddress(sub.WalletAddress)
 		tokenAddress := common.HexToAddress(sub.TokenAddress)
-		chain := sub.Chain
 
 		balance, err := s.bundler.GetErc20TokenBalance(tokenAddress, wallet)
 		if err != nil {
@@ -110,24 +103,71 @@ func (s *Scheduler) SubscriptionJob() {
 			// initiate user operation
 			time.Sleep(15 * time.Second)
 			// get the account
-
-			_, err = s.walletService.ExecuteCharge(sub.WalletAddress, sub.MerchantDepositAddress, sub.Token, sub.Key.PrivateKeyId, sub.Amount, chain, usePaymaster)
-			if err != nil {
-				err = errors.Wrapf(err, "ExecuteCharge() - error occurred during charge execution for subscription %v - ", sub.ID)
-				log.Err(err).Send()
-				continue
-			}
-			nextChargeAt := time.Now().Add((time.Duration(sub.Interval)))
-
-			update := map[string]interface{}{
-				"expires_at":     nextChargeAt,
-				"next_charge_at": nextChargeAt,
-			}
-			err = s.datastore.UpdateSubscription(sub.ID, update)
-			if err != nil {
-				log.Err(err).Send()
-			}
+			// ws := wallet.NewWalletService(s.datastore)
+			s.initialisePayment(sub)
 		}
+	}
+}
+
+func (s *Scheduler) initialisePayment(sub models.Subscription) {
+	var sponsored bool
+	switch os.Getenv("USE_PAYMASTER") {
+	case "TRUE":
+		sponsored = true
+	default:
+		sponsored = false
+	}
+
+	turnkeyService, err := turnkey.NewTurnKeyService()
+	if err != nil {
+		log.Err(err).Send()
+	}
+
+	walletService := wallet.NewWalletService(s.datastore, turnkeyService, sub.Chain)
+	reference := uuid.New()
+
+	payment := &models.Payment{
+		Type:                  wallet.PaymentTypeRecurring.String(),
+		Chain:                 sub.Chain,
+		Token:                 sub.Token,
+		Amount:                sub.Amount,
+		Source:                sub.WalletAddress,
+		WalletID:              sub.WalletID,
+		ProductID:             sub.ProductID,
+		Sponsored:             sponsored,
+		Reference:             reference,
+		Destination:           sub.MerchantDepositAddress,
+		SubscriptionID:        sub.ID,
+		SubscriptionPublicKey: sub.Key.PublicKey,
+	}
+
+	userop, useropHash, err := walletService.CreatePayment(payment)
+	if err != nil {
+		err = errors.Wrap(err, "creating payment operation failed")
+		log.Err(err).Caller().Send()
+	}
+
+	signature, err := walletService.SignPaymentOperation(userop, useropHash)
+	if err != nil {
+		err = errors.Wrap(err, "signing payment operation failed")
+		log.Err(err).Caller().Send()
+	}
+	userop["signature"] = signature
+
+	_, err = walletService.ExecutePaymentOperation(userop, payment.Chain)
+	if err != nil {
+		log.Err(err).Send()
+	}
+
+	nextChargeAt := time.Now().Add((time.Duration(sub.Interval)))
+
+	update := map[string]interface{}{
+		"expires_at":     nextChargeAt,
+		"next_charge_at": nextChargeAt,
+	}
+	err = s.datastore.UpdateSubscription(sub.ID, update)
+	if err != nil {
+		log.Err(err).Send()
 	}
 }
 

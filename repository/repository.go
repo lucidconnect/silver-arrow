@@ -25,8 +25,10 @@ type Database interface {
 
 	// Payments
 	CreatePayment(*models.Payment) error
-	UpdatePayment(uuid.UUID, map[string]any) error
+	UpdatePayment(id uuid.UUID, update map[string]any) error
 	FindPaymentById(id uuid.UUID) (*models.Payment, error)
+	FindPaymentByReference(uuid.UUID) (*models.Payment, error)
+	FindPaymentByUseropHash(hash string) (*models.Payment, error)
 
 	// Product
 	CreateProduct(*models.Product) error

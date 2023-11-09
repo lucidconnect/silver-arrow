@@ -20,7 +20,6 @@ import (
 	"github.com/lucidconnect/silver-arrow/repository"
 	"github.com/lucidconnect/silver-arrow/service/scheduler"
 	"github.com/lucidconnect/silver-arrow/service/turnkey"
-	"github.com/lucidconnect/silver-arrow/service/wallet"
 	"github.com/robfig/cron/v3"
 	"github.com/rs/cors"
 	"github.com/rs/zerolog/log"
@@ -48,11 +47,10 @@ func main() {
 	if err != nil {
 		log.Panic().Err(err).Send()
 	}
-	walletService := wallet.NewWalletService(database, tunkeyService)
 
 	router.Use(auth.Middleware(*database))
 
-	jobRunner := scheduler.NewScheduler(database, walletService)
+	jobRunner := scheduler.NewScheduler(database)
 	setupJobs(jobRunner)
 	walletSrv := handler.NewDefaultServer(wallet_generated.NewExecutableSchema(wallet_generated.Config{Resolvers: &wallet_graph.Resolver{
 		Cache:          repository.NewMCache(),

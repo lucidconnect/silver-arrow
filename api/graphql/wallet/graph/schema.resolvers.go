@@ -15,9 +15,7 @@ import (
 	"github.com/lucidconnect/silver-arrow/api/graphql/wallet/graph/generated"
 	"github.com/lucidconnect/silver-arrow/api/graphql/wallet/graph/model"
 	"github.com/lucidconnect/silver-arrow/auth"
-	"github.com/lucidconnect/silver-arrow/erc20"
 	"github.com/lucidconnect/silver-arrow/service/erc4337"
-	"github.com/lucidconnect/silver-arrow/service/merchant"
 	"github.com/lucidconnect/silver-arrow/service/wallet"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
@@ -27,7 +25,7 @@ import (
 func (r *mutationResolver) AddAccount(ctx context.Context, input model.Account) (string, error) {
 	address := common.HexToAddress(input.Address)
 
-	walletService := wallet.NewWalletService(r.Database, r.TurnkeyService)
+	walletService := wallet.NewWalletService(r.Database, r.TurnkeyService, 0)
 	// should check if the account is deployed
 	// deploy if not deployed
 	err := walletService.AddAccount(input)
@@ -59,7 +57,7 @@ func (r *mutationResolver) CreatePaymentIntent(ctx context.Context, input model.
 		return "", err
 	}
 
-	walletService := wallet.NewWalletService(r.Database, r.TurnkeyService)
+	walletService := wallet.NewWalletService(r.Database, r.TurnkeyService, int64(input.Chain))
 	var usePaymaster bool
 	switch os.Getenv("USE_PAYMASTER") {
 	case "TRUE":
@@ -71,16 +69,24 @@ func (r *mutationResolver) CreatePaymentIntent(ctx context.Context, input model.
 
 	switch input.Type {
 	case model.PaymentTypeRecurring:
-		newSubscription := model.NewSubscription{
-			Chain:         input.Chain,
-			Token:         input.Token,
-			Email:         *input.Email,
-			Amount:        input.Amount,
-			Interval:      input.Interval,
-			ProductID:     input.ProductID,
-			WalletAddress: input.WalletAddress,
-			OwnerAddress:  input.OwnerAddress,
+		var nextCharge time.Time
+
+		if input.FirstChargeNow {
+			nextCharge = time.Now()
 		}
+
+		newSubscription := model.NewSubscription{
+			Chain:          input.Chain,
+			Token:          input.Token,
+			Email:          *input.Email,
+			Amount:         input.Amount,
+			Interval:       input.Interval,
+			ProductID:      input.ProductID,
+			OwnerAddress:   input.OwnerAddress,
+			WalletAddress:  input.WalletAddress,
+			NextChargeDate: &nextCharge,
+		}
+
 		validationData, userOp, err := walletService.AddSubscription(merchantId, newSubscription, usePaymaster, common.Big0, int64(input.Chain))
 		if err != nil {
 			return "", err
@@ -106,17 +112,10 @@ func (r *mutationResolver) ValidatePaymentIntent(ctx context.Context, input mode
 	}
 	_ = merch.ID
 
-	walletService := wallet.NewWalletService(r.Database, r.TurnkeyService)
-	merchantService := merchant.NewMerchantService(r.Database)
+	walletService := wallet.NewWalletService(r.Database, r.TurnkeyService, int64(input.Chain))
+	// merchantService := merchant.NewMerchantService(r.Database)
 
-	time.Sleep(time.Second)
-	var usePaymaster bool
-	switch os.Getenv("USE_PAYMASTER") {
-	case "TRUE":
-		usePaymaster = true
-	default:
-		usePaymaster = false
-	}
+	// time.Sleep(time.Second)
 
 	opInterface, err := r.Cache.Get(input.UserOpHash)
 	if err != nil {
@@ -136,31 +135,10 @@ func (r *mutationResolver) ValidatePaymentIntent(ctx context.Context, input mode
 	op["signature"] = hexutil.Encode(sig)
 
 	chain := int64(input.Chain)
-	subData, key, err := walletService.ValidateSubscription(op, chain)
+	subData, err := walletService.ValidateSubscription(op, chain)
 	if err != nil {
 		return nil, err
 	}
-	product, err := merchantService.FetchProduct(*subData.ProductID)
-	if err != nil {
-		return nil, err
-	}
-	target := product.ReceivingAddress
-	// x := int64(subData.Amount)
-	// Delay for a few seconds to allow the changes to be propagated onchain
-	time.Sleep(15 * time.Second)
-	transactionHash, err := walletService.ExecuteCharge(subData.WalletAddress, target, subData.Token, key, int64(subData.Amount), chain, usePaymaster)
-	if err != nil {
-		err = errors.Wrap(err, "ExecuteCharge() - error occurred during first time charge execution - ")
-		return subData, err
-	}
-	explorer, err := erc20.GetChainExplorer(chain)
-	if err != nil {
-		log.Err(err).Send()
-	}
-	transactionDetails := fmt.Sprintf("%v/tx/%v", explorer, transactionHash)
-
-	subData.TransactionHash = &transactionHash
-	subData.TransactionExplorer = &transactionDetails
 
 	return subData, nil
 }
@@ -169,7 +147,7 @@ func (r *mutationResolver) ValidatePaymentIntent(ctx context.Context, input mode
 func (r *mutationResolver) ModifySubscriptionState(ctx context.Context, input model.SubscriptionMod) (string, error) {
 	var err error
 	var result string
-	walletService := wallet.NewWalletService(r.Database, nil)
+	walletService := wallet.NewWalletService(r.Database, nil, 0)
 
 	switch input.Toggle {
 	case model.StatusToggleCancel:
@@ -207,7 +185,7 @@ func (r *mutationResolver) InitiateTransferRequest(ctx context.Context, input mo
 		sponsored = false
 	}
 
-	walletService := wallet.NewWalletService(r.Database, nil)
+	walletService := wallet.NewWalletService(r.Database, nil, int64(input.Chain))
 	validationData, userop, err := walletService.InitiateTransfer(input.Sender, input.Target, input.Token, input.Amount, int64(input.Chain), sponsored)
 	if err != nil {
 		log.Err(err).Send()
@@ -246,7 +224,7 @@ func (r *mutationResolver) ValidateTransferRequest(ctx context.Context, input mo
 
 	chain := int64(input.Chain)
 
-	walletService := wallet.NewWalletService(r.Database, nil)
+	walletService := wallet.NewWalletService(r.Database, nil, int64(input.Chain))
 
 	td, err := walletService.ValidateTransfer(op, chain)
 	if err != nil {
@@ -259,7 +237,7 @@ func (r *mutationResolver) ValidateTransferRequest(ctx context.Context, input mo
 
 // FetchSubscriptions is the resolver for the fetchSubscriptions field.
 func (r *queryResolver) FetchSubscriptions(ctx context.Context, account string) ([]*model.SubscriptionData, error) {
-	ws := wallet.NewWalletService(r.Database, r.TurnkeyService)
+	ws := wallet.NewWalletService(r.Database, r.TurnkeyService, 0)
 	subs, err := ws.FetchSubscriptions(account)
 	if err != nil {
 		err = errors.New("failed to fetch subscriptions")

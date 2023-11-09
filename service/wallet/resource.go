@@ -1,4 +1,4 @@
-package rest
+package wallet
 
 /*** PaymentIntent is the entry point resource to initiate a payment on a user's erc4337 wallet
  * PaymentIntent is created by merchant and sent to Lucid
@@ -56,3 +56,10 @@ func (pt PaymentType) IsValid() bool {
 func (pt PaymentType) String() string {
 	return string(pt)
 }
+
+
+func (pt PaymentStatus) String() string {
+	return string(pt)
+}
+
+
