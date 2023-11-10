@@ -50,6 +50,7 @@ type SubscriptionData {
   amount: Int!
 	interval: Int!
   productId: String!
+  productName: String
 	walletAddress: String!
   subscriptionKey: String!
   createdAt: String
