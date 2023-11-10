@@ -291,13 +291,14 @@ func (w *WalletService) FetchSubscriptions(walletAddress string) ([]*model.Subsc
 		interval := nanoSecondsToDay(v.Interval)
 		createdAt := v.CreatedAt.Format("dd:mm:yyyy")
 		sd := &model.SubscriptionData{
-			ID:          v.ID.String(),
-			Token:       v.Token,
-			Amount:      int(v.Amount),
-			Interval:    int(interval),
-			ProductID:   v.ProductID.String(),
-			ProductName: &product.Name,
-			CreatedAt:   &createdAt,
+			ID:             v.ID.String(),
+			Token:          v.Token,
+			Amount:         int(v.Amount),
+			Interval:       int(interval),
+			ProductID:      v.ProductID.String(),
+			ProductName:    &product.Name,
+			CreatedAt:      &createdAt,
+			NextChargeDate: &v.NextChargeAt,
 		}
 		subData = append(subData, sd)
 	}

@@ -63,6 +63,7 @@ type ComplexityRoot struct {
 		CreatedAt           func(childComplexity int) int
 		ID                  func(childComplexity int) int
 		Interval            func(childComplexity int) int
+		NextChargeDate      func(childComplexity int) int
 		ProductID           func(childComplexity int) int
 		ProductName         func(childComplexity int) int
 		SubscriptionKey     func(childComplexity int) int
@@ -221,6 +222,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.SubscriptionData.Interval(childComplexity), true
+
+	case "SubscriptionData.nextChargeDate":
+		if e.complexity.SubscriptionData.NextChargeDate == nil {
+			break
+		}
+
+		return e.complexity.SubscriptionData.NextChargeDate(childComplexity), true
 
 	case "SubscriptionData.productId":
 		if e.complexity.SubscriptionData.ProductID == nil {
@@ -465,6 +473,7 @@ type SubscriptionData {
 	walletAddress: String!
   subscriptionKey: String!
   createdAt: String
+  nextChargeDate: Time
   transactionHash: String
   transactionExplorer: String
 }
@@ -831,6 +840,8 @@ func (ec *executionContext) fieldContext_Mutation_validateSubscription(ctx conte
 				return ec.fieldContext_SubscriptionData_subscriptionKey(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_SubscriptionData_createdAt(ctx, field)
+			case "nextChargeDate":
+				return ec.fieldContext_SubscriptionData_nextChargeDate(ctx, field)
 			case "transactionHash":
 				return ec.fieldContext_SubscriptionData_transactionHash(ctx, field)
 			case "transactionExplorer":
@@ -1087,6 +1098,8 @@ func (ec *executionContext) fieldContext_Query_fetchSubscriptions(ctx context.Co
 				return ec.fieldContext_SubscriptionData_subscriptionKey(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_SubscriptionData_createdAt(ctx, field)
+			case "nextChargeDate":
+				return ec.fieldContext_SubscriptionData_nextChargeDate(ctx, field)
 			case "transactionHash":
 				return ec.fieldContext_SubscriptionData_transactionHash(ctx, field)
 			case "transactionExplorer":
@@ -1623,6 +1636,47 @@ func (ec *executionContext) fieldContext_SubscriptionData_createdAt(ctx context.
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SubscriptionData_nextChargeDate(ctx context.Context, field graphql.CollectedField, obj *model.SubscriptionData) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SubscriptionData_nextChargeDate(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.NextChargeDate, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*time.Time)
+	fc.Result = res
+	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SubscriptionData_nextChargeDate(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SubscriptionData",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
 		},
 	}
 	return fc, nil
@@ -4162,6 +4216,8 @@ func (ec *executionContext) _SubscriptionData(ctx context.Context, sel ast.Selec
 			}
 		case "createdAt":
 			out.Values[i] = ec._SubscriptionData_createdAt(ctx, field, obj)
+		case "nextChargeDate":
+			out.Values[i] = ec._SubscriptionData_nextChargeDate(ctx, field, obj)
 		case "transactionHash":
 			out.Values[i] = ec._SubscriptionData_transactionHash(ctx, field, obj)
 		case "transactionExplorer":

@@ -54,6 +54,7 @@ type SubscriptionData {
 	walletAddress: String!
   subscriptionKey: String!
   createdAt: String
+  nextChargeDate: Time
   transactionHash: String
   transactionExplorer: String
 }
