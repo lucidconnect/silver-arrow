@@ -6,7 +6,6 @@ package graph
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"time"
@@ -16,6 +15,7 @@ import (
 	"github.com/lucidconnect/silver-arrow/api/graphql/wallet/graph/generated"
 	"github.com/lucidconnect/silver-arrow/api/graphql/wallet/graph/model"
 	"github.com/lucidconnect/silver-arrow/auth"
+	"github.com/lucidconnect/silver-arrow/gqlerror"
 	"github.com/lucidconnect/silver-arrow/service/erc4337"
 	"github.com/lucidconnect/silver-arrow/service/wallet"
 	"github.com/rs/zerolog/log"
@@ -52,9 +52,14 @@ func (r *mutationResolver) CreatePaymentIntent(ctx context.Context, input model.
 	signatureCheck := fmt.Sprintf("%v", input.Amount) + ":" + input.Token + ":" + fmt.Sprintf("%v", input.Interval) + ":" + input.ProductID
 	err = validateSignature(signatureCheck, signature, merchant.PublicKey)
 	if err != nil {
-		log.Err(err).Ctx(ctx).Send()
-		err = errors.New("request signature is invalid")
-		return "", err
+		log.Debug().Err(err).Ctx(ctx).Send()
+		return "", gqlerror.ErrToGraphQLError(gqlerror.MerchantAuthorisationFailed, err.Error(), ctx)
+	}
+
+	productId := parseUUID(input.ProductID)
+	product, err := r.Database.FetchProduct(productId)
+	if err != nil {
+		return "", gqlerror.ErrToGraphQLError(gqlerror.MerchantDataInvalid, "product not found", ctx)
 	}
 
 	walletService := wallet.NewWalletService(r.Database, r.TurnkeyService, int64(input.Chain))
@@ -81,24 +86,26 @@ func (r *mutationResolver) CreatePaymentIntent(ctx context.Context, input model.
 			Email:          *input.Email,
 			Amount:         input.Amount,
 			Interval:       input.Interval,
-			ProductID:      input.ProductID,
+			ProductID:      productId,
 			OwnerAddress:   input.OwnerAddress,
 			WalletAddress:  input.WalletAddress,
+			DepositAddress: product.DepositAddress,
 			NextChargeDate: &nextCharge,
 		}
 
 		validationData, userOp, err := walletService.AddSubscription(merchantId, newSubscription, usePaymaster, common.Big0, int64(input.Chain))
 		if err != nil {
-			return "", err
+			return "", gqlerror.ErrToGraphQLError(gqlerror.InternalError, "Couldn't add subscription to user's wallet", ctx)
 		}
 		fmt.Println("Userop hash", validationData.UserOpHash)
 		err = r.Cache.Set(validationData.UserOpHash, userOp)
 		if err != nil {
-			return "", err
+			log.Err(err).Send()
+			return "", gqlerror.ErrToGraphQLError(gqlerror.InternalError, "Couldn't add subscription to user's wallet", ctx)
 		}
 		useropHash = validationData.UserOpHash
 	default:
-		return "", errors.New("unsupported payment type")
+		return "", gqlerror.ErrToGraphQLError(gqlerror.NilError, "unsupported payment type", ctx)
 	}
 
 	return useropHash, nil
@@ -119,12 +126,14 @@ func (r *mutationResolver) ValidatePaymentIntent(ctx context.Context, input mode
 
 	opInterface, err := r.Cache.Get(input.UserOpHash)
 	if err != nil {
-		return nil, err
+		log.Err(err).Send()
+		return nil, gqlerror.ErrToGraphQLError(gqlerror.InternalError, "Subscription validation failed", ctx)
 	}
 	op, _ := opInterface.(map[string]any)
 	sig, err := hexutil.Decode(erc4337.SUDO_MODE)
 	if err != nil {
-		return nil, err
+		log.Err(err).Send()
+		return nil, gqlerror.ErrToGraphQLError(gqlerror.InternalError, "Subscription validation failed", ctx)
 	}
 	partialSig, err := hexutil.Decode(input.SignedMessage)
 	if err != nil {
@@ -137,7 +146,7 @@ func (r *mutationResolver) ValidatePaymentIntent(ctx context.Context, input mode
 	chain := int64(input.Chain)
 	subData, err := walletService.ValidateSubscription(op, chain)
 	if err != nil {
-		return nil, err
+		return nil, gqlerror.ErrToGraphQLError(gqlerror.InternalError, "Subscription validation failed", ctx)
 	}
 
 	return subData, nil
@@ -154,25 +163,22 @@ func (r *mutationResolver) ModifySubscriptionState(ctx context.Context, input mo
 		// cancel subscription
 		result, err = walletService.CancelSubscription(input.SubscriptionID)
 		if err != nil {
-			log.Err(err).Send()
-			return "", err
+			return "", gqlerror.ErrToGraphQLError(gqlerror.InternalError, "Subscription could not be canceled", ctx)
 		}
 	case model.StatusToggleDisable:
 		// temporary disbale
 		result, err = walletService.DisableSubscription(input.SubscriptionID)
 		if err != nil {
-			log.Err(err).Send()
-			return "", err
+			return "", gqlerror.ErrToGraphQLError(gqlerror.InternalError, "Subscription could not be disabled", ctx)
 		}
 	case model.StatusToggleEnable:
 		// reenable subscription
 		result, err = walletService.EnableSubscription(input.SubscriptionID)
 		if err != nil {
-			log.Err(err).Send()
-			return "", err
+			return "", gqlerror.ErrToGraphQLError(gqlerror.InternalError, "Subscription could not be enabled", ctx)
 		}
 	}
-	return result, err
+	return result, nil
 }
 
 // InitiateTransferRequest is the resolver for the initiateTransferRequest field.
@@ -188,13 +194,13 @@ func (r *mutationResolver) InitiateTransferRequest(ctx context.Context, input mo
 	walletService := wallet.NewWalletService(r.Database, nil, int64(input.Chain))
 	validationData, userop, err := walletService.InitiateTransfer(input.Sender, input.Target, input.Token, input.Amount, int64(input.Chain), sponsored)
 	if err != nil {
-		log.Err(err).Send()
-		return "", errors.New("internal server error")
+		return "", gqlerror.ErrToGraphQLError(gqlerror.InternalError, "Initiating toke transfer failed", ctx)
 	}
 
 	err = r.Cache.Set(validationData.UserOpHash, userop)
 	if err != nil {
-		return "", err
+		log.Err(err).Send()
+		return "", gqlerror.ErrToGraphQLError(gqlerror.InternalError, "Initiating token transfer failed", ctx)
 	}
 
 	return validationData.UserOpHash, nil
@@ -205,18 +211,18 @@ func (r *mutationResolver) ValidateTransferRequest(ctx context.Context, input mo
 	opInterface, err := r.Cache.Get(input.UserOpHash)
 	if err != nil {
 		log.Err(err).Send()
-		return nil, errors.New("internal server error")
+		return nil, gqlerror.ErrToGraphQLError(gqlerror.InternalError, "validating token transfer failed", ctx)
 	}
 	op, _ := opInterface.(map[string]any)
 	sig, err := hexutil.Decode(erc4337.SUDO_MODE)
 	if err != nil {
 		log.Err(err).Send()
-		return nil, errors.New("internal server error")
+		return nil, gqlerror.ErrToGraphQLError(gqlerror.InternalError, "validating token transfer failed", ctx)
 	}
 	partialSig, err := hexutil.Decode(input.SignedMessage)
 	if err != nil {
 		log.Err(err).Caller().Send()
-		return nil, errors.New("invalid signature format")
+		return nil, gqlerror.ErrToGraphQLError(gqlerror.NilError, "invalid signature format", ctx)
 	}
 	fmt.Println("partial signature - ", partialSig)
 	sig = append(sig, partialSig...)
@@ -228,8 +234,7 @@ func (r *mutationResolver) ValidateTransferRequest(ctx context.Context, input mo
 
 	td, err := walletService.ValidateTransfer(op, chain)
 	if err != nil {
-		log.Err(err).Caller().Send()
-		return nil, errors.New("internal server error")
+		return nil, gqlerror.ErrToGraphQLError(gqlerror.InternalError, "validating token transfer failed", ctx)
 	}
 
 	return td, nil
@@ -240,8 +245,7 @@ func (r *queryResolver) FetchSubscriptions(ctx context.Context, account string) 
 	ws := wallet.NewWalletService(r.Database, r.TurnkeyService, 0)
 	subs, err := ws.FetchSubscriptions(account)
 	if err != nil {
-		err = errors.New("failed to fetch subscriptions")
-		return nil, err
+		return nil, gqlerror.ErrToGraphQLError(gqlerror.InternalError, "failed to fetch subscriptions", ctx)
 	}
 	return subs, nil
 }

@@ -122,7 +122,7 @@ func (ws *WalletService) AddAccount(input model.Account) error {
 }
 
 func (ws *WalletService) ValidateSubscription(userop map[string]any, chain int64) (*model.TransactionData, error) {
-	opHash, err :=  ws.bundlerService.SendUserOperation(userop)
+	opHash, err := ws.bundlerService.SendUserOperation(userop)
 	if err != nil {
 		log.Err(err).Msg("failed to send user op")
 		return nil, err
@@ -240,22 +240,14 @@ func (ws *WalletService) AddSubscription(merchantId uuid.UUID, input model.NewSu
 	var initCode []byte
 	var nonce, amount *big.Int
 
-	// bundler := ws.bundlerService
-
 	tagId, orgId, walletID, err := ws.database.GetWalletMetadata(input.WalletAddress)
 	if err != nil {
 		log.Err(err).Msgf("failed to fetch private key tag for wallet - %v", input.WalletAddress)
 		return nil, nil, err
 	}
 
-	productId := merchant.ParseUUID(input.ProductID)
-
-	product, err := ws.database.FetchProduct(productId)
-	if err != nil {
-		log.Err(err).Msg("failed to fetch product")
-	}
 	randomSalt := randKey(4)
-	keyName := fmt.Sprintf("sub-%v-%v", randomSalt, productId)
+	keyName := fmt.Sprintf("sub-%v-%v", randomSalt, input.ProductID)
 	activityId, err := ws.turnkey.CreatePrivateKey(orgId, keyName, tagId)
 	if err != nil {
 		log.Err(err).Msg("failed to create subscription private key")
@@ -273,12 +265,6 @@ func (ws *WalletService) AddSubscription(merchantId uuid.UUID, input model.NewSu
 		log.Err(err).Caller().Send()
 		return nil, nil, err
 	}
-
-	// bundler, err := erc4337.NewAlchemyService(chain)
-	// if err != nil {
-	// 	log.Err(err).Msg("failed to initialise bundler")
-	// 	return nil, nil, err
-	// }
 
 	// supported token is still USDC, so minor factor is 1000000
 	amount = big.NewInt(int64(input.Amount)) // This will cause a bug for amounts that are fractional
@@ -340,8 +326,8 @@ func (ws *WalletService) AddSubscription(merchantId uuid.UUID, input model.NewSu
 		Interval:               interval.Nanoseconds(),
 		UserOpHash:             opHash.Hex(),
 		MerchantId:             merchantId.String(),
-		ProductID:              productId,
-		MerchantDepositAddress: product.DepositAddress,
+		ProductID:              input.ProductID,
+		MerchantDepositAddress: input.DepositAddress,
 		NextChargeAt:           nextChargeAt,
 		ExpiresAt:              nextChargeAt,
 		WalletID:               walletID,
@@ -819,8 +805,6 @@ func (ws *WalletService) ValidateTransfer(userop map[string]any, chain int64) (*
 
 	return transactionDetails, nil
 }
-
-
 
 func daysToNanoSeconds(days int64) time.Duration {
 	nanoSsecondsInt := days * 24 * 60 * 60 * 1e9

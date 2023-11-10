@@ -1,6 +1,10 @@
 package model
 
-import "time"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type NewSubscription struct {
 	Chain          int
@@ -8,8 +12,9 @@ type NewSubscription struct {
 	Token          string
 	Amount         int
 	Interval       int
-	ProductID      string
+	ProductID      uuid.UUID
 	OwnerAddress   string
 	WalletAddress  string
+	DepositAddress string
 	NextChargeDate *time.Time
 }
