@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
@@ -510,9 +511,6 @@ type Mutation {
   createPaymentIntent(input: PaymentIntent!): String!
   validatePaymentIntent(input: RequestValidation!): TransactionData!
 
-  # addSubscription(input: NewSubscription!): ValidationData!
-  # validateSubscription(input: RequestValidation!): SubscriptionData!
-
   # user's dashboard ops
   modifySubscriptionState(input: SubscriptionMod!): String!
   initiateTransferRequest(input: NewTransferRequest!): String!
@@ -526,18 +524,7 @@ input Account {
   signer: String
 }
 
-# subscription data
-# input NewSubscription {
-#   chain: Int!
-#   nextChargeAt: Time
-# 	token: String!
-# 	amount: Int!
-# 	interval: Int!
-#   productId: String!
-# 	walletAddress: String!
-#   ownerAddress: String!
-# }
-
+# payment data
 input PaymentIntent {
   type: PaymentType!
   email: String
@@ -588,23 +575,6 @@ type TransactionData {
 	walletAddress: String!
   subscriptionKey: String
   createdAt: String
-  nextChargeDate: Time
-  transactionHash: String
-  transactionExplorer: String
-}
-
-type TransactionData {
-  id: ID
-  type: PaymentType!
-  chain: Int!
-	token: String!
-  amount: Int!
-	interval: Int
-  reference: String!
-  productId: String
-	walletAddress: String!
-  subscriptionKey: String
-  createdAt: String
   transactionHash: String
   transactionExplorer: String
 }
@@ -632,12 +602,6 @@ enum PaymentType {
   single
   recurring
 }
-
-# type TransactionData {
-#   chain: Int!
-#   TransactionHash: String!
-#   BlockExplorerLink: String!
-# }
 
 scalar Time`, BuiltIn: false},
 }
@@ -970,16 +934,12 @@ func (ec *executionContext) fieldContext_Mutation_validatePaymentIntent(ctx cont
 				return ec.fieldContext_TransactionData_reference(ctx, field)
 			case "productId":
 				return ec.fieldContext_TransactionData_productId(ctx, field)
-			case "productName":
-				return ec.fieldContext_SubscriptionData_productName(ctx, field)
 			case "walletAddress":
 				return ec.fieldContext_TransactionData_walletAddress(ctx, field)
 			case "subscriptionKey":
 				return ec.fieldContext_TransactionData_subscriptionKey(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_TransactionData_createdAt(ctx, field)
-			case "nextChargeDate":
-				return ec.fieldContext_SubscriptionData_nextChargeDate(ctx, field)
 			case "transactionHash":
 				return ec.fieldContext_TransactionData_transactionHash(ctx, field)
 			case "transactionExplorer":
@@ -5791,6 +5751,22 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 		return graphql.Null
 	}
 	res := graphql.MarshalString(*v)
+	return res
+}
+
+func (ec *executionContext) unmarshalOTime2ᚖtimeᚐTime(ctx context.Context, v interface{}) (*time.Time, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalTime(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOTime2ᚖtimeᚐTime(ctx context.Context, sel ast.SelectionSet, v *time.Time) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalTime(*v)
 	return res
 }
 
