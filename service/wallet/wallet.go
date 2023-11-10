@@ -284,15 +284,20 @@ func (w *WalletService) FetchSubscriptions(walletAddress string) ([]*model.Subsc
 	}
 
 	for _, v := range subs {
+		product, err := w.database.FetchProduct(v.ProductID)
+		if err != nil {
+			log.Err(err).Msgf("failed to fetch product with Id [%v]", v.ProductID)
+		}
 		interval := nanoSecondsToDay(v.Interval)
 		createdAt := v.CreatedAt.Format("dd:mm:yyyy")
 		sd := &model.SubscriptionData{
-			ID:        v.ID.String(),
-			Token:     v.Token,
-			Amount:    int(v.Amount),
-			Interval:  int(interval),
-			ProductID: v.ProductID.String(),
-			CreatedAt: &createdAt,
+			ID:          v.ID.String(),
+			Token:       v.Token,
+			Amount:      int(v.Amount),
+			Interval:    int(interval),
+			ProductID:   v.ProductID.String(),
+			ProductName: &product.Name,
+			CreatedAt:   &createdAt,
 		}
 		subData = append(subData, sd)
 	}
@@ -536,8 +541,8 @@ func (ws *WalletService) ValidateTransfer(userop map[string]any, chain int64) (*
 	blockExplorerTx := fmt.Sprintf("%v/tx/%v", explorer, transactionHash)
 
 	transactionDetails := &model.TransactionData{
-		Chain:           int(chain),
-		TransactionHash: transactionHash,
+		Chain:             int(chain),
+		TransactionHash:   transactionHash,
 		BlockExplorerLink: blockExplorerTx,
 	}
 

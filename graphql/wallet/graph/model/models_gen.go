@@ -46,6 +46,7 @@ type SubscriptionData struct {
 	Amount              int     `json:"amount"`
 	Interval            int     `json:"interval"`
 	ProductID           string  `json:"productId"`
+	ProductName         *string `json:"productName,omitempty"`
 	WalletAddress       string  `json:"walletAddress"`
 	SubscriptionKey     string  `json:"subscriptionKey"`
 	CreatedAt           *string `json:"createdAt,omitempty"`
