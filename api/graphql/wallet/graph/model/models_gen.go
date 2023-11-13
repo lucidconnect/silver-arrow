@@ -53,18 +53,18 @@ type RequestValidation struct {
 }
 
 type SubscriptionData struct {
-	ID                  string     `json:"id"`
-	Token               string     `json:"token"`
-	Amount              int        `json:"amount"`
-	Interval            int        `json:"interval"`
-	ProductID           string     `json:"productId"`
-	ProductName         *string    `json:"productName,omitempty"`
-	WalletAddress       string     `json:"walletAddress"`
-	SubscriptionKey     string     `json:"subscriptionKey"`
-	CreatedAt           *string    `json:"createdAt,omitempty"`
-	NextChargeDate      *time.Time `json:"nextChargeDate,omitempty"`
-	TransactionHash     *string    `json:"transactionHash,omitempty"`
-	TransactionExplorer *string    `json:"transactionExplorer,omitempty"`
+	ID                  string    `json:"id"`
+	Token               string    `json:"token"`
+	Amount              int       `json:"amount"`
+	Interval            int       `json:"interval"`
+	ProductID           string    `json:"productId"`
+	ProductName         string    `json:"productName"`
+	WalletAddress       string    `json:"walletAddress"`
+	SubscriptionKey     string    `json:"subscriptionKey"`
+	CreatedAt           string    `json:"createdAt"`
+	NextChargeDate      time.Time `json:"nextChargeDate"`
+	TransactionHash     string    `json:"transactionHash"`
+	TransactionExplorer string    `json:"transactionExplorer"`
 }
 
 type SubscriptionMod struct {
@@ -78,14 +78,14 @@ type TransactionData struct {
 	Chain               int         `json:"chain"`
 	Token               string      `json:"token"`
 	Amount              int         `json:"amount"`
-	Interval            *int        `json:"interval,omitempty"`
+	Interval            int         `json:"interval"`
 	Reference           string      `json:"reference"`
-	ProductID           *string     `json:"productId,omitempty"`
+	ProductID           string      `json:"productId"`
 	WalletAddress       string      `json:"walletAddress"`
-	SubscriptionKey     *string     `json:"subscriptionKey,omitempty"`
-	CreatedAt           *string     `json:"createdAt,omitempty"`
-	TransactionHash     *string     `json:"transactionHash,omitempty"`
-	TransactionExplorer *string     `json:"transactionExplorer,omitempty"`
+	SubscriptionKey     string      `json:"subscriptionKey"`
+	CreatedAt           string      `json:"createdAt"`
+	TransactionHash     string      `json:"transactionHash"`
+	TransactionExplorer string      `json:"transactionExplorer"`
 }
 
 type ValidationData struct {

@@ -66,13 +66,13 @@ type SubscriptionData {
   amount: Int!
 	interval: Int!
   productId: String!
-  productName: String
+  productName: String!
 	walletAddress: String!
   subscriptionKey: String!
-  createdAt: String
-  nextChargeDate: Time
-  transactionHash: String
-  transactionExplorer: String
+  createdAt: String!
+  nextChargeDate: Time!
+  transactionHash: String!
+  transactionExplorer: String!
 }
 
 type TransactionData {
@@ -81,14 +81,14 @@ type TransactionData {
   chain: Int!
 	token: String!
   amount: Int!
-	interval: Int
+	interval: Int!
   reference: String!
-  productId: String
+  productId: String!
 	walletAddress: String!
-  subscriptionKey: String
-  createdAt: String
-  transactionHash: String
-  transactionExplorer: String
+  subscriptionKey: String!
+  createdAt: String!
+  transactionHash: String!
+  transactionExplorer: String!
 }
 
 input NewTransferRequest {

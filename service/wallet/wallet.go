@@ -146,10 +146,10 @@ func (ws *WalletService) ValidateSubscription(userop map[string]any, chain int64
 	subData := &model.TransactionData{
 		Token:         token,
 		Amount:        amount,
-		Interval:      &interval,
-		ProductID:     &productId,
+		Interval:      interval,
+		ProductID:     productId,
 		WalletAddress: result.WalletAddress,
-		CreatedAt:     &createdAt,
+		CreatedAt:     createdAt,
 	}
 	fmt.Println("subscription result - ", result)
 
@@ -227,9 +227,9 @@ func (ws *WalletService) ValidateSubscription(userop map[string]any, chain int64
 		if err != nil {
 			log.Err(err).Send()
 		}
-		subData.TransactionExplorer = &onchainTx
+		subData.TransactionExplorer = onchainTx
 	} else {
-		subData.TransactionExplorer = &blockExplorerTx
+		subData.TransactionExplorer = blockExplorerTx
 	}
 
 	return subData, nil
@@ -370,9 +370,9 @@ func (w *WalletService) FetchSubscriptions(walletAddress string) ([]*model.Subsc
 			Amount:         int(v.Amount),
 			Interval:       int(interval),
 			ProductID:      v.ProductID.String(),
-			ProductName:    &product.Name,
-			CreatedAt:      &createdAt,
-			NextChargeDate: &v.NextChargeAt,
+			ProductName:    product.Name,
+			CreatedAt:      createdAt,
+			NextChargeDate: v.NextChargeAt,
 		}
 		subData = append(subData, sd)
 	}
@@ -824,8 +824,8 @@ func (ws *WalletService) ValidateTransfer(userop map[string]any, chain int64) (*
 
 	transactionDetails := &model.TransactionData{
 		Chain:               int(chain),
-		TransactionHash:     &transactionHash,
-		TransactionExplorer: &blockExplorerTx,
+		TransactionHash:     transactionHash,
+		TransactionExplorer: blockExplorerTx,
 	}
 
 	return transactionDetails, nil
