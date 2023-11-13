@@ -10,7 +10,7 @@ type NewSubscription struct {
 	Chain          int
 	Email          string
 	Token          string
-	Amount         int
+	Amount         float64
 	Interval       int
 	ProductID      uuid.UUID
 	OwnerAddress   string

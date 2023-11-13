@@ -266,9 +266,8 @@ func (ws *WalletService) AddSubscription(merchantId uuid.UUID, input model.NewSu
 		return nil, nil, err
 	}
 
-	// supported token is still USDC, so minor factor is 1000000
-	amount = big.NewInt(int64(input.Amount)) // This will cause a bug for amounts that are fractional
 	interval := daysToNanoSeconds(int64(input.Interval))
+	amount = parseTransferAmount(input.Token, input.Amount)
 
 	if input.NextChargeDate != nil {
 		nextChargeAt = *input.NextChargeDate
@@ -379,6 +378,32 @@ func (w *WalletService) FetchSubscriptions(walletAddress string) ([]*model.Subsc
 	}
 
 	return subData, nil
+}
+
+func (ws *WalletService) FetchPayment(reference string) (*model.Payment, error) {
+	var paymentData *model.Payment
+	ref, err := uuid.Parse(reference)
+	if err != nil {
+		log.Err(err).Msg("invalid reference")
+		return nil, errors.New("invalid reference")
+	}
+	payment, err := ws.database.FindPaymentByReference(ref)
+	if err != nil {
+		log.Err(err).Msgf("payment [%v] does not exist", reference)
+		return nil, errors.New("invalid payment reference")
+	}
+
+	paymentData = &model.Payment{
+		Chain:     int(payment.Chain),
+		Token:     payment.Token,
+		Status:    model.PaymentStatus(payment.Status),
+		Amount:    parseTransferAmountFloat(payment.Token, payment.Amount),
+		Source:    payment.Source,
+		ProductID: payment.ProductID.String(),
+		Reference: payment.Reference.String(),
+	}
+
+	return paymentData, nil
 }
 
 func amountToWei(amount any) (*big.Int, error) {
@@ -736,7 +761,7 @@ func (ws *WalletService) InitiateTransfer(sender, target, token string, amount f
 		return nil, nil, err
 	}
 
-	transferAmount := parseTransferAmount(token, chain, amount)
+	transferAmount := parseTransferAmount(token, amount)
 	callData, err = erc4337.CreateTransferCallData(target, token, chain, transferAmount)
 	if err != nil {
 		err = errors.Wrapf(err, "creating transfer call data failed")
@@ -987,7 +1012,7 @@ func randKey(length int) string {
 	return hexutil.Encode(key)
 }
 
-func parseTransferAmount(token string, chain int64, amount float64) *big.Int {
+func parseTransferAmount(token string, amount float64) *big.Int {
 	var divisor int
 	if token == "USDC" || token == "USDT" {
 		divisor = 6
@@ -998,6 +1023,19 @@ func parseTransferAmount(token string, chain int64, amount float64) *big.Int {
 	parsedAmount := int64(amount * minorFactor)
 
 	return big.NewInt(parsedAmount)
+}
+
+func parseTransferAmountFloat(token string, amount int64) float64 {
+	var divisor int
+	if token == "USDC" || token == "USDT" {
+		divisor = 6
+	} else {
+		divisor = 18
+	}
+	minorFactor := math.Pow10(divisor)
+	parsedAmount := float64(amount) / minorFactor
+
+	return parsedAmount
 }
 
 func isPaymentDue(dueDate time.Time) bool {

@@ -93,7 +93,6 @@ func Test_amountToWei(t *testing.T) {
 func Test_parseTransferAmount(t *testing.T) {
 	type args struct {
 		token  string
-		chain  int64
 		amount float64
 	}
 	tests := []struct {
@@ -106,7 +105,6 @@ func Test_parseTransferAmount(t *testing.T) {
 			"USDC",
 			args{
 				"USDC",
-				10,
 				149.99,
 			},
 			big.NewInt(149990000),
@@ -115,7 +113,6 @@ func Test_parseTransferAmount(t *testing.T) {
 			"ETH",
 			args{
 				"ETH",
-				10,
 				0.8239,
 			},
 			big.NewInt(823900000000000000),
@@ -123,8 +120,45 @@ func Test_parseTransferAmount(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := parseTransferAmount(tt.args.token, tt.args.chain, tt.args.amount); got != tt.want {
+			if got := parseTransferAmount(tt.args.token, tt.args.amount); got != tt.want {
 				t.Errorf("parseTransferAmount() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_parseTransferAmountFloat(t *testing.T) {
+	type args struct {
+		token  string
+		amount int64
+	}
+	tests := []struct {
+		name string
+		args args
+		want float64
+	}{
+		// TODO: Add test cases.
+		{
+			"USDC",
+			args{
+				"USDC",
+				149990000,
+			},
+			149.99,
+		},
+		{
+			"ETH",
+			args{
+				"ETH",
+				823900000000000000,
+			},
+			0.8239,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := parseTransferAmountFloat(tt.args.token, tt.args.amount); got != tt.want {
+				t.Errorf("parseTransferAmountFloat() = %v, want %v", got, tt.want)
 			}
 		})
 	}

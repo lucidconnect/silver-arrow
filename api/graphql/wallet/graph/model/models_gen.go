@@ -23,12 +23,22 @@ type NewTransferRequest struct {
 	Target string  `json:"target"`
 }
 
+type Payment struct {
+	Chain     int           `json:"chain"`
+	Token     string        `json:"token"`
+	Status    PaymentStatus `json:"status"`
+	Amount    float64       `json:"amount"`
+	Source    string        `json:"source"`
+	ProductID string        `json:"productId"`
+	Reference string        `json:"reference"`
+}
+
 type PaymentIntent struct {
 	Type           PaymentType `json:"type"`
 	Email          *string     `json:"email,omitempty"`
 	Chain          int         `json:"chain"`
 	Token          string      `json:"token"`
-	Amount         int         `json:"amount"`
+	Amount         float64     `json:"amount"`
 	Interval       int         `json:"interval"`
 	ProductID      string      `json:"productId"`
 	OwnerAddress   string      `json:"ownerAddress"`
@@ -80,6 +90,49 @@ type TransactionData struct {
 
 type ValidationData struct {
 	UserOpHash string `json:"userOpHash"`
+}
+
+type PaymentStatus string
+
+const (
+	PaymentStatusFailed  PaymentStatus = "failed"
+	PaymentStatusPending PaymentStatus = "pending"
+	PaymentStatusSuccess PaymentStatus = "success"
+)
+
+var AllPaymentStatus = []PaymentStatus{
+	PaymentStatusFailed,
+	PaymentStatusPending,
+	PaymentStatusSuccess,
+}
+
+func (e PaymentStatus) IsValid() bool {
+	switch e {
+	case PaymentStatusFailed, PaymentStatusPending, PaymentStatusSuccess:
+		return true
+	}
+	return false
+}
+
+func (e PaymentStatus) String() string {
+	return string(e)
+}
+
+func (e *PaymentStatus) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = PaymentStatus(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid PaymentStatus", str)
+	}
+	return nil
+}
+
+func (e PaymentStatus) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 type PaymentType string

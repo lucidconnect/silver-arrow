@@ -25,7 +25,7 @@ func TestAddSubscription(t *testing.T) {
 
 	ws := wallet.NewWalletService(r, tk, defaultChain)
 	// mId := randKey()
-	pId := "3838hr8hud9dijh3j"
+	pId := uuid.New()
 	key := "0xe81f9f7146470e1e728cc44d22089098de6be6ebe3ca39f21b7b092f09b10cf5"
 	p, _ := crypto.HexToECDSA(key[2:])
 	owner := crypto.PubkeyToAddress(p.PublicKey).Hex()

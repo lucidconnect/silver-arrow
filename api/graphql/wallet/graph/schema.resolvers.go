@@ -250,6 +250,16 @@ func (r *queryResolver) FetchSubscriptions(ctx context.Context, account string) 
 	return subs, nil
 }
 
+// FetchPayment is the resolver for the fetchPayment field.
+func (r *queryResolver) FetchPayment(ctx context.Context, reference string) (*model.Payment, error) {
+	ws := wallet.NewWalletService(r.Database, nil, 0)
+	payment, err := ws.FetchPayment(reference)
+	if err != nil {
+		return nil, gqlerror.ErrToGraphQLError(gqlerror.MerchantDataInvalid, err.Error(), ctx)
+	}
+	return payment, nil
+}
+
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
 

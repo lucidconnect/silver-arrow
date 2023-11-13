@@ -4,6 +4,7 @@
 
 type Query {
   fetchSubscriptions(account: String!): [SubscriptionData!]!
+  fetchPayment(reference: String!): Payment!
 }
 
 type Mutation {
@@ -31,12 +32,22 @@ input PaymentIntent {
   email: String
   chain: Int!
   token: String!
-  amount: Int!
+  amount: Float!
   interval: Int!
   productId: String!
   ownerAddress: String!
   walletAddress: String!
   firstChargeNow: Boolean!
+}
+
+type Payment {
+  chain: Int!
+  token: String!
+  status: PaymentStatus!
+  amount: Float!
+  source: String!
+  productId: String!
+  reference: String!
 }
 
 input RequestValidation {
@@ -103,5 +114,11 @@ enum PaymentType {
   single
   recurring
 }
+
+enum PaymentStatus {
+  failed
+  pending
+  success
+} 
 
 scalar Time
