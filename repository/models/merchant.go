@@ -16,6 +16,7 @@ type Product struct {
 	MerchantID     uuid.UUID
 	CreatedAt      time.Time
 	Subscriptions  []Subscription
+	Payments       []Payment
 }
 
 type Merchant struct {

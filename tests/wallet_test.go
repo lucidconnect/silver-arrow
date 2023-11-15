@@ -11,7 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/google/uuid"
-	"github.com/lucidconnect/silver-arrow/graphql/wallet/graph/model"
+	"github.com/lucidconnect/silver-arrow/api/graphql/wallet/graph/model"
 	"github.com/lucidconnect/silver-arrow/repository"
 	"github.com/lucidconnect/silver-arrow/service/erc4337"
 	"github.com/lucidconnect/silver-arrow/service/turnkey"
@@ -23,16 +23,15 @@ func TestAddSubscription(t *testing.T) {
 	r := repository.NewDB(db)
 	tk, _ := turnkey.NewTurnKeyService()
 
-	ws := wallet.NewWalletService(r, tk)
+	ws := wallet.NewWalletService(r, tk, defaultChain)
 	// mId := randKey()
-	pId := "3838hr8hud9dijh3j"
+	pId := uuid.New()
 	key := "0xe81f9f7146470e1e728cc44d22089098de6be6ebe3ca39f21b7b092f09b10cf5"
 	p, _ := crypto.HexToECDSA(key[2:])
 	owner := crypto.PubkeyToAddress(p.PublicKey).Hex()
 	fmt.Println("owner", owner)
 	newSub := model.NewSubscription{
 		Chain:        10,
-		NextChargeAt: nil,
 		Token:        "USDC",
 		Amount:       1,
 		Interval:     30,
@@ -63,9 +62,8 @@ func TestAddSubscription(t *testing.T) {
 	op["signature"] = hexutil.Encode(sig)
 	fmt.Println(op["signature"])
 
-	data, sKey, err := ws.ValidateSubscription(op, chain)
+	data, err := ws.ValidateSubscription(op, chain)
 	assert.NotEmpty(t, data)
-	assert.NotEmpty(t, sKey)
 	assert.NoError(t, err)
 
 	// target := "0xB77ce6ec08B85DcC468B94Cea7Cc539a3BbF9510"

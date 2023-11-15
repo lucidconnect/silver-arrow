@@ -9,22 +9,32 @@ type Database interface {
 	// Wallet
 	AddAccount(*models.Wallet) error
 	FetchAccountByAddress(address string) (*models.Wallet, error)
+	GetWalletMetadata(wallet string) (string, string, uuid.UUID, error)
+	FindAllPaymentsByWallet(address string) ([]models.Payment, error)
+
+	// Subscriptions
 	AddSubscription(*models.Subscription, *models.Key) error
+	AddSubscriptionKey(*models.Key) error
 	FetchWalletSubscriptions(address string) ([]models.Subscription, error)
 	FetchDueSubscriptions(days int) ([]models.Subscription, error)
 	FindSubscriptionByHash(hash string) (*models.Subscription, error)
-	FindSubscriptionById(id uuid.UUID) (*models.Subscription, error) 
+	FindSubscriptionById(id uuid.UUID) (*models.Subscription, error)
 	UpdateSubscription(uuid.UUID, map[string]interface{}) error
 	DeactivateSubscription(id uint) error
-	AddSubscriptionKey(*models.Key) error
 	GetSubscriptionKey(publicKey string) (string, error)
-	GetWalletMetadata(wallet string) (string, string, uuid.UUID, error)
+
+	// Payments
+	CreatePayment(*models.Payment) error
+	UpdatePayment(id uuid.UUID, update map[string]any) error
+	FindPaymentById(id uuid.UUID) (*models.Payment, error)
+	FindPaymentByReference(uuid.UUID) (*models.Payment, error)
+	FindPaymentByUseropHash(hash string) (*models.Payment, error)
 
 	// Product
 	CreateProduct(*models.Product) error
 	FetchProduct(uuid.UUID) (*models.Product, error)
 	FetchProductsByOwner(string) ([]models.Product, error)
-	FindSubscriptionByProduct(string) ([]models.Subscription, error)
+	FetchAllPaymentsByProduct(productId uuid.UUID) ([]models.Payment, error)
 
 	// Merchant
 	AddMerchant(*models.Merchant) error

@@ -1,0 +1,124 @@
+# GraphQL schema example
+#
+# https://gqlgen.com/getting-started/
+
+type Query {
+  fetchSubscriptions(account: String!): [SubscriptionData!]!
+  fetchPayment(reference: String!): Payment!
+}
+
+type Mutation {
+  # frontend sdk
+  addAccount(input: Account!): String!
+  createPaymentIntent(input: PaymentIntent!): String!
+  validatePaymentIntent(input: RequestValidation!): TransactionData!
+
+  # user's dashboard ops
+  modifySubscriptionState(input: SubscriptionMod!): String!
+  initiateTransferRequest(input: NewTransferRequest!): String!
+  validateTransferRequest(input: RequestValidation!): TransactionData!
+}
+
+# account creation
+input Account {
+	email: String
+  address: String!
+  signer: String
+}
+
+# payment data
+input PaymentIntent {
+  type: PaymentType!
+  email: String
+  chain: Int!
+  token: String!
+  amount: Float!
+  interval: Int!
+  productId: String!
+  ownerAddress: String!
+  walletAddress: String!
+  firstChargeNow: Boolean!
+}
+
+type Payment {
+  chain: Int!
+  token: String!
+  status: PaymentStatus!
+  amount: Float!
+  source: String!
+  productId: String!
+  reference: String!
+}
+
+input RequestValidation {
+  chain: Int!
+  userOpHash: String!
+  signedMessage: String!
+}
+
+type ValidationData {
+  userOpHash: String!
+}
+
+type SubscriptionData {
+  id: ID!
+	token: String!
+  amount: Int!
+	interval: Int!
+  productId: String!
+  productName: String!
+	walletAddress: String!
+  subscriptionKey: String!
+  createdAt: String!
+  nextChargeDate: Time!
+  transactionHash: String!
+  transactionExplorer: String!
+}
+
+type TransactionData {
+  id: ID
+  type: PaymentType!
+  chain: Int!
+	token: String!
+  amount: Int!
+	interval: Int!
+  reference: String!
+  productId: String!
+	walletAddress: String!
+  subscriptionKey: String!
+  createdAt: String!
+  transactionHash: String!
+  transactionExplorer: String!
+}
+
+input NewTransferRequest {
+  chain: Int!
+  token: String!
+  amount: Float!
+  sender: String!
+  target: String!
+}
+
+input SubscriptionMod {
+  subscriptionId: String!
+  toggle: StatusToggle!
+}
+
+enum StatusToggle {
+  cancel
+  disable
+  enable
+}
+
+enum PaymentType {
+  single
+  recurring
+}
+
+enum PaymentStatus {
+  failed
+  pending
+  success
+} 
+
+scalar Time

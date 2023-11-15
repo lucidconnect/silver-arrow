@@ -15,6 +15,7 @@ type Wallet struct {
 	TurnkeyPrivateKeyTag string
 	Subscriptions        []Subscription
 	Keys                 []Key
+	Payments             []Payment
 }
 
 func (w *Wallet) BeforeCreate(tx *gorm.DB) (err error) {

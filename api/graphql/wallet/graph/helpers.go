@@ -2,12 +2,14 @@ package graph
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"os"
 	"strconv"
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/google/uuid"
 	"github.com/lucidconnect/silver-arrow/auth"
 	"github.com/lucidconnect/silver-arrow/repository/models"
 	"github.com/pkg/errors"
@@ -38,10 +40,6 @@ func validateSignature(rawString, signature, pk string) error {
 	pbk, _ := crypto.Ecrecover(hash, sigBytes)
 
 	pub, _ := crypto.UnmarshalPubkey(pbk)
-	// pub, err := crypto.SigToPub(hash, sigBytes)
-	// if err != nil {
-	// 	return err
-	// }
 
 	fmt.Println("pk -", pk)
 
@@ -49,7 +47,13 @@ func validateSignature(rawString, signature, pk string) error {
 	fmt.Println(recoveredAddress)
 
 	if recoveredAddress.Hex() != pk {
-		return errors.New("invalid signature")
+		return errors.New("signature invalid")
 	}
 	return nil
+}
+
+func parseUUID(mid string) uuid.UUID {
+	b, _ := base64.RawURLEncoding.DecodeString(mid)
+	id, _ := uuid.FromBytes(b)
+	return id
 }

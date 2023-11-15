@@ -10,17 +10,16 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/joho/godotenv"
+	merchant_graph "github.com/lucidconnect/silver-arrow/api/graphql/merchant/graph"
+	merchant_generated "github.com/lucidconnect/silver-arrow/api/graphql/merchant/graph/generated"
+	wallet_graph "github.com/lucidconnect/silver-arrow/api/graphql/wallet/graph"
+	wallet_generated "github.com/lucidconnect/silver-arrow/api/graphql/wallet/graph/generated"
 	"github.com/lucidconnect/silver-arrow/auth"
 	"github.com/lucidconnect/silver-arrow/erc20"
-	merchant_graph "github.com/lucidconnect/silver-arrow/graphql/merchant/graph"
-	merchant_generated "github.com/lucidconnect/silver-arrow/graphql/merchant/graph/generated"
-	wallet_graph "github.com/lucidconnect/silver-arrow/graphql/wallet/graph"
-	wallet_generated "github.com/lucidconnect/silver-arrow/graphql/wallet/graph/generated"
 	"github.com/lucidconnect/silver-arrow/logger"
 	"github.com/lucidconnect/silver-arrow/repository"
 	"github.com/lucidconnect/silver-arrow/service/scheduler"
 	"github.com/lucidconnect/silver-arrow/service/turnkey"
-	"github.com/lucidconnect/silver-arrow/service/wallet"
 	"github.com/robfig/cron/v3"
 	"github.com/rs/cors"
 	"github.com/rs/zerolog/log"
@@ -48,11 +47,10 @@ func main() {
 	if err != nil {
 		log.Panic().Err(err).Send()
 	}
-	walletService := wallet.NewWalletService(database, tunkeyService)
 
 	router.Use(auth.Middleware(*database))
 
-	jobRunner := scheduler.NewScheduler(database, walletService)
+	jobRunner := scheduler.NewScheduler(database)
 	setupJobs(jobRunner)
 	walletSrv := handler.NewDefaultServer(wallet_generated.NewExecutableSchema(wallet_generated.Config{Resolvers: &wallet_graph.Resolver{
 		Cache:          repository.NewMCache(),
@@ -63,8 +61,8 @@ func main() {
 	merchantSrv := handler.NewDefaultServer(merchant_generated.NewExecutableSchema(merchant_generated.Config{Resolvers: &merchant_graph.Resolver{
 		Database: database,
 	}}))
-	router.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	router.Handle("/merchant/graphiql", playground.Handler("GraphQL playground", "/merchant/query"))
+	router.Handle("/", playground.Handler("api/GraphQL playground", "/query"))
+	router.Handle("/merchant/graphiql", playground.Handler("api/GraphQL playground", "/merchant/query"))
 
 	router.Handle("/query", walletSrv)
 	router.Handle("/merchant/query", merchantSrv)
@@ -73,7 +71,7 @@ func main() {
 	if port == "" {
 		port = defaultPort
 	}
-	log.Info().Msgf("connect to http://localhost:%s/ for GraphQL playground", port)
+	log.Info().Msgf("connect to http://localhost:%s/ for api/GraphQL playground", port)
 	if err := http.ListenAndServe(":"+port, router); err != nil {
 		log.Fatal().Err(err).Msg("unable to start the server")
 	}
