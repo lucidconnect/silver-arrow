@@ -35,7 +35,7 @@ type WalletService struct {
 	validatorAddress string
 }
 
-func NewWalletService(r repository.Database, t *turnkey.TurnkeyService, chain int64) *WalletService {
+func NewWalletService(r repository.Database, chain int64) *WalletService {
 	validatorAddress := os.Getenv("VALIDATOR_ADDRESS")
 	var bundler *erc4337.AlchemyService
 	var err error
@@ -47,8 +47,13 @@ func NewWalletService(r repository.Database, t *turnkey.TurnkeyService, chain in
 		}
 	}
 
+	tunkeyService, err := turnkey.NewTurnKeyService()
+	if err != nil {
+		log.Panic().Err(err).Send()
+	}
+
 	return &WalletService{
-		turnkey:          t,
+		turnkey:          tunkeyService,
 		database:         r,
 		bundlerService:   bundler,
 		validatorAddress: validatorAddress,
@@ -525,7 +530,7 @@ func (ws *WalletService) CreatePayment(payment *models.Payment) (map[string]any,
 	userOpHash := operation.GetUserOpHash(entrypoint, chainId)
 	// hash := userOpHash.Bytes()
 
-	payment.Status = string(PaymentStatusPending)
+	payment.Status = models.PaymentStatusPending
 	payment.UserOpHash = userOpHash.Hex()
 	err = ws.database.CreatePayment(payment)
 	if err != nil {
@@ -612,6 +617,7 @@ func (ws *WalletService) ExecutePaymentOperation(signedOp map[string]any, chain 
 	if err != nil {
 		err = errors.Wrapf(err, "fetching the transction hash failed. userop hash - [%v]", opHash)
 		log.Err(err).Caller().Send()
+		return "", fmt.Errorf("internal server error")
 	}
 
 	payment, err := ws.database.FindPaymentByUseropHash(opHash)

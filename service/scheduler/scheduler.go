@@ -15,7 +15,6 @@ import (
 	"github.com/lucidconnect/silver-arrow/repository"
 	"github.com/lucidconnect/silver-arrow/repository/models"
 	"github.com/lucidconnect/silver-arrow/service/erc4337"
-	"github.com/lucidconnect/silver-arrow/service/turnkey"
 	"github.com/lucidconnect/silver-arrow/service/wallet"
 	"github.com/pkg/errors"
 )
@@ -118,12 +117,7 @@ func (s *Scheduler) initialisePayment(sub models.Subscription) {
 		sponsored = false
 	}
 
-	turnkeyService, err := turnkey.NewTurnKeyService()
-	if err != nil {
-		log.Err(err).Send()
-	}
-
-	walletService := wallet.NewWalletService(s.datastore, turnkeyService, sub.Chain)
+	walletService := wallet.NewWalletService(s.datastore, sub.Chain)
 	reference := uuid.New()
 
 	payment := &models.Payment{
