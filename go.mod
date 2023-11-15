@@ -17,6 +17,7 @@ require (
 
 require (
 	github.com/btcsuite/btcd/btcec/v2 v2.3.2 // indirect
+	github.com/frain-dev/convoy-go v1.0.2 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
 	go.mongodb.org/mongo-driver v1.12.1 // indirect

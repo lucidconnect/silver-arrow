@@ -20,8 +20,12 @@ type Product struct {
 }
 
 type Merchant struct {
-	ID           uuid.UUID `gorm:"primaryKey"`
-	PublicKey    string    // lucid public key for authenticating requests
-	OwnerAddress string    `gorm:"unique"` // web3 wallet that owns this account
-	Products     []Product
+	ID               uuid.UUID `gorm:"primaryKey"`
+	Name             string
+	Email            string
+	PublicKey        string // lucid public key for authenticating requests
+	WebhookUrl       string
+	OwnerAddress     string `gorm:"unique"` // web3 wallet that owns this account
+	Products         []Product
+	ConvoyEndpointID string
 }

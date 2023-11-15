@@ -38,9 +38,14 @@ type Database interface {
 
 	// Merchant
 	AddMerchant(*models.Merchant) error
+	FetchMerchantById(uuid.UUID) (*models.Merchant, error)
 	FetchMerchantByAddress(string) (*models.Merchant, error)
 	FetchMerchantByPublicKey(string) (*models.Merchant, error)
 	UpdateMerchantKey(uuid.UUID, string) error
+
+	// Webhook
+	CreateWebhookEvent(*models.WebhookEvent) error
+	UpdateWebhookEvent(*models.WebhookEvent) error
 }
 
 type Queuer interface {

@@ -38,12 +38,12 @@ func (s *Subscription) BeforeCreate(tx *gorm.DB) (err error) {
 }
 
 type Payment struct {
-	ID                    uuid.UUID `gorm:"primaryKey"`
-	Type                  string    `gorm:"not null"`
-	Chain                 int64     `gorm:"not null"`
-	Token                 string    `gorm:"not null"`
-	Status                string    `gorm:"not null"`
-	Amount                int64     `gorm:"not null"`
+	ID                    uuid.UUID     `gorm:"primaryKey"`
+	Type                  string        `gorm:"not null"`
+	Chain                 int64         `gorm:"not null"`
+	Token                 string        `gorm:"not null"`
+	Status                PaymentStatus `gorm:"not null"`
+	Amount                int64         `gorm:"not null"`
 	Source                string
 	WalletID              uuid.UUID `gorm:"not null"`
 	ProductID             uuid.UUID `gorm:"not null"`
@@ -51,13 +51,23 @@ type Payment struct {
 	Reference             uuid.UUID `gorm:"index;not null"`
 	UserOpHash            string
 	Destination           string
+	Acknowledged          bool
 	SubscriptionID        uuid.UUID
 	TransactionHash       string
 	BlockExplorerTx       string
 	SubscriptionPublicKey string
+	WebhookAcknowledgedAt time.Time
 }
 
 func (p *Payment) BeforeCreate(tx *gorm.DB) (err error) {
 	p.ID = uuid.New()
 	return
 }
+
+type PaymentStatus string
+
+const (
+	PaymentStatusFailed  PaymentStatus = "failed"
+	PaymentStatusPending PaymentStatus = "pending"
+	PaymentStatusSuccess PaymentStatus = "success"
+)

@@ -274,3 +274,20 @@ func (p *DB) FetchAllPaymentsByProduct(productId uuid.UUID) ([]models.Payment, e
 	}
 	return payments, nil
 }
+
+func (p *DB) FetchMerchantById(id uuid.UUID) (*models.Merchant, error) {
+	var merchant *models.Merchant
+	if err := p.Db.Where("id = ?", id).First(&merchant).Error; err != nil {
+		return nil, err
+	}
+
+	return merchant, nil
+}
+
+func (p *DB) CreateWebhookEvent(webhookEvent *models.WebhookEvent) error {
+	return p.Db.Create(webhookEvent).Error
+}
+
+func (p *DB) UpdateWebhookEvent(webhookEvent *models.WebhookEvent) error {
+	return p.Db.Save(webhookEvent).Error
+}
