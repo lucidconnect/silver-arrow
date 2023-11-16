@@ -71,8 +71,8 @@ func (s *Server) Routes() {
 	s.router.Handle("/merchant/query", s.merchantGraphqlHandler())
 
 	// merchant authentication
-	s.router.HandleFunc("/auth/nonce", s.GetNonce())
-	s.router.HandleFunc("/auth/verify", s.VerifyMerchant())
+	s.router.HandleFunc("/auth/nonce", s.GetNonce()).Methods(http.MethodGet)
+	s.router.HandleFunc("/auth/verify", s.VerifyMerchant()).Methods(http.MethodPost)
 }
 
 func (s *Server) walletGraphqlHandler() *handler.Server {
