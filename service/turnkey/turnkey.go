@@ -78,8 +78,6 @@ func initTurnkeyClient() (*tk.Client, error) {
 	keyPath := os.Getenv("TK_KEYS_NAME")
 	keyDir := os.Getenv("TK_KEYS_DIR")
 
-	fmt.Println("path ", keyPath)
-	// client, err := tk.New(keyPath)
 	client, err := initKeys(keyPath, keyDir)
 	if err != nil {
 		err = errors.Wrap(err, "initTurnkeyClient() failed to create a new api client")
@@ -91,13 +89,12 @@ func initTurnkeyClient() (*tk.Client, error) {
 		OrganizationID: client.DefaultOrganization(),
 	})
 
-	resp, err := client.V0().WhoAmi.PublicAPIServiceGetWhoami(p, client.Authenticator)
+	_, err = client.V0().WhoAmi.PublicAPIServiceGetWhoami(p, client.Authenticator)
 	if err != nil {
 		err = errors.Wrap(err, "initTurnkeyClient() failed to turnkey public api service")
 		return nil, err
 	}
 
-	fmt.Println("turnkey user id - ", *resp.Payload.UserID)
 	return client, nil
 }
 
