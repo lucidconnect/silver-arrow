@@ -26,10 +26,6 @@ type httpResponse struct {
 	Error  string `json:"error,omitempty"`
 }
 
-type contextKey struct {
-	name string
-}
-
 var (
 	sessionName = "xyz.lucidconnect.auth"
 )

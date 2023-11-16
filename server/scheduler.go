@@ -10,13 +10,10 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/ethereum/go-ethereum/common"
-	LucidMerchant "github.com/lucidconnect/silver-arrow/abi/LucidMerchant"
 	"github.com/lucidconnect/silver-arrow/repository/models"
 	"github.com/lucidconnect/silver-arrow/service/wallet"
 	"github.com/pkg/errors"
 )
-
-var defaultChain int64
 
 // create a valid the user op and add it to a queue
 func (s *Server) SubscriptionJob() {
@@ -146,27 +143,27 @@ func (s *Server) initialisePayment(sub models.Subscription) {
 	s.TriggerWebhook(*merchant, reference.String())
 }
 
-func getAccountNonce(address string) *big.Int {
-	return big.NewInt(0)
-}
+// func getAccountNonce(address string) *big.Int {
+// 	return big.NewInt(0)
+// }
 
 // FetchMerchantAddress call's the merchant contract
 // and fetches the address for the given MerchantId
-func (s *Server) fetchMerchantAddress(merchantId string) (string, error) {
-	contractAddress := os.Getenv("MERCHANT_CONTRACT")
-	backend := s.bundler.GetEthBackend()
+// func (s *Server) fetchMerchantAddress(merchantId string) (string, error) {
+// 	contractAddress := os.Getenv("MERCHANT_CONTRACT")
+// 	backend := s.bundler.GetEthBackend()
 
-	l, err := LucidMerchant.NewLucidMerchant(common.HexToAddress(contractAddress), backend)
-	if err != nil {
-		return "", err
-	}
+// 	l, err := LucidMerchant.NewLucidMerchant(common.HexToAddress(contractAddress), backend)
+// 	if err != nil {
+// 		return "", err
+// 	}
 
-	sbyte := make([]byte, 32)
-	copy(sbyte, []byte(merchantId))
+// 	sbyte := make([]byte, 32)
+// 	copy(sbyte, []byte(merchantId))
 
-	m, err := l.GetMerchant(nil, [32]byte(sbyte))
-	if err != nil {
-		return "", err
-	}
-	return m.ReceivingAddress.Hex(), nil
-}
+// 	m, err := l.GetMerchant(nil, [32]byte(sbyte))
+// 	if err != nil {
+// 		return "", err
+// 	}
+// 	return m.ReceivingAddress.Hex(), nil
+// }
