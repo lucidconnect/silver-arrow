@@ -42,6 +42,7 @@ type Payment struct {
 	Type                  string        `gorm:"not null"`
 	Chain                 int64         `gorm:"not null"`
 	Token                 string        `gorm:"not null"`
+	TokenAddress          string        `gorm:"not null"`
 	Status                PaymentStatus `gorm:"not null"`
 	Amount                int64         `gorm:"not null"`
 	Source                string
