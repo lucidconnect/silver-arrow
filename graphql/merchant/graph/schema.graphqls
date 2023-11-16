@@ -23,8 +23,6 @@ input NewMerchant {
   owner: String!
     "This would be the url where payment status event would be delivered to"
   webHookUrl: String
-  "This would be the email where transaction receipt replies would be delivered to"
-  supportEmail: String
 }
 
 type Merchant {

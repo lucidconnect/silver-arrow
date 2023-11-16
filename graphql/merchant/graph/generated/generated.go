@@ -538,8 +538,6 @@ input NewMerchant {
   owner: String!
     "This would be the url where payment status event would be delivered to"
   webHookUrl: String
-  "This would be the email where transaction receipt replies would be delivered to"
-  supportEmail: String
 }
 
 type Merchant {
@@ -4440,7 +4438,7 @@ func (ec *executionContext) unmarshalInputNewMerchant(ctx context.Context, obj i
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "email", "owner", "webHookUrl", "supportEmail"}
+	fieldsInOrder := [...]string{"name", "email", "owner", "webHookUrl"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -4483,15 +4481,6 @@ func (ec *executionContext) unmarshalInputNewMerchant(ctx context.Context, obj i
 				return it, err
 			}
 			it.WebHookURL = data
-		case "supportEmail":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("supportEmail"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.SupportEmail = data
 		}
 	}
 

@@ -6,6 +6,7 @@ package graph
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/lucidconnect/silver-arrow/gqlerror"
@@ -17,6 +18,14 @@ import (
 // AddProduct is the resolver for the addProduct field.
 func (r *mutationResolver) AddProduct(ctx context.Context, input model.NewProduct) (*model.Product, error) {
 	merchantService := merchant.NewMerchantService(r.Database)
+
+	merchant, err := getAuthenticatedAndActiveMerchant(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if merchant == nil {
+		return nil, errors.New("merchant does not exist")
+	}
 	result, err := merchantService.CreateProduct(input)
 	if err != nil {
 		return nil, err
@@ -33,7 +42,16 @@ func (r *mutationResolver) UpdateProduct(ctx context.Context, input model.Produc
 // CreateAccessKey is the resolver for the createAccessKey field.
 func (r *mutationResolver) CreateAccessKey(ctx context.Context, owner string) (*model.AccessKey, error) {
 	merchantService := merchant.NewMerchantService(r.Database)
-	accessKeys, err := merchantService.CreateAccessKeys(owner)
+
+	merchant, err := getAuthenticatedAndActiveMerchant(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if merchant == nil {
+		return nil, errors.New("merchant does not exist")
+	}
+
+	accessKeys, err := merchantService.CreateAccessKeys(merchant.OwnerAddress)
 	if err != nil {
 		return nil, err
 	}

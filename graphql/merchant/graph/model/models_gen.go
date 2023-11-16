@@ -35,8 +35,6 @@ type NewMerchant struct {
 	Owner string `json:"owner"`
 	// This would be the url where payment status event would be delivered to
 	WebHookURL *string `json:"webHookUrl,omitempty"`
-	// This would be the email where transaction receipt replies would be delivered to
-	SupportEmail *string `json:"supportEmail,omitempty"`
 }
 
 type NewProduct struct {
