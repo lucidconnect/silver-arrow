@@ -80,10 +80,14 @@ func (r *mutationResolver) CreatePaymentIntent(ctx context.Context, input model.
 			nextCharge = time.Now()
 		}
 
+		var email string
+		if input.Email != nil {
+			email = *input.Email
+		}
 		newSubscription := model.NewSubscription{
 			Chain:          input.Chain,
 			Token:          input.Token,
-			Email:          *input.Email,
+			Email:          email,
 			Amount:         input.Amount,
 			Interval:       input.Interval,
 			ProductID:      productId,
