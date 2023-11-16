@@ -42,6 +42,7 @@ type Database interface {
 	FetchMerchantByAddress(string) (*models.Merchant, error)
 	FetchMerchantByPublicKey(string) (*models.Merchant, error)
 	UpdateMerchantKey(uuid.UUID, string) error
+	UpdateMerchantWebhookUrl(uuid.UUID, string) error
 
 	// Webhook
 	CreateWebhookEvent(*models.WebhookEvent) error

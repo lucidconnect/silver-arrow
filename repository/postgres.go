@@ -216,6 +216,15 @@ func (p *DB) UpdateMerchantKey(id uuid.UUID, key string) error {
 	return nil
 }
 
+func (p *DB) UpdateMerchantWebhookUrl(id uuid.UUID, webhookUrl string) error {
+	var merchant *models.Merchant
+
+	if err := p.Db.Model(&merchant).Where("id = ?", id).Update("webhook_url", webhookUrl).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
 func (p *DB) CreatePayment(payment *models.Payment) error {
 	return p.Db.Create(payment).Error
 }

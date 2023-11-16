@@ -1,9 +1,11 @@
 package merchant
 
 import (
+	"errors"
+
 	"github.com/google/uuid"
 	"github.com/lucidconnect/silver-arrow/auth"
-	"github.com/lucidconnect/silver-arrow/api/graphql/merchant/graph/model"
+	"github.com/lucidconnect/silver-arrow/graphql/merchant/graph/model"
 	"github.com/lucidconnect/silver-arrow/repository"
 	"github.com/lucidconnect/silver-arrow/repository/models"
 	"github.com/rs/zerolog/log"
@@ -18,6 +20,42 @@ func NewMerchantService(r repository.Database) *MerchantService {
 	return &MerchantService{
 		repository: r,
 	}
+}
+
+func (m *MerchantService) CreateMerchant(input model.NewMerchant) (*model.Merchant, error) {
+	id := uuid.New()
+
+	merchant := &models.Merchant{
+		ID:           id,
+		Name:         input.Name,
+		Email:        input.Email,
+		OwnerAddress: input.Owner,
+	}
+
+	if err := m.repository.AddMerchant(merchant); err != nil {
+		log.Err(err).Msg("creating merchant failed")
+		return nil, errors.New("merchant creation failed")
+	}
+
+	merchantObj := &model.Merchant{
+		ID:    id.String(),
+		Name:  input.Name,
+		Email: input.Email,
+	}
+	return merchantObj, nil
+}
+
+func (m *MerchantService) UpdateMerchantWebhook(merchant models.Merchant, webhookUrl string) (*model.Merchant, error) {
+	if err := m.repository.UpdateMerchantWebhookUrl(merchant.ID, webhookUrl); err != nil {
+		log.Err(err).Send()
+		return nil, errors.New("updating merchant webhook url failed")
+	}
+	return &model.Merchant{
+		ID:         merchant.ID.String(),
+		Name:       merchant.Name,
+		PublicKey:  merchant.PublicKey,
+		WebHookURL: webhookUrl,
+	}, nil
 }
 
 func (m *MerchantService) CreateAccessKeys(owner string) (*model.AccessKey, error) {

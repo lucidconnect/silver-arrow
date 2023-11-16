@@ -15,9 +15,11 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-var merchantCtxKey = &contextKey{"merchant"}
-
-var authSignatureCtxKey = &contextKey{"authSignature"}
+var (
+	merchantCtxKey      = &contextKey{"merchant"}
+	AuthMerchantCtxKey  = &contextKey{"authMerchant"}
+	authSignatureCtxKey = &contextKey{"authSignature"}
+)
 
 type contextKey struct {
 	name string
@@ -69,6 +71,14 @@ func SignatureContext(ctx context.Context, pk string) (string, error) {
 	raw, _ := ctx.Value(authSignatureCtxKey).(string)
 	if raw == "" {
 		return "", errors.New("invalid signature")
+	}
+	return raw, nil
+}
+
+func AuthMerchantContext(ctx context.Context) (*models.Merchant, error) {
+	raw, _ := ctx.Value(AuthMerchantCtxKey).(*models.Merchant)
+	if raw == nil {
+		return nil, errors.New("invalid merchant context")
 	}
 	return raw, nil
 }

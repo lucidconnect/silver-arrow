@@ -13,6 +13,26 @@ type Mutation {
   addProduct(input: NewProduct!): Product!
   updateProduct(input: ProductUpdate!): Product!
   createAccessKey(owner: String!): AccessKey!
+  createMerchant(input: NewMerchant!): Merchant!
+  updateMerchantwebHookUrl(webhookUrl: String!): Merchant!
+}
+
+input NewMerchant {
+  name: String!
+  email: String!
+  owner: String!
+    "This would be the url where payment status event would be delivered to"
+  webHookUrl: String
+  "This would be the email where transaction receipt replies would be delivered to"
+  supportEmail: String
+}
+
+type Merchant {
+  id: ID!
+  name: String!
+  email: String!
+  publicKey: String!
+  webHookUrl: String!
 }
 
 input NewProduct {
@@ -26,6 +46,14 @@ input NewProduct {
 input ProductUpdate {
   name: String
   receivingAddress: String
+}
+
+input MerchantUpdate {
+  merchantId: String!
+  name: String
+  email: String
+  isActive: Boolean
+  webHookUrl: String
 }
 
 type Sub {

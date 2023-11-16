@@ -9,11 +9,11 @@ import (
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
-	merchant_graph "github.com/lucidconnect/silver-arrow/api/graphql/merchant/graph"
-	merchant_generated "github.com/lucidconnect/silver-arrow/api/graphql/merchant/graph/generated"
-	wallet_graph "github.com/lucidconnect/silver-arrow/api/graphql/wallet/graph"
-	wallet_generated "github.com/lucidconnect/silver-arrow/api/graphql/wallet/graph/generated"
 	"github.com/lucidconnect/silver-arrow/auth"
+	merchant_graph "github.com/lucidconnect/silver-arrow/graphql/merchant/graph"
+	merchant_generated "github.com/lucidconnect/silver-arrow/graphql/merchant/graph/generated"
+	wallet_graph "github.com/lucidconnect/silver-arrow/graphql/wallet/graph"
+	wallet_generated "github.com/lucidconnect/silver-arrow/graphql/wallet/graph/generated"
 	"github.com/lucidconnect/silver-arrow/repository"
 	"github.com/lucidconnect/silver-arrow/service/erc4337"
 	"github.com/rs/cors"
@@ -21,11 +21,11 @@ import (
 )
 
 type Server struct {
-	queue        repository.Queuer
-	router       *mux.Router
-	bundler      *erc4337.AlchemyService
-	database     repository.Database
-	sessionStore *sessions.CookieStore
+	queue                     repository.Queuer
+	router, merchantSubrouter *mux.Router
+	bundler                   *erc4337.AlchemyService
+	database                  repository.Database
+	sessionStore              *sessions.CookieStore
 	// walletGraphqlHandler, merchantGraphqlHandler *handler.Server
 }
 
@@ -45,14 +45,16 @@ func NewServer(db *repository.DB) *Server {
 	router := mux.NewRouter()
 
 	loadCORS(router)
+	merchantRouter := router.PathPrefix("/merchant").Subrouter()
 	router.Use(auth.Middleware(*db))
 
 	return &Server{
-		queue:    queue,
-		router:   router,
-		bundler:  bundler,
-		database: db,
-		sessionStore: sessions.NewCookieStore([]byte("siwe-quickstart-secret")),
+		queue:             queue,
+		router:            router,
+		bundler:           bundler,
+		database:          db,
+		sessionStore:      sessions.NewCookieStore([]byte("siwe-quickstart-secret")),
+		merchantSubrouter: merchantRouter,
 	}
 }
 
@@ -64,11 +66,13 @@ func (s *Server) Start(port string) {
 }
 
 func (s *Server) Routes() {
-	s.router.Handle("/", playground.Handler("api/GraphQL playground", "/query"))
-	s.router.Handle("/merchant/graphiql", playground.Handler("api/GraphQL playground", "/merchant/query"))
+	s.merchantSubrouter.Use(s.Middleware())
 
 	s.router.Handle("/query", s.walletGraphqlHandler())
-	s.router.Handle("/merchant/query", s.merchantGraphqlHandler())
+	s.router.Handle("/graphiql", playground.Handler("api/GraphQL playground", "/query"))
+
+	s.merchantSubrouter.Handle("/graphiql", playground.Handler("api/GraphQL playground", "/merchant/query"))
+	s.merchantSubrouter.Handle("/query", s.merchantGraphqlHandler())
 
 	// merchant authentication
 	s.router.HandleFunc("/auth/nonce", s.GetNonce()).Methods(http.MethodGet)

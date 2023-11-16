@@ -11,9 +11,11 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/google/uuid"
-	"github.com/lucidconnect/silver-arrow/api/graphql/merchant/graph/model"
+	"github.com/lucidconnect/silver-arrow/graphql/merchant/graph/model"
 	"github.com/lucidconnect/silver-arrow/repository/models"
 )
+
+// ProductId is base64 encoded
 
 func (m *MerchantService) CreateProduct(input model.NewProduct) (*model.Product, error) {
 	id := uuid.New()
@@ -39,7 +41,7 @@ func (m *MerchantService) CreateProduct(input model.NewProduct) (*model.Product,
 	}
 
 	productID, _ := Base64EncodeUUID(id)
-	merchantObj := &model.Product{
+	productObj := &model.Product{
 		Name:             input.Name,
 		Chain:            input.Chain,
 		Owner:            input.Owner,
@@ -47,7 +49,7 @@ func (m *MerchantService) CreateProduct(input model.NewProduct) (*model.Product,
 		ProductID:        productID,
 		ReceivingAddress: input.ReceivingAddress,
 	}
-	return merchantObj, nil
+	return productObj, nil
 }
 
 func (m *MerchantService) FetchProductsByOwner(owner string) ([]*model.Product, error) {
