@@ -68,7 +68,7 @@ func (s *Server) Start(port string) {
 func (s *Server) Routes() {
 	s.merchantSubrouter.Use(s.Middleware())
 
-	s.router.Handle("/query", s.walletGraphqlHandler())
+	s.router.Handle("/", s.walletGraphqlHandler())
 	s.router.Handle("/graphiql", playground.Handler("api/GraphQL playground", "/query"))
 
 	s.merchantSubrouter.Handle("/graphiql", playground.Handler("api/GraphQL playground", "/merchant/query"))
