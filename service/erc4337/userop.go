@@ -13,10 +13,10 @@ import (
 	"github.com/stackup-wallet/stackup-bundler/pkg/userop"
 )
 
-func CreateTransferCallData(toAddress, token string, amount *big.Int) ([]byte, error) {
+func CreateTransferCallData(toAddress, token string, chain int64, amount *big.Int) ([]byte, error) {
 	accountABI := getAccountABI()
 
-	if token == "ETH" {
+	if isNativeToken(token, chain) {
 		callData, err := GetExecuteFnData(accountABI, toAddress, amount, nil)
 		if err != nil {
 			err = errors.Wrap(err, "CreateTransferCallData(): failed to create final call data")
@@ -33,7 +33,7 @@ func CreateTransferCallData(toAddress, token string, amount *big.Int) ([]byte, e
 		return nil, err
 	}
 
-	tokenAddress := erc20.GetTokenAddress(token, 80001)
+	tokenAddress := erc20.GetTokenAddress(token, chain)
 	callData, err := GetExecuteFnData(accountABI, tokenAddress, common.Big0, erc20TransferData)
 	if err != nil {
 		err = errors.Wrap(err, "CreateTransferCallData(): failed to create final call data")
@@ -83,4 +83,10 @@ func SignUserOp(op map[string]any, key, mode string, merchantId []byte, chain in
 	fmt.Println("hash - ", hexutil.Encode(opHash[:]))
 
 	return signature, ecrecover.ToEthSignedMessageHash(hash), nil
+}
+
+// helper function to identify if a token is noative, this helps to properly create a user operation to send tokens
+func isNativeToken(token string, chain int64) bool {
+	nativeToken := erc20.GetNativeToken(chain)
+	return token == nativeToken
 }

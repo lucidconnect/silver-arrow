@@ -10,6 +10,7 @@
     [x] Deploy the smart contract account when a new smart wallet address is added
 [x] Encryption/decryption for the signing keys generated (went with turnkey instead)
 [] Switch to a connection model to fetch the subscriptions for each merchant
+[] cache PaymentIntent alongside the userop 
 ## Less Priority
 
 [] Create a simulated bundler for testing

@@ -114,7 +114,7 @@ func (a *AlchemyService) CreateUnsignedUserOperation(sender string, initCode, ca
 	var paymasterAndData, maxFeePerGas, maxPriorityFeePerGas string
 	tok := make([]byte, 65)
 	rand.Read(tok)
-	dummySignature := hexutil.Encode(tok)
+	dummySignature := "0x00000001d16b1fd2d2703b7214bee4a66979f386e1f1af9cd48629d3c5a436b567941cc43125a5d744bae0fe0fbf32144f6c2f9ccdc25c6e28d464953297cea608c748cc1c"
 	o := map[string]any{
 		"sender":   sender,
 		"nonce":    hexutil.EncodeBig(nonce),
@@ -287,7 +287,7 @@ func (bs *AlchemyService) GetMaxPriorityFee() (string, error) {
 	return hexutil.EncodeUint64(maxPriorityFee), nil
 }
 
-// SendUserOperation sends a user operation to an alt mempool
+// SendUserOperation sends a user operation to an alt mempool and returns the userop hash if call is successful
 func (bs *AlchemyService) SendUserOperation(userop map[string]any) (string, error) {
 	var result string
 	// log.Debug().Msgf("user op", userop)
@@ -318,13 +318,27 @@ func (bs *AlchemyService) SendUserOperation(userop map[string]any) (string, erro
 func (bs *AlchemyService) GetUserOperationByHash(userophash string) (map[string]any, error) {
 	var result map[string]any
 
-	err := bs.backend.Client().CallContext(bs.ctx, &result, "eth_getUserOperationByHash", userophash)
-	if err != nil {
-		err = errors.Wrap(err, "eth_getUserOperationByHash call error")
-		return nil, err
+	backOffOperation := func() error {
+		err := bs.backend.Client().CallContext(bs.ctx, &result, "eth_getUserOperationByHash", userophash)
+		if err != nil {
+			err = errors.Wrap(err, "eth_getUserOperationByHash call error")
+			log.Err(err).Send()
+		}
+
+		if result == nil {
+			err = errors.New("null rpc result")
+			log.Debug().Err(err).Send()
+		}
+
+		return err
 	}
 
-	// log.Debug().Msgf("user operation - ", result)
+	err := backoff.Retry(backOffOperation, backoff.NewExponentialBackOff())
+	if err != nil {
+		err = errors.Wrap(err, "eth_sendUserOperation call error")
+		return result, err
+	}
+	log.Debug().Msgf("user operation - %v", result)
 	return result, nil
 }
 

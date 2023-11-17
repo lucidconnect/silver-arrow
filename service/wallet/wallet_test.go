@@ -14,6 +14,10 @@ func Test_daysToNanoSeconds(t *testing.T) {
 	duration := daysToNanoSeconds(28)
 	fmt.Println(duration.Nanoseconds())
 	assert.Equal(t, time.Duration(2419200000000000), duration)
+
+	days := nanoSecondsToDay(2419200000000000)
+	fmt.Println(days)
+	assert.Equal(t, int64(28), days)
 }
 
 func Test_amountToWei(t *testing.T) {
@@ -85,3 +89,104 @@ func Test_amountToWei(t *testing.T) {
 // 		})
 // 	}
 // }
+
+func Test_parseTransferAmount(t *testing.T) {
+	type args struct {
+		token  string
+		amount float64
+	}
+	tests := []struct {
+		name string
+		args args
+		want *big.Int
+	}{
+		// TODO: Add test cases.
+		{
+			"USDC",
+			args{
+				"USDC",
+				149.99,
+			},
+			big.NewInt(149990000),
+		},
+		{
+			"ETH",
+			args{
+				"ETH",
+				0.8239,
+			},
+			big.NewInt(823900000000000000),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := parseTransferAmount(tt.args.token, tt.args.amount); got != tt.want {
+				t.Errorf("parseTransferAmount() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_parseTransferAmountFloat(t *testing.T) {
+	type args struct {
+		token  string
+		amount int64
+	}
+	tests := []struct {
+		name string
+		args args
+		want float64
+	}{
+		// TODO: Add test cases.
+		{
+			"USDC",
+			args{
+				"USDC",
+				149990000,
+			},
+			149.99,
+		},
+		{
+			"ETH",
+			args{
+				"ETH",
+				823900000000000000,
+			},
+			0.8239,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := parseTransferAmountFloat(tt.args.token, tt.args.amount); got != tt.want {
+				t.Errorf("parseTransferAmountFloat() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_amountToMwei(t *testing.T) {
+	type args struct {
+		amount int64
+	}
+	tests := []struct {
+		name string
+		args args
+		want *big.Int
+	}{
+		// TODO: Add test cases.
+		{
+			"non nil result",
+			args{
+				amount: 1000000,
+			},
+			big.NewInt(1000000),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := amountToMwei(tt.args.amount); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("amountToMwei() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

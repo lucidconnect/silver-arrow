@@ -1,0 +1,31 @@
+openapi: 3.1.0
+info:
+  title: Payment API
+  version: 1.0.0
+paths:
+  /payments/{reference}:
+    get:
+      summary: Retrieve a payment by reference
+      parameters:
+        - name: reference
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful retrieval
+          content:
+            application/json:
+              example:
+                chain: 123
+                token: "abc123"
+                status: "SUCCESS"
+                amount: 50.0
+                source: "credit_card"
+                productId: "p456"
+                reference: "ref123"
+        '404':
+          description: Payment not found
+
+   

@@ -8,9 +8,10 @@ import (
 )
 
 type Token struct {
-	Name    string `json:"name"`
-	Chain   int64  `json:"chain"`
-	Address string `json:"address"`
+	Name        string `json:"name"`
+	Chain       int64  `json:"chain"`
+	Address     string `json:"address"`
+	MinorFactor int64  `json:"minorFactor"`
 }
 
 var tokenCache = make(map[string]map[int64]string)
@@ -39,6 +40,18 @@ func GetTokenAddress(token string, chain int64) string {
 	}
 
 	return tokenAddress
+}
+
+func GetNativeToken(chain int64) string {
+	var token string
+
+	switch chain {
+	case 10:
+		token = "ETH"
+	case 80001:
+		token = "MATIC"
+	}
+	return token
 }
 
 func initFromJsonString(jsonString string) {

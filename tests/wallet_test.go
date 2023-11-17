@@ -14,29 +14,26 @@ import (
 	"github.com/lucidconnect/silver-arrow/graphql/wallet/graph/model"
 	"github.com/lucidconnect/silver-arrow/repository"
 	"github.com/lucidconnect/silver-arrow/service/erc4337"
-	"github.com/lucidconnect/silver-arrow/service/turnkey"
 	"github.com/lucidconnect/silver-arrow/service/wallet"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestAddSubscription(t *testing.T) {
 	r := repository.NewDB(db)
-	tk, _ := turnkey.NewTurnKeyService()
 
-	ws := wallet.NewWalletService(r, tk)
+	ws := wallet.NewWalletService(r, defaultChain)
 	// mId := randKey()
-	pId := "3838hr8hud9dijh3j"
+	pId := uuid.New()
 	key := "0xe81f9f7146470e1e728cc44d22089098de6be6ebe3ca39f21b7b092f09b10cf5"
 	p, _ := crypto.HexToECDSA(key[2:])
 	owner := crypto.PubkeyToAddress(p.PublicKey).Hex()
 	fmt.Println("owner", owner)
 	newSub := model.NewSubscription{
-		Chain:        10,
-		NextChargeAt: nil,
-		Token:        "USDC",
-		Amount:       1,
-		Interval:     30,
-		ProductID:    pId,
+		Chain:     10,
+		Token:     "USDC",
+		Amount:    1,
+		Interval:  30,
+		ProductID: pId,
 		// WalletAddress: "0x14De44b6100dE479655D752ECD2230D10F8fA061",
 		WalletAddress: "0xb96442F14ac82E21c333A8bB9b03274Ae26eb79D",
 		OwnerAddress:  "0x85fc2E4425d0DAba7426F50091a384ee05D37Cd2",
@@ -63,9 +60,8 @@ func TestAddSubscription(t *testing.T) {
 	op["signature"] = hexutil.Encode(sig)
 	fmt.Println(op["signature"])
 
-	data, sKey, err := ws.ValidateSubscription(op, chain)
+	data, err := ws.ValidateSubscription(op, chain)
 	assert.NotEmpty(t, data)
-	assert.NotEmpty(t, sKey)
 	assert.NoError(t, err)
 
 	// target := "0xB77ce6ec08B85DcC468B94Cea7Cc539a3BbF9510"
@@ -96,7 +92,7 @@ func TestSignature(t *testing.T) {
 	ercBundler, _ := erc4337.NewAlchemyService(defaultChain)
 
 	amount := big.NewInt(1000000)
-	data, err := erc4337.CreateTransferCallData(target, token, amount)
+	data, err := erc4337.CreateTransferCallData(target, token, defaultChain, amount)
 	if !assert.NoError(t, err) {
 		t.FailNow()
 	}

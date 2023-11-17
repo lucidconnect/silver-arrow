@@ -26,7 +26,7 @@ func SetupDatabase(dbconn *sql.DB) (*gorm.DB, error) {
 	}
 
 	// ...
-	if err = db.AutoMigrate(models.Wallet{}, models.Merchant{}, models.Key{}, models.Subscription{}, models.Product{}); err != nil {
+	if err = db.AutoMigrate(models.Payment{}, models.Wallet{}, models.Merchant{}, models.Key{}, models.Subscription{}, models.Product{}); err != nil {
 		log.Fatal().Err(err).Msg("Error migrating database models")
 	}
 	// db.Model(&models.Subscription{}).
@@ -109,7 +109,7 @@ func (p *DB) FetchDueSubscriptions(days int) ([]models.Subscription, error) {
 	startInterval := time.Now().Add(time.Duration(days) * 24 * time.Hour)
 	endInterval := startInterval.Add(24 * time.Hour)
 
-	err := p.Db.Where("expires_at >= ? AND expires_at <= ?", startInterval, endInterval).Preload("Key").Find(&subscriptions).Error
+	err := p.Db.Where("active = ? AND expires_at >= ? AND expires_at <= ?", true, startInterval, endInterval).Preload("Key").Find(&subscriptions).Error
 	if err != nil {
 		return nil, err
 	}
@@ -138,6 +138,14 @@ func (p *DB) FindSubscriptionByHash(hash string) (*models.Subscription, error) {
 	return subscription, nil
 }
 
+func (p *DB) FindSubscriptionById(id uuid.UUID) (*models.Subscription, error) {
+	var subscription *models.Subscription
+	if err := p.Db.Where("id = ?", id).Preload("Key").Find(&subscription).Error; err != nil {
+		return nil, err
+	}
+	return subscription, nil
+}
+
 // returns the private key ID
 func (p *DB) GetSubscriptionKey(publicKey string) (string, error) {
 	var key models.Key
@@ -145,6 +153,18 @@ func (p *DB) GetSubscriptionKey(publicKey string) (string, error) {
 		return "", err
 	}
 	return key.PrivateKeyId, nil
+}
+
+func (p *DB) GetWalletMetadata(address string) (string, string, uuid.UUID, error) {
+	var wallet models.Wallet
+	if err := p.Db.Where("wallet_address = ?", address).Find(&wallet).Error; err != nil {
+		return "", "", uuid.Nil, err
+	}
+	keyTag := wallet.TurnkeyPrivateKeyTag
+	orgId := wallet.TurnkeySubOrgID
+	walletId := wallet.ID
+
+	return keyTag, orgId, walletId, nil
 }
 
 func (p *DB) CreateProduct(m *models.Product) error {
@@ -165,27 +185,6 @@ func (p *DB) FetchProductsByOwner(owner string) ([]models.Product, error) {
 		return nil, err
 	}
 	return products, nil
-}
-
-func (p *DB) FindSubscriptionByProduct(merchantId string) ([]models.Subscription, error) {
-	var subscriptions []models.Subscription
-
-	if err := p.Db.Where("merchant_id = ?", merchantId).Find(&subscriptions).Error; err != nil {
-		return nil, err
-	}
-	return subscriptions, nil
-}
-
-func (p *DB) GetWalletMetadata(address string) (string, string, uuid.UUID, error) {
-	var wallet models.Wallet
-	if err := p.Db.Where("wallet_address = ?", address).Find(&wallet).Error; err != nil {
-		return "", "", uuid.Nil, err
-	}
-	keyTag := wallet.TurnkeyPrivateKeyTag
-	orgId := wallet.TurnkeySubOrgID
-	walletId := wallet.ID
-
-	return keyTag, orgId, walletId, nil
 }
 
 func (p *DB) AddMerchant(merchant *models.Merchant) error {
@@ -215,4 +214,89 @@ func (p *DB) UpdateMerchantKey(id uuid.UUID, key string) error {
 		return err
 	}
 	return nil
+}
+
+func (p *DB) UpdateMerchantWebhookUrl(id uuid.UUID, webhookUrl string) error {
+	var merchant *models.Merchant
+
+	if err := p.Db.Model(&merchant).Where("id = ?", id).Update("webhook_url", webhookUrl).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+func (p *DB) CreatePayment(payment *models.Payment) error {
+	return p.Db.Create(payment).Error
+}
+
+func (p *DB) UpdatePayment(id uuid.UUID, paymentUpdate map[string]any) error {
+	var payment *models.Payment
+	if err := p.Db.Model(&payment).Where("id = ?", id).Updates(paymentUpdate).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+func (p *DB) FindPaymentById(id uuid.UUID) (*models.Payment, error) {
+	var payment *models.Payment
+	if err := p.Db.Where("id = ? ", id).First(&payment).Error; err != nil {
+		return nil, err
+	}
+	return payment, nil
+}
+
+func (p *DB) FindPaymentByReference(reference uuid.UUID) (*models.Payment, error) {
+	var payment *models.Payment
+	if err := p.Db.Where("reference = ? ", reference).First(&payment).Error; err != nil {
+		return nil, err
+	}
+	return payment, nil
+}
+
+func (p *DB) FindPaymentByUseropHash(hash string) (*models.Payment, error) {
+	var payment *models.Payment
+	if err := p.Db.Where("user_op_hash = ? ", hash).First(&payment).Error; err != nil {
+		return nil, err
+	}
+	return payment, nil
+}
+
+func (p *DB) FindAllPaymentsByWallet(address string) ([]models.Payment, error) {
+	var wallet models.Wallet
+
+	if err := p.Db.Where("wallet_address = ?", address).Preload("Payments").First(&wallet).Error; err != nil {
+		return nil, err
+	}
+	payments := wallet.Payments
+	return payments, nil
+}
+
+func (p *DB) FetchAllPaymentsByProduct(productId uuid.UUID) ([]models.Payment, error) {
+	var subscriptions []models.Subscription
+	var payments []models.Payment
+	if err := p.Db.Where("product_id = ?", productId).Preload("Payments").Find(&subscriptions).Error; err != nil {
+		return nil, err
+	}
+
+	for _, subscription := range subscriptions {
+		payments = append(payments, subscription.Payments...)
+	}
+	return payments, nil
+}
+
+func (p *DB) FetchMerchantById(id uuid.UUID) (*models.Merchant, error) {
+	var merchant *models.Merchant
+	if err := p.Db.Where("id = ?", id).First(&merchant).Error; err != nil {
+		return nil, err
+	}
+
+	return merchant, nil
+}
+
+func (p *DB) CreateWebhookEvent(webhookEvent *models.WebhookEvent) error {
+	return p.Db.Create(webhookEvent).Error
+}
+
+func (p *DB) UpdateWebhookEvent(webhookEvent *models.WebhookEvent) error {
+	return p.Db.Save(webhookEvent).Error
 }
