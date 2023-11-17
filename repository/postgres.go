@@ -216,6 +216,15 @@ func (p *DB) UpdateMerchantKey(id uuid.UUID, key string) error {
 	return nil
 }
 
+func (p *DB) UpdateMerchantWebhookUrl(id uuid.UUID, webhookUrl string) error {
+	var merchant *models.Merchant
+
+	if err := p.Db.Model(&merchant).Where("id = ?", id).Update("webhook_url", webhookUrl).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
 func (p *DB) CreatePayment(payment *models.Payment) error {
 	return p.Db.Create(payment).Error
 }
@@ -273,4 +282,21 @@ func (p *DB) FetchAllPaymentsByProduct(productId uuid.UUID) ([]models.Payment, e
 		payments = append(payments, subscription.Payments...)
 	}
 	return payments, nil
+}
+
+func (p *DB) FetchMerchantById(id uuid.UUID) (*models.Merchant, error) {
+	var merchant *models.Merchant
+	if err := p.Db.Where("id = ?", id).First(&merchant).Error; err != nil {
+		return nil, err
+	}
+
+	return merchant, nil
+}
+
+func (p *DB) CreateWebhookEvent(webhookEvent *models.WebhookEvent) error {
+	return p.Db.Create(webhookEvent).Error
+}
+
+func (p *DB) UpdateWebhookEvent(webhookEvent *models.WebhookEvent) error {
+	return p.Db.Save(webhookEvent).Error
 }

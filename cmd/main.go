@@ -4,22 +4,15 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/99designs/gqlgen/graphql/handler"
-	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/go-chi/chi"
 	"gorm.io/gorm"
 
 	"github.com/joho/godotenv"
-	merchant_graph "github.com/lucidconnect/silver-arrow/api/graphql/merchant/graph"
-	merchant_generated "github.com/lucidconnect/silver-arrow/api/graphql/merchant/graph/generated"
-	wallet_graph "github.com/lucidconnect/silver-arrow/api/graphql/wallet/graph"
-	wallet_generated "github.com/lucidconnect/silver-arrow/api/graphql/wallet/graph/generated"
-	"github.com/lucidconnect/silver-arrow/auth"
 	"github.com/lucidconnect/silver-arrow/erc20"
 	"github.com/lucidconnect/silver-arrow/logger"
 	"github.com/lucidconnect/silver-arrow/repository"
+	"github.com/lucidconnect/silver-arrow/server"
 	"github.com/lucidconnect/silver-arrow/service/scheduler"
-	"github.com/lucidconnect/silver-arrow/service/turnkey"
 	"github.com/robfig/cron/v3"
 	"github.com/rs/cors"
 	"github.com/rs/zerolog/log"
@@ -34,48 +27,18 @@ var (
 func main() {
 	bootstrap()
 
-	// db, err := repository.SetupDatabase(nil)
-	// if err != nil {
-	// 	log.Println(err)
-	// }
-	router := chi.NewRouter()
-	loadCORS(router)
-
 	database := repository.NewDB(db)
 	database.RunMigrations()
-	tunkeyService, err := turnkey.NewTurnKeyService()
-	if err != nil {
-		log.Panic().Err(err).Send()
-	}
-
-	router.Use(auth.Middleware(*database))
-
 	jobRunner := scheduler.NewScheduler(database)
 	setupJobs(jobRunner)
-	walletSrv := handler.NewDefaultServer(wallet_generated.NewExecutableSchema(wallet_generated.Config{Resolvers: &wallet_graph.Resolver{
-		Cache:          repository.NewMCache(),
-		Database:       database,
-		TurnkeyService: tunkeyService,
-	}}))
 
-	merchantSrv := handler.NewDefaultServer(merchant_generated.NewExecutableSchema(merchant_generated.Config{Resolvers: &merchant_graph.Resolver{
-		Database: database,
-	}}))
-	router.Handle("/", playground.Handler("api/GraphQL playground", "/query"))
-	router.Handle("/merchant/graphiql", playground.Handler("api/GraphQL playground", "/merchant/query"))
-
-	router.Handle("/query", walletSrv)
-	router.Handle("/merchant/query", merchantSrv)
-
+	httpServer := server.NewServer(database)
+	httpServer.Routes()
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = defaultPort
 	}
-	log.Info().Msgf("connect to http://localhost:%s/ for api/GraphQL playground", port)
-	if err := http.ListenAndServe(":"+port, router); err != nil {
-		log.Fatal().Err(err).Msg("unable to start the server")
-	}
-	log.Fatal()
+	httpServer.Start(port)
 }
 
 func bootstrap() {

@@ -163,3 +163,30 @@ func Test_parseTransferAmountFloat(t *testing.T) {
 		})
 	}
 }
+
+func Test_amountToMwei(t *testing.T) {
+	type args struct {
+		amount int64
+	}
+	tests := []struct {
+		name string
+		args args
+		want *big.Int
+	}{
+		// TODO: Add test cases.
+		{
+			"non nil result",
+			args{
+				amount: 1000000,
+			},
+			big.NewInt(1000000),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := amountToMwei(tt.args.amount); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("amountToMwei() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

@@ -12,8 +12,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/lucidconnect/silver-arrow/api/graphql/wallet/graph/generated"
-	"github.com/lucidconnect/silver-arrow/api/graphql/wallet/graph/model"
+	"github.com/lucidconnect/silver-arrow/graphql/wallet/graph/generated"
+	"github.com/lucidconnect/silver-arrow/graphql/wallet/graph/model"
 	"github.com/lucidconnect/silver-arrow/auth"
 	"github.com/lucidconnect/silver-arrow/gqlerror"
 	"github.com/lucidconnect/silver-arrow/service/erc4337"
@@ -25,7 +25,7 @@ import (
 func (r *mutationResolver) AddAccount(ctx context.Context, input model.Account) (string, error) {
 	address := common.HexToAddress(input.Address)
 
-	walletService := wallet.NewWalletService(r.Database, r.TurnkeyService, 0)
+	walletService := wallet.NewWalletService(r.Database, 0)
 	// should check if the account is deployed
 	// deploy if not deployed
 	err := walletService.AddAccount(input)
@@ -62,7 +62,7 @@ func (r *mutationResolver) CreatePaymentIntent(ctx context.Context, input model.
 		return "", gqlerror.ErrToGraphQLError(gqlerror.MerchantDataInvalid, "product not found", ctx)
 	}
 
-	walletService := wallet.NewWalletService(r.Database, r.TurnkeyService, int64(input.Chain))
+	walletService := wallet.NewWalletService(r.Database, int64(input.Chain))
 	var usePaymaster bool
 	switch os.Getenv("USE_PAYMASTER") {
 	case "TRUE":
@@ -80,10 +80,14 @@ func (r *mutationResolver) CreatePaymentIntent(ctx context.Context, input model.
 			nextCharge = time.Now()
 		}
 
+		var email string
+		if input.Email != nil {
+			email = *input.Email
+		}
 		newSubscription := model.NewSubscription{
 			Chain:          input.Chain,
 			Token:          input.Token,
-			Email:          *input.Email,
+			Email:          email,
 			Amount:         input.Amount,
 			Interval:       input.Interval,
 			ProductID:      productId,
@@ -119,7 +123,7 @@ func (r *mutationResolver) ValidatePaymentIntent(ctx context.Context, input mode
 	}
 	_ = merch.ID
 
-	walletService := wallet.NewWalletService(r.Database, r.TurnkeyService, int64(input.Chain))
+	walletService := wallet.NewWalletService(r.Database, int64(input.Chain))
 	// merchantService := merchant.NewMerchantService(r.Database)
 
 	// time.Sleep(time.Second)
@@ -156,7 +160,7 @@ func (r *mutationResolver) ValidatePaymentIntent(ctx context.Context, input mode
 func (r *mutationResolver) ModifySubscriptionState(ctx context.Context, input model.SubscriptionMod) (string, error) {
 	var err error
 	var result string
-	walletService := wallet.NewWalletService(r.Database, nil, 0)
+	walletService := wallet.NewWalletService(r.Database, 0)
 
 	switch input.Toggle {
 	case model.StatusToggleCancel:
@@ -191,7 +195,7 @@ func (r *mutationResolver) InitiateTransferRequest(ctx context.Context, input mo
 		sponsored = false
 	}
 
-	walletService := wallet.NewWalletService(r.Database, nil, int64(input.Chain))
+	walletService := wallet.NewWalletService(r.Database, int64(input.Chain))
 	validationData, userop, err := walletService.InitiateTransfer(input.Sender, input.Target, input.Token, input.Amount, int64(input.Chain), sponsored)
 	if err != nil {
 		return "", gqlerror.ErrToGraphQLError(gqlerror.InternalError, "Initiating toke transfer failed", ctx)
@@ -230,7 +234,7 @@ func (r *mutationResolver) ValidateTransferRequest(ctx context.Context, input mo
 
 	chain := int64(input.Chain)
 
-	walletService := wallet.NewWalletService(r.Database, nil, int64(input.Chain))
+	walletService := wallet.NewWalletService(r.Database, int64(input.Chain))
 
 	td, err := walletService.ValidateTransfer(op, chain)
 	if err != nil {
@@ -242,7 +246,7 @@ func (r *mutationResolver) ValidateTransferRequest(ctx context.Context, input mo
 
 // FetchSubscriptions is the resolver for the fetchSubscriptions field.
 func (r *queryResolver) FetchSubscriptions(ctx context.Context, account string) ([]*model.SubscriptionData, error) {
-	ws := wallet.NewWalletService(r.Database, r.TurnkeyService, 0)
+	ws := wallet.NewWalletService(r.Database, 0)
 	subs, err := ws.FetchSubscriptions(account)
 	if err != nil {
 		return nil, gqlerror.ErrToGraphQLError(gqlerror.InternalError, "failed to fetch subscriptions", ctx)
@@ -252,7 +256,7 @@ func (r *queryResolver) FetchSubscriptions(ctx context.Context, account string) 
 
 // FetchPayment is the resolver for the fetchPayment field.
 func (r *queryResolver) FetchPayment(ctx context.Context, reference string) (*model.Payment, error) {
-	ws := wallet.NewWalletService(r.Database, nil, 0)
+	ws := wallet.NewWalletService(r.Database, 0)
 	payment, err := ws.FetchPayment(reference)
 	if err != nil {
 		return nil, gqlerror.ErrToGraphQLError(gqlerror.MerchantDataInvalid, err.Error(), ctx)

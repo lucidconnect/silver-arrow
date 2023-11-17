@@ -17,7 +17,7 @@ import (
 	"github.com/lucidconnect/silver-arrow/erc20"
 
 	// "github.com/lucidconnect/silver-arrow/erc4337"
-	"github.com/lucidconnect/silver-arrow/api/graphql/wallet/graph/model"
+	"github.com/lucidconnect/silver-arrow/graphql/wallet/graph/model"
 	"github.com/lucidconnect/silver-arrow/repository"
 	"github.com/lucidconnect/silver-arrow/repository/models"
 	"github.com/lucidconnect/silver-arrow/service/erc4337"
@@ -35,7 +35,7 @@ type WalletService struct {
 	validatorAddress string
 }
 
-func NewWalletService(r repository.Database, t *turnkey.TurnkeyService, chain int64) *WalletService {
+func NewWalletService(r repository.Database, chain int64) *WalletService {
 	validatorAddress := os.Getenv("VALIDATOR_ADDRESS")
 	var bundler *erc4337.AlchemyService
 	var err error
@@ -47,8 +47,13 @@ func NewWalletService(r repository.Database, t *turnkey.TurnkeyService, chain in
 		}
 	}
 
+	tunkeyService, err := turnkey.NewTurnKeyService()
+	if err != nil {
+		log.Panic().Err(err).Send()
+	}
+
 	return &WalletService{
-		turnkey:          t,
+		turnkey:          tunkeyService,
 		database:         r,
 		bundlerService:   bundler,
 		validatorAddress: validatorAddress,
@@ -195,6 +200,7 @@ func (ws *WalletService) ValidateSubscription(userop map[string]any, chain int64
 			Destination:           result.MerchantDepositAddress,
 			SubscriptionID:        result.ID,
 			SubscriptionPublicKey: result.Key.PublicKey,
+			TokenAddress:          result.TokenAddress,
 		}
 
 		userop, useropHash, err := ws.CreatePayment(payment)
@@ -424,73 +430,18 @@ func amountToWei(amount any) (*big.Int, error) {
 	}
 }
 
-func amountToMwei(amount int64) (*big.Int, error) {
+func amountToMwei(amount int64) *big.Int {
 	etherInMWei := new(big.Int)
-	etherInMWei.SetString("1000000", 10)
-	v := big.NewInt(int64(amount))
-	mWeiAmount := new(big.Int).Mul(v, etherInMWei)
-	return mWeiAmount, nil
-	// switch v := amount.(type) {
-	// case *big.Int:
-	// 	mWeiAmount := new(big.Int).Mul(v, etherInMWei)
-	// 	return mWeiAmount, nil
-	// case *big.Float:
-	// 	mWeiAmount := new(big.Int)
-	// 	mWeiAmountFloat := new(big.Float).Mul(v, big.NewFloat(1e6))
-	// 	mWeiAmountFloat.Int(mWeiAmount)
-	// 	return mWeiAmount, nil
-	// default:
-	// 	return nil, fmt.Errorf("unsupported input type: %T", amount)
-	// }
+	return etherInMWei.SetInt64(amount)
 }
 
-func mWeiToAmount(amt *big.Int) int64 {
-	etherInMWei := new(big.Int)
-	etherInMWei.SetString("1000000", 10)
-
-	result := new(big.Int)
-	result.Div(amt, etherInMWei)
-	return result.Int64()
-}
-
-func weiToAmount(amt *big.Int) int64 {
-	etherInWei := new(big.Int)
-	etherInWei.SetString("1000000000000000000", 10)
-
-	result := new(big.Int)
-	result.Div(amt, etherInWei)
-	return result.Int64()
-}
-
-// CreatePayment creates a userop for an initiated payment,
+// CreatePayment creates a userop for an initiated payment, amount is already in the minor factor form
 // generates the userop hash, sets the payment status to a pending state
 // returns a message to be signed.
 func (ws *WalletService) CreatePayment(payment *models.Payment) (map[string]any, common.Hash, error) {
+	tokenAddress := common.HexToAddress(payment.TokenAddress)
 
-	// payment, _ := ws.database.FindPaymentByReference(reference)
-
-	// bundler, err := erc4337.NewAlchemyService(payment.Chain)
-	// if err != nil {
-	// 	err = errors.Wrap(err, "initialising alchemy service failed")
-	// 	log.Err(err).Send()
-	// 	return nil, common.Hash{}, err
-	// }
-	erc20Token := erc20.GetTokenAddress(payment.Token, payment.Chain)
-	tokenAddress := common.HexToAddress(erc20Token)
-
-	// wallet, err := ws.database.FetchAccountByAddress(payment.Source)
-	// if err != nil {
-	// 	err = errors.Wrapf(err, "smart account lookup for address [%v] failed", payment.Source)
-	// 	log.Err(err).Caller().Send()
-	// 	return "", fmt.Errorf("sender address [%v] not found", payment.Source)
-	// }
-
-	actualAmount, err := amountToMwei(payment.Amount)
-	if err != nil {
-		err = errors.Wrapf(err, "converting amount [%v] to wei value failed", payment.Amount)
-		log.Err(err).Caller().Send()
-		return nil, common.Hash{}, fmt.Errorf("internal server error")
-	}
+	actualAmount := amountToMwei(payment.Amount)
 	data, err := erc4337.TransferErc20Action(tokenAddress, common.HexToAddress(payment.Destination), actualAmount)
 	if err != nil {
 		err = errors.Wrap(err, "creating TransferErc20Action call data failed")
@@ -525,7 +476,7 @@ func (ws *WalletService) CreatePayment(payment *models.Payment) (map[string]any,
 	userOpHash := operation.GetUserOpHash(entrypoint, chainId)
 	// hash := userOpHash.Bytes()
 
-	payment.Status = string(PaymentStatusPending)
+	payment.Status = models.PaymentStatusPending
 	payment.UserOpHash = userOpHash.Hex()
 	err = ws.database.CreatePayment(payment)
 	if err != nil {
@@ -612,6 +563,7 @@ func (ws *WalletService) ExecutePaymentOperation(signedOp map[string]any, chain 
 	if err != nil {
 		err = errors.Wrapf(err, "fetching the transction hash failed. userop hash - [%v]", opHash)
 		log.Err(err).Caller().Send()
+		return "", fmt.Errorf("internal server error")
 	}
 
 	payment, err := ws.database.FindPaymentByUseropHash(opHash)
@@ -663,12 +615,7 @@ func (ws *WalletService) ExecuteCharge(sender, target, token, key string, amount
 	}
 	org := wallet.TurnkeySubOrgID
 
-	actualAmount, err := amountToMwei(amount)
-	if err != nil {
-		err = errors.Wrapf(err, "converting amount [%v] to wei value failed", amount)
-		log.Err(err).Caller().Send()
-		return "", fmt.Errorf("internal server error")
-	}
+	actualAmount := amountToMwei(amount)
 	data, err := erc4337.TransferErc20Action(tokenAddress, common.HexToAddress(target), actualAmount)
 	if err != nil {
 		err = errors.Wrap(err, "creating TransferErc20Action call data failed")

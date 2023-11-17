@@ -7,10 +7,34 @@ type AccessKey struct {
 	PrivateKey string `json:"privateKey"`
 }
 
+type Merchant struct {
+	ID         string `json:"id"`
+	Name       string `json:"name"`
+	Email      string `json:"email"`
+	PublicKey  string `json:"publicKey"`
+	WebHookURL string `json:"webHookUrl"`
+}
+
 type MerchantStats struct {
 	Users         int `json:"users"`
 	Products      int `json:"products"`
 	Subscriptions int `json:"subscriptions"`
+}
+
+type MerchantUpdate struct {
+	MerchantID string  `json:"merchantId"`
+	Name       *string `json:"name,omitempty"`
+	Email      *string `json:"email,omitempty"`
+	IsActive   *bool   `json:"isActive,omitempty"`
+	WebHookURL *string `json:"webHookUrl,omitempty"`
+}
+
+type NewMerchant struct {
+	Name  string `json:"name"`
+	Email string `json:"email"`
+	Owner string `json:"owner"`
+	// This would be the url where payment status event would be delivered to
+	WebHookURL *string `json:"webHookUrl,omitempty"`
 }
 
 type NewProduct struct {

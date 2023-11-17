@@ -11,19 +11,17 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/google/uuid"
-	"github.com/lucidconnect/silver-arrow/api/graphql/wallet/graph/model"
+	"github.com/lucidconnect/silver-arrow/graphql/wallet/graph/model"
 	"github.com/lucidconnect/silver-arrow/repository"
 	"github.com/lucidconnect/silver-arrow/service/erc4337"
-	"github.com/lucidconnect/silver-arrow/service/turnkey"
 	"github.com/lucidconnect/silver-arrow/service/wallet"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestAddSubscription(t *testing.T) {
 	r := repository.NewDB(db)
-	tk, _ := turnkey.NewTurnKeyService()
 
-	ws := wallet.NewWalletService(r, tk, defaultChain)
+	ws := wallet.NewWalletService(r, defaultChain)
 	// mId := randKey()
 	pId := uuid.New()
 	key := "0xe81f9f7146470e1e728cc44d22089098de6be6ebe3ca39f21b7b092f09b10cf5"
@@ -31,11 +29,11 @@ func TestAddSubscription(t *testing.T) {
 	owner := crypto.PubkeyToAddress(p.PublicKey).Hex()
 	fmt.Println("owner", owner)
 	newSub := model.NewSubscription{
-		Chain:        10,
-		Token:        "USDC",
-		Amount:       1,
-		Interval:     30,
-		ProductID:    pId,
+		Chain:     10,
+		Token:     "USDC",
+		Amount:    1,
+		Interval:  30,
+		ProductID: pId,
 		// WalletAddress: "0x14De44b6100dE479655D752ECD2230D10F8fA061",
 		WalletAddress: "0xb96442F14ac82E21c333A8bB9b03274Ae26eb79D",
 		OwnerAddress:  "0x85fc2E4425d0DAba7426F50091a384ee05D37Cd2",

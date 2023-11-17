@@ -6,16 +6,26 @@ package graph
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
-	"github.com/lucidconnect/silver-arrow/api/graphql/merchant/graph/generated"
-	"github.com/lucidconnect/silver-arrow/api/graphql/merchant/graph/model"
+	"github.com/lucidconnect/silver-arrow/gqlerror"
+	"github.com/lucidconnect/silver-arrow/graphql/merchant/graph/generated"
+	"github.com/lucidconnect/silver-arrow/graphql/merchant/graph/model"
 	"github.com/lucidconnect/silver-arrow/service/merchant"
 )
 
 // AddProduct is the resolver for the addProduct field.
 func (r *mutationResolver) AddProduct(ctx context.Context, input model.NewProduct) (*model.Product, error) {
 	merchantService := merchant.NewMerchantService(r.Database)
+
+	merchant, err := getAuthenticatedAndActiveMerchant(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if merchant == nil {
+		return nil, errors.New("merchant does not exist")
+	}
 	result, err := merchantService.CreateProduct(input)
 	if err != nil {
 		return nil, err
@@ -32,11 +42,45 @@ func (r *mutationResolver) UpdateProduct(ctx context.Context, input model.Produc
 // CreateAccessKey is the resolver for the createAccessKey field.
 func (r *mutationResolver) CreateAccessKey(ctx context.Context, owner string) (*model.AccessKey, error) {
 	merchantService := merchant.NewMerchantService(r.Database)
-	accessKeys, err := merchantService.CreateAccessKeys(owner)
+
+	merchant, err := getAuthenticatedAndActiveMerchant(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if merchant == nil {
+		return nil, errors.New("merchant does not exist")
+	}
+
+	accessKeys, err := merchantService.CreateAccessKeys(merchant.OwnerAddress)
 	if err != nil {
 		return nil, err
 	}
 	return accessKeys, nil
+}
+
+// CreateMerchant is the resolver for the createMerchant field.
+func (r *mutationResolver) CreateMerchant(ctx context.Context, input model.NewMerchant) (*model.Merchant, error) {
+	merchantService := merchant.NewMerchantService(r.Database)
+	result, err := merchantService.CreateMerchant(input)
+	if err != nil {
+		return nil, gqlerror.ErrToGraphQLError(gqlerror.InternalError, err.Error(), ctx)
+	}
+	return result, nil
+}
+
+// UpdateMerchantwebHookURL is the resolver for the updateMerchantwebHookUrl field.
+func (r *mutationResolver) UpdateMerchantwebHookURL(ctx context.Context, webhookURL string) (*model.Merchant, error) {
+	merchantService := merchant.NewMerchantService(r.Database)
+	merchant, err := getAuthenticatedAndActiveMerchant(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := merchantService.UpdateMerchantWebhook(*merchant, webhookURL)
+	if err != nil {
+		return nil, gqlerror.ErrToGraphQLError(gqlerror.InternalError, err.Error(), ctx)
+	}
+	return result, nil
 }
 
 // FetchOneProduct is the resolver for the fetchOneProduct field.
@@ -88,3 +132,15 @@ func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//     it when you're done.
+//   - You have helper methods in this file. Move them out to keep these resolver files clean.
+func (r *mutationResolver) UpdateMerchantDetails(ctx context.Context, input model.MerchantUpdate) (*model.Merchant, error) {
+
+	return nil, gqlerror.ErrToGraphQLError(gqlerror.InternalError, "err.Error()", ctx)
+
+}
