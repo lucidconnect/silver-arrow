@@ -110,7 +110,7 @@ func loadCORS(router *mux.Router) {
 					http.MethodPost,
 				},
 				AllowedHeaders:   []string{"*"},
-				AllowCredentials: false,
+				AllowCredentials: true,
 			})
 			c.Log = &log.Logger
 			router.Use(c.Handler)
@@ -125,7 +125,7 @@ func loadCORS(router *mux.Router) {
 				http.MethodPost,
 			},
 			AllowedHeaders:   []string{"*"},
-			AllowCredentials: false,
+			AllowCredentials: true,
 		})
 		c.Log = &log.Logger
 		router.Use(c.Handler)
