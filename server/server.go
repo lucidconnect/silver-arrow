@@ -96,9 +96,42 @@ func (s *Server) merchantGraphqlHandler() *handler.Server {
 
 func loadCORS(router *mux.Router) {
 	switch os.Getenv("APP_ENV") {
+	case "production":
+		{
+			allowedOrigins := []string{"https://portal.lucidconnect.xyz", "https://checkout.lucidconnect.xyz", "https://lucidconnect.xyz"}
+			// for i := range utils.CustomMerchantCodes {
+			// 	allowedOrigins = append(allowedOrigins, fmt.Sprintf("https://%v.web3-pay.com", utils.CustomMerchantCodes[i]))
+			// }
+			c := cors.New(cors.Options{
+				AllowedOrigins: allowedOrigins,
+				AllowedMethods: []string{
+					http.MethodOptions,
+					http.MethodGet,
+					http.MethodPost,
+				},
+				AllowedHeaders:   []string{"*"},
+				AllowCredentials: false,
+			})
+			c.Log = &log.Logger
+			router.Use(c.Handler)
+		}
+	case "staging":
+		c := cors.New(cors.Options{
+			// AllowedOrigins: []string{"https://checkout.sendcashpay.com", "https://*", "http://*", "https://checkout.transfers.africa"},
+			AllowedOrigins: []string{"https://*", "http://*"},
+			AllowedMethods: []string{
+				http.MethodOptions,
+				http.MethodGet,
+				http.MethodPost,
+			},
+			AllowedHeaders:   []string{"*"},
+			AllowCredentials: false,
+		})
+		c.Log = &log.Logger
+		router.Use(c.Handler)
 	default:
 		c := cors.New(cors.Options{
-			AllowedOrigins: []string{"*"},
+			AllowedOrigins: []string{"http://localhost:4002/", "http://localhost:7890/", "http://localhost:3000/", "https://*", "http://*", "*"},
 			AllowedMethods: []string{
 				http.MethodOptions,
 				http.MethodGet,
