@@ -99,7 +99,7 @@ func loadCORS(router *mux.Router) {
 	switch os.Getenv("APP_ENV") {
 	default:
 		router.Use(cors.New(cors.Options{
-			AllowedOrigins: []string{"https://*", "http://*"},
+			AllowedOrigins: []string{"https://*", "http://*", "*"},
 			AllowedMethods: []string{
 				http.MethodOptions,
 				http.MethodGet,
