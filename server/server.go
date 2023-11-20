@@ -115,20 +115,20 @@ func loadCORS(router *mux.Router) {
 			c.Log = &log.Logger
 			router.Use(c.Handler)
 		}
-	case "staging":
-		c := cors.New(cors.Options{
-			// AllowedOrigins: []string{"https://checkout.sendcashpay.com", "https://*", "http://*", "https://checkout.transfers.africa"},
-			AllowedOrigins: []string{"https://portal.lucidconnect.xyz", "https://checkout.lucidconnect.xyz", "https://lucidconnect.xyz", "https://wallet.lucidconnect.xyz", "https://*", "http://*"},
-			AllowedMethods: []string{
-				http.MethodOptions,
-				http.MethodGet,
-				http.MethodPost,
-			},
-			AllowedHeaders:   []string{"*"},
-			AllowCredentials: true,
-		})
-		c.Log = &log.Logger
-		router.Use(c.Handler)
+	// case "staging":
+	// 	c := cors.New(cors.Options{
+	// 		// AllowedOrigins: []string{"https://checkout.sendcashpay.com", "https://*", "http://*", "https://checkout.transfers.africa"},
+	// 		AllowedOrigins: []string{"https://portal.lucidconnect.xyz", "https://checkout.lucidconnect.xyz", "https://lucidconnect.xyz", "https://wallet.lucidconnect.xyz", "https://*", "http://*"},
+	// 		AllowedMethods: []string{
+	// 			http.MethodOptions,
+	// 			http.MethodGet,
+	// 			http.MethodPost,
+	// 		},
+	// 		AllowedHeaders:   []string{"*"},
+	// 		AllowCredentials: true,
+	// 	})
+	// 	c.Log = &log.Logger
+	// 	router.Use(c.Handler)
 	default:
 		c := cors.New(cors.Options{
 			AllowedOrigins: []string{"http://localhost:4002/", "http://localhost:7890/", "http://localhost:3000/", "https://*", "http://*", "*"},
