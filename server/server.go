@@ -25,7 +25,7 @@ type Server struct {
 	router       *mux.Router
 	bundler      *erc4337.AlchemyService
 	database     repository.Database
-	sessionStore *sessions.CookieStore
+	sessionStore sessions.Store
 	// walletGraphqlHandler, merchantGraphqlHandler *handler.Server
 }
 
@@ -46,13 +46,12 @@ func NewServer(db *repository.DB) *Server {
 
 	loadCORS(router)
 	loadAuthMiddleware(router, *db)
-
 	return &Server{
 		queue:        queue,
 		router:       router,
 		bundler:      bundler,
 		database:     db,
-		sessionStore: sessions.NewCookieStore([]byte("siwe-quickstart-secret")),
+		sessionStore: sessions.NewFilesystemStore("", []byte("siwe-quickstart-secret"))		,
 	}
 }
 
