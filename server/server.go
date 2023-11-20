@@ -75,7 +75,7 @@ func (s *Server) Routes() {
 	auth := s.router.PathPrefix("/auth").Subrouter()
 	// merchant authentication
 	auth.HandleFunc("/nonce", s.GetNonce()).Methods(http.MethodGet)
-	auth.HandleFunc("/verify", s.VerifyMerchant()).Methods(http.MethodPost)
+	auth.HandleFunc("/verify", s.VerifyMerchant())
 }
 
 func (s *Server) walletGraphqlHandler() *handler.Server {
@@ -138,7 +138,7 @@ func loadCORS(router *mux.Router) {
 				http.MethodPost,
 			},
 			AllowedHeaders:   []string{"*"},
-			AllowCredentials: true,
+			AllowCredentials: true,		
 		})
 		c.Log = &log.Logger
 		router.Use(c.Handler)
