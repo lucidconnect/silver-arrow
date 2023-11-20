@@ -34,6 +34,8 @@ func (s *Server) GetNonce() http.HandlerFunc {
 		session, _ := s.sessionStore.Get(r, sessionName)
 		session.Values["nonce"] = siwe.GenerateNonce()
 		session.Options.SameSite = http.SameSiteNoneMode
+		// session.Options.HttpOnly = true
+		session.Options.Secure = true
 		session.Save(r, w)
 		fmt.Println(session.ID)
 
