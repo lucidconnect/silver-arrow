@@ -45,7 +45,6 @@ func NewServer(db *repository.DB) *Server {
 	router := mux.NewRouter()
 
 	loadCORS(router)
-	loadAuthMiddleware(router, *db)
 	return &Server{
 		queue:        queue,
 		router:       router,
@@ -64,6 +63,8 @@ func (s *Server) Start(port string) {
 
 func (s *Server) Routes() {
 	merchantRouter := s.router.PathPrefix("/merchant").Subrouter()
+
+	loadAuthMiddleware(merchantRouter, s.database)
 
 	s.router.Handle("/query", s.walletGraphqlHandler())
 	s.router.Handle("/", playground.Handler("api/GraphQL playground", "/query"))
@@ -144,6 +145,6 @@ func loadCORS(router *mux.Router) {
 	}
 }
 
-func loadAuthMiddleware(router *mux.Router, db repository.DB) {
+func loadAuthMiddleware(router *mux.Router, db repository.Database) {
 	router.Use(auth.Middleware(db))
 }

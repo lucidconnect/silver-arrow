@@ -25,7 +25,7 @@ type contextKey struct {
 	name string
 }
 
-func Middleware(db repository.DB) func(http.Handler) http.Handler {
+func Middleware(db repository.Database) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			authorizationValue := r.Header.Get("Authorization")
