@@ -21,11 +21,11 @@ import (
 )
 
 type Server struct {
-	queue                     repository.Queuer
-	router, merchantSubrouter *mux.Router
-	bundler                   *erc4337.AlchemyService
-	database                  repository.Database
-	sessionStore              *sessions.CookieStore
+	queue        repository.Queuer
+	router       *mux.Router
+	bundler      *erc4337.AlchemyService
+	database     repository.Database
+	sessionStore *sessions.CookieStore
 	// walletGraphqlHandler, merchantGraphqlHandler *handler.Server
 }
 
@@ -45,16 +45,14 @@ func NewServer(db *repository.DB) *Server {
 	router := mux.NewRouter()
 
 	loadCORS(router)
-	merchantRouter := router.PathPrefix("/merchant").Subrouter()
-	router.Use(auth.Middleware(*db))
+	loadAuthMiddleware(router, *db)
 
 	return &Server{
-		queue:             queue,
-		router:            router,
-		bundler:           bundler,
-		database:          db,
-		sessionStore:      sessions.NewCookieStore([]byte("siwe-quickstart-secret")),
-		merchantSubrouter: merchantRouter,
+		queue:        queue,
+		router:       router,
+		bundler:      bundler,
+		database:     db,
+		sessionStore: sessions.NewCookieStore([]byte("siwe-quickstart-secret")),
 	}
 }
 
@@ -66,17 +64,18 @@ func (s *Server) Start(port string) {
 }
 
 func (s *Server) Routes() {
-	s.merchantSubrouter.Use(s.Middleware())
+	merchantRouter := s.router.PathPrefix("/merchant").Subrouter()
 
 	s.router.Handle("/query", s.walletGraphqlHandler())
 	s.router.Handle("/", playground.Handler("api/GraphQL playground", "/query"))
 
-	s.merchantSubrouter.Handle("/graphiql", playground.Handler("api/GraphQL playground", "/merchant/query"))
-	s.merchantSubrouter.Handle("/query", s.merchantGraphqlHandler())
+	merchantRouter.Handle("/graphiql", playground.Handler("api/GraphQL playground", "/merchant/query"))
+	merchantRouter.Handle("/query", s.merchantGraphqlHandler())
 
+	auth := s.router.PathPrefix("/auth").Subrouter()
 	// merchant authentication
-	s.router.HandleFunc("/auth/nonce", s.GetNonce()).Methods(http.MethodGet)
-	s.router.HandleFunc("/auth/verify", s.VerifyMerchant()).Methods(http.MethodPost)
+	auth.HandleFunc("/nonce", s.GetNonce()).Methods(http.MethodGet)
+	auth.HandleFunc("/verify", s.VerifyMerchant()).Methods(http.MethodPost)
 }
 
 func (s *Server) walletGraphqlHandler() *handler.Server {
@@ -98,8 +97,8 @@ func (s *Server) merchantGraphqlHandler() *handler.Server {
 func loadCORS(router *mux.Router) {
 	switch os.Getenv("APP_ENV") {
 	default:
-		router.Use(cors.New(cors.Options{
-			AllowedOrigins: []string{"https://*", "http://*"},
+		c := cors.New(cors.Options{
+			AllowedOrigins: []string{"*"},
 			AllowedMethods: []string{
 				http.MethodOptions,
 				http.MethodGet,
@@ -107,6 +106,12 @@ func loadCORS(router *mux.Router) {
 			},
 			AllowedHeaders:   []string{"*"},
 			AllowCredentials: true,
-		}).Handler)
+		})
+		c.Log = &log.Logger
+		router.Use(c.Handler)
 	}
+}
+
+func loadAuthMiddleware(router *mux.Router, db repository.DB) {
+	router.Use(auth.Middleware(db))
 }
