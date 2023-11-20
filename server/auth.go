@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/google/uuid"
 	"github.com/lucidconnect/silver-arrow/auth"
 	"github.com/rs/zerolog/log"
 	"github.com/spruceid/siwe-go"
@@ -33,8 +32,8 @@ var (
 func (s *Server) GetNonce() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		session, _ := s.sessionStore.Get(r, sessionName)
-		session.ID = uuid.NewString()
 		session.Values["nonce"] = siwe.GenerateNonce()
+		session.Options.SameSite = http.SameSiteNoneMode
 		session.Save(r, w)
 		fmt.Println(session.ID)
 
