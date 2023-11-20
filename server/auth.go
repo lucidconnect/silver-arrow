@@ -82,6 +82,7 @@ func (s *Server) VerifyMerchant() http.HandlerFunc {
 			data := &responseData{Valid: false}
 			response := &httpResponse{Status: http.StatusBadRequest, Data: data, Error: "invalid signature"}
 			writeJsonResponse(w, response)
+			return
 		}
 
 		address := crypto.PubkeyToAddress(*pkey)
