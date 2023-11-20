@@ -129,7 +129,7 @@ func GetTransferFnData(erc20TokenABI string, to string, amount *big.Int) ([]byte
 	return payload, nil
 }
 
-func GetExecuteFnData(accountABI, to string, amount *big.Int, callData []byte) ([]byte, error) {
+func GetExecuteFnData(to string, amount *big.Int, callData []byte) ([]byte, error) {
 	dest := common.HexToAddress(to)
 
 	contractABI, err := Kernel.KernelMetaData.GetAbi()

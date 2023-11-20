@@ -741,7 +741,7 @@ func (ws *WalletService) InitiateTransfer(sender, target, token string, amount f
 	// userophash has to be returned for the user to sign
 	return vd, op, nil
 }
-func (ws *WalletService) ValidateTransfer(userop map[string]any, chain int64) (*model.TransactionData, error) {
+func (ws *WalletService) ExecuteUserop(userop map[string]any, chain int64) (*model.TransactionData, error) {
 	bundler, err := erc4337.NewAlchemyService(chain)
 	if err != nil {
 		log.Err(err).Caller().Send()
@@ -871,21 +871,67 @@ func (ws *WalletService) isAccountDeployed(address string, chain int64) bool {
 
 // TODO: not finished
 // CancelSubscription will remove the subscription key from the wallet
-func (ws *WalletService) CancelSubscription(subscriptionId string) (string, error) {
+func (ws *WalletService) CancelSubscription(subscriptionId string) (string, map[string]any, error) {
 	id, err := uuid.Parse(subscriptionId)
 	if err != nil {
 		err = errors.Wrapf(err, "parsing subscription id %v failed", subscriptionId)
 		log.Err(err).Send()
-		return "", err
+		return "", nil, err
 	}
-	_, err = ws.database.FindSubscriptionById(id)
+	sub, err := ws.database.FindSubscriptionById(id)
 	if err != nil {
 		err = errors.Wrapf(err, "failed to fetch subscription %v", subscriptionId)
 		log.Err(err).Send()
+		return "", nil, err
+	}
+
+	address := common.HexToAddress(sub.WalletAddress)
+	subKey := common.HexToAddress(sub.Key.PublicKey)
+
+	disableValidatorCallData, err := erc4337.DisableValidator(subKey)
+	if err != nil {
+		err = errors.Wrap(err, "failed to fetch validator disable calldata")
+		log.Err(err).Send()
+		return "", nil, err
+	}
+
+	callData, err := erc4337.GetExecuteFnData(ws.validatorAddress, common.Big0, disableValidatorCallData)
+	if err != nil {
+		err = errors.Wrap(err, "failed to create final call data")
+		return "", nil, err
+	}
+
+	nonce, err := ws.bundlerService.GetAccountNonce(address)
+	if err != nil {
+		return "", nil, err
+	}
+	op, err := ws.bundlerService.CreateUnsignedUserOperation(address.Hex(), nil, callData, nonce, true, sub.Chain)
+	if err != nil {
+		return "", nil, err
+	}
+
+	userop, err := userop.New(op)
+	if err != nil {
+		return "", nil, err
+	}
+
+	entryPoint := common.HexToAddress(ws.bundlerService.EntryPoint)
+	hash := userop.GetUserOpHash(entryPoint, big.NewInt(sub.Chain))
+
+	update := map[string]any{
+		"active":     false,
+		"updated_at": time.Now(),
+	}
+
+	err = ws.database.UpdateSubscription(id, update)
+	if err != nil {
+		err = errors.Wrapf(err, "modifying subscription status failed for sub %v ", subscriptionId)
+		log.Err(err).Send()
+		return "", nil, fmt.Errorf("could not disable subscription with id %v", subscriptionId)
 	}
 
 	// ws.database.DeactivateSubscription()
-	return "", errors.New("unimplemented")
+	return hash.Hex(), op, nil
 }
 
 // DisableSubscription only toggles a subscription status to inactive

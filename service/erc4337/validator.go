@@ -9,6 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	KernelStorage "github.com/lucidconnect/silver-arrow/abi/kernelStorage"
+	"github.com/lucidconnect/silver-arrow/abi/sessionKeyOwnedValidator"
 	"github.com/pkg/errors"
 )
 
@@ -107,6 +108,21 @@ func (v *SessionKeyOwnedValidator) SetExecution(enableData []byte, ownerAccount 
 	}
 	// log.Fatalln("exit")
 
+	return callData, nil
+}
+
+// DisableValidator creates the call data which is a call to the disable method on the validator
+func DisableValidator(sessionKey common.Address) ([]byte, error) {
+	sessionKeyValidatorAbi, err := sessionKeyOwnedValidator.SessionKeyOwnedValidatorMetaData.GetAbi()
+	if err != nil {
+		err = errors.Wrap(err, "SessionKeyOwnedValidator abi error")
+		return nil, err
+	}
+
+	callData, err := sessionKeyValidatorAbi.Pack("disable", sessionKey.Bytes())
+	if err != nil {
+		return nil, err
+	}
 	return callData, nil
 }
 
