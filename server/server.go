@@ -1,9 +1,11 @@
 package server
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
@@ -61,6 +63,11 @@ func (s *Server) Start(port string) {
 }
 
 func (s *Server) Routes() {
+
+	s.router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, fmt.Sprintf("Lucid Backend Service %v",
+			strings.ToTitle(os.Getenv("APP_ENV"))))
+	})
 	// merchant authentication
 	authRouter := s.router.PathPrefix("/auth").Subrouter()
 	authRouter.HandleFunc("/nonce", s.GetNonce()).Methods(http.MethodGet)
@@ -72,10 +79,10 @@ func (s *Server) Routes() {
 	merchantRouter.Handle("/query", s.merchantGraphqlHandler())
 
 	// checkout
-	checkoutRouter := s.router.PathPrefix("/checkout").Subrouter()
-	checkoutRouter.Use(s.CheckoutMiddleware())
-	checkoutRouter.Handle("/query", s.walletGraphqlHandler())
-	checkoutRouter.Handle("/graphiql", playground.Handler("/api/Graphql playground", "/checkout/query"))
+	walletRouter := s.router.PathPrefix("/wallet").Subrouter()
+	walletRouter.Use(s.CheckoutMiddleware())
+	walletRouter.Handle("/query", s.walletGraphqlHandler())
+	walletRouter.Handle("/graphiql", playground.Handler("/api/Graphql playground", "/wallet/query"))
 	// s.router.Handle("/merchant/graphiql",  playground.Handler("api/GraphQL playground", "/merchant/query"))
 	// s.router.Handle("/", playground.Handler("api/GraphQL playground", "/query"))
 }
