@@ -50,7 +50,7 @@ func NewServer(db *repository.DB) *Server {
 	sesisonStore.Options = &sessions.Options{
 		Path: "/",
 		MaxAge: 3600*24,
-		Secure: true,
+		Secure: false,
 		SameSite: http.SameSiteNoneMode,
 	}
 	loadCORS(router)
