@@ -25,6 +25,7 @@ type Merchant struct {
 	Email            string
 	PublicKey        string // lucid public key for authenticating requests
 	WebhookUrl       string
+	WebhookToken     string
 	OwnerAddress     string `gorm:"unique"` // web3 wallet that owns this account
 	Products         []Product
 	ConvoyEndpointID string
