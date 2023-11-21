@@ -283,6 +283,7 @@ func (r *queryResolver) FetchSubscriptions(ctx context.Context, account string) 
 	ws := wallet.NewWalletService(r.Database, 0)
 	subs, err := ws.FetchSubscriptions(account)
 	if err != nil {
+		log.Err(err).Send()
 		return nil, gqlerror.ErrToGraphQLError(gqlerror.InternalError, "failed to fetch subscriptions", ctx)
 	}
 	return subs, nil

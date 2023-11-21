@@ -9,7 +9,6 @@ import (
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
-	"github.com/lucidconnect/silver-arrow/auth"
 	merchant_graph "github.com/lucidconnect/silver-arrow/graphql/merchant/graph"
 	merchant_generated "github.com/lucidconnect/silver-arrow/graphql/merchant/graph/generated"
 	wallet_graph "github.com/lucidconnect/silver-arrow/graphql/wallet/graph"
@@ -62,20 +61,23 @@ func (s *Server) Start(port string) {
 }
 
 func (s *Server) Routes() {
+	// merchant authentication
+	authRouter := s.router.PathPrefix("/auth").Subrouter()
+	authRouter.HandleFunc("/nonce", s.GetNonce()).Methods(http.MethodGet)
+	authRouter.HandleFunc("/verify", s.VerifyMerchant())
+
 	merchantRouter := s.router.PathPrefix("/merchant").Subrouter()
-
-	loadAuthMiddleware(merchantRouter, s.database)
-
-	s.router.Handle("/query", s.walletGraphqlHandler())
-	s.router.Handle("/", playground.Handler("api/GraphQL playground", "/query"))
-
+	merchantRouter.Use(s.MerchantAuthMiddleware())
 	merchantRouter.Handle("/graphiql", playground.Handler("api/GraphQL playground", "/merchant/query"))
 	merchantRouter.Handle("/query", s.merchantGraphqlHandler())
 
-	auth := s.router.PathPrefix("/auth").Subrouter()
-	// merchant authentication
-	auth.HandleFunc("/nonce", s.GetNonce()).Methods(http.MethodGet)
-	auth.HandleFunc("/verify", s.VerifyMerchant())
+	// checkout
+	checkoutRouter := s.router.PathPrefix("/checkout").Subrouter()
+	checkoutRouter.Use(s.CheckoutMiddleware())
+	checkoutRouter.Handle("/query", s.walletGraphqlHandler())
+	checkoutRouter.Handle("/graphiql", playground.Handler("/api/Graphql playground", "/checkout/query"))
+	// s.router.Handle("/merchant/graphiql",  playground.Handler("api/GraphQL playground", "/merchant/query"))
+	// s.router.Handle("/", playground.Handler("api/GraphQL playground", "/query"))
 }
 
 func (s *Server) walletGraphqlHandler() *handler.Server {
@@ -145,6 +147,7 @@ func loadCORS(router *mux.Router) {
 	}
 }
 
-func loadAuthMiddleware(router *mux.Router, db repository.Database) {
-	router.Use(auth.Middleware(db))
-}
+// func loadMerchantAuthMiddleware(router *mux.Router, db repository.Database) {
+// 	// router.Use(auth.Middleware(db))
+// 	router.Use()
+// }

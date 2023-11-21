@@ -1,15 +1,12 @@
 package server
 
 import (
-	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/lucidconnect/silver-arrow/auth"
 	"github.com/rs/zerolog/log"
 	"github.com/spruceid/siwe-go"
 )
@@ -108,38 +105,5 @@ func writeJsonResponse(w http.ResponseWriter, response *httpResponse) {
 		log.Err(err).Send()
 		w.WriteHeader(http.StatusInternalServerError)
 		return
-	}
-}
-
-func (s *Server) Middleware() func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			session, _ := s.sessionStore.Get(r, sessionName)
-			siweObj := session.Values["siwe"]
-
-			if siweObj == nil {
-				next.ServeHTTP(w, r)
-				return
-			}
-			siweMsg, ok := siweObj.(*siwe.Message)
-			if !ok {
-				err := errors.New("parsing siwe object failed")
-				log.Err(err).Send()
-				next.ServeHTTP(w, r)
-				return
-			}
-
-			merchantAddress := siweMsg.GetAddress().Hex()
-			merchant, err := s.database.FetchMerchantByAddress(merchantAddress)
-			if err != nil {
-				log.Err(err).Send()
-				next.ServeHTTP(w, r)
-				return
-			}
-			merchantCtx := context.WithValue(r.Context(), auth.AuthMerchantCtxKey, merchant)
-			r = r.WithContext(merchantCtx)
-
-			next.ServeHTTP(w, r)
-		})
 	}
 }
