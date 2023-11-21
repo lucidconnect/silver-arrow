@@ -30,7 +30,7 @@ func (s *Server) GetNonce() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		session, _ := s.sessionStore.Get(r, sessionName)
 		session.Values["nonce"] = siwe.GenerateNonce()
-		session.Options.SameSite = http.SameSiteDefaultMode
+		session.Options.SameSite = http.SameSiteNoneMode
 		// session.Options.HttpOnly = true
 		session.Options.Secure = true
 		session.Options.MaxAge = int(24 * time.Hour.Seconds())
@@ -67,7 +67,13 @@ func (s *Server) VerifyMerchant() http.HandlerFunc {
 		fmt.Println(session.ID)
 		message := request.Message
 		signature := request.Signature
-		nonce := session.Values["nonce"].(string)
+		nonce, ok := session.Values["nonce"].(string)
+		if !ok {
+			log.Error().Msg("nonce is empty")
+			response := &httpResponse{Status: http.StatusInternalServerError, Error: ""}
+			writeJsonResponse(w, response)
+			return
+		}
 		siweObj, err := siwe.ParseMessage(message)
 		if err != nil {
 			log.Err(err).Msg("parsing siwe message failed")
