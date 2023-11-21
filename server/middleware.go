@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"os"
 	"strings"
@@ -20,7 +21,7 @@ func (s *Server) MerchantAuthMiddleware() func(http.Handler) http.Handler {
 			if app != "production" {
 				authorizationValue := r.Header.Get("Authorization")
 				if authorizationValue == "" {
-					if strings.Contains(r.RequestURI, "graphiql"){
+					if strings.Contains(r.RequestURI, "graphiql") {
 						next.ServeHTTP(w, r)
 						return
 					}
@@ -54,6 +55,7 @@ func (s *Server) MerchantAuthMiddleware() func(http.Handler) http.Handler {
 				log.Err(err).Send()
 			}
 			siweObj := session.Values["siwe"]
+			fmt.Println("siwe:", siweObj)
 
 			if siweObj == nil {
 				w.WriteHeader(http.StatusForbidden)
