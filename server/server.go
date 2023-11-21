@@ -50,7 +50,7 @@ func NewServer(db *repository.DB) *Server {
 		router:       router,
 		bundler:      bundler,
 		database:     db,
-		sessionStore: sessions.NewFilesystemStore("", []byte("siwe-quickstart-secret"))		,
+		sessionStore: sessions.NewFilesystemStore("", []byte("siwe-quickstart-secret")),
 	}
 }
 
@@ -131,14 +131,14 @@ func loadCORS(router *mux.Router) {
 	// 	router.Use(c.Handler)
 	default:
 		c := cors.New(cors.Options{
-			AllowedOrigins: []string{"http://localhost:4002", "http://localhost:7890", "http://localhost:3000"},
+			AllowedOrigins: []string{"https://portal.lucidconnect.xyz", "https://checkout.lucidconnect.xyz", "https://lucidconnect.xyz", "https://wallet.lucidconnect.xyz", "http://localhost:4002", "http://localhost:7890", "http://localhost:3000"},
 			AllowedMethods: []string{
 				http.MethodOptions,
 				http.MethodGet,
 				http.MethodPost,
 			},
 			AllowedHeaders:   []string{"*"},
-			AllowCredentials: true,		
+			AllowCredentials: true,
 		})
 		c.Log = &log.Logger
 		router.Use(c.Handler)
