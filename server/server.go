@@ -45,13 +45,21 @@ func NewServer(db *repository.DB) *Server {
 
 	router := mux.NewRouter()
 
+	sesisonStore := sessions.NewFilesystemStore("", []byte("siwe-quickstart-secret"))
+
+	sesisonStore.Options = &sessions.Options{
+		Path: "/",
+		MaxAge: 3600*24,
+		Secure: true,
+		SameSite: http.SameSiteNoneMode,
+	}
 	loadCORS(router)
 	return &Server{
 		queue:        queue,
 		router:       router,
 		bundler:      bundler,
 		database:     db,
-		sessionStore: sessions.NewFilesystemStore("", []byte("siwe-quickstart-secret")),
+		sessionStore:sesisonStore,
 	}
 }
 

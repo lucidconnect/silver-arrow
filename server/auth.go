@@ -30,10 +30,10 @@ func (s *Server) GetNonce() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		session, _ := s.sessionStore.Get(r, sessionName)
 		session.Values["nonce"] = siwe.GenerateNonce()
-		session.Options.SameSite = http.SameSiteNoneMode
+		// session.Options.SameSite = http.SameSiteNoneMode
 		// session.Options.HttpOnly = true
-		session.Options.Secure = true
-		session.Options.MaxAge = int(24 * time.Hour.Seconds())
+		// session.Options.Secure = true
+		// session.Options.MaxAge = int(24 * time.Hour.Seconds())
 
 		session.Save(r, w)
 		fmt.Println(session.ID)
