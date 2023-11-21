@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/rs/zerolog/log"
@@ -95,8 +94,11 @@ func (s *Server) VerifyMerchant() http.HandlerFunc {
 
 		session.Values["siwe"] = siweObj
 		fmt.Println("siwe:", session.Values["siwe"])
-		session.Options.MaxAge = int(24 * time.Hour.Seconds())
-		session.Save(r, w)
+		if err := session.Save(r, w); err != nil {
+			log.Err(err).Send()
+			return
+		}
+		fmt.Println("session: ", session.Values)
 		data := &responseData{Valid: true, Address: address.Hex()}
 
 		if merchant, err := s.database.FetchMerchantByAddress(address.Hex()); err == nil {
