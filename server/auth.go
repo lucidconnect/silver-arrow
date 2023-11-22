@@ -49,10 +49,11 @@ func (s *Server) VerifyMerchant() http.HandlerFunc {
 		Signature string `json:"signature"`
 	}
 	type responseData struct {
-		Valid      bool   `json:"status"`
-		Token      string `json:"token"`
-		Address    string `json:"address,omitempty"`
-		MerchantId string `json:"merchant_id,omitempty"`
+		Valid           bool   `json:"status"`
+		Token           string `json:"token"`
+		Address         string `json:"address,omitempty"`
+		MerchantId      string `json:"merchant_id,omitempty"`
+		IsValidMerchant bool   `json:"is_valid_merchant"`
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -107,10 +108,11 @@ func (s *Server) VerifyMerchant() http.HandlerFunc {
 			writeJsonResponse(w, response)
 			return
 		}
-		data := &responseData{Valid: true, Address: address.Hex(), Token: jwt}
+		data := &responseData{Valid: true, Address: address.Hex(), Token: jwt, IsValidMerchant: false}
 
 		if merchant, err := s.database.FetchMerchantByAddress(address.Hex()); err == nil {
 			data.MerchantId = merchant.ID.String()
+			data.IsValidMerchant = true
 		}
 
 		response := &httpResponse{Status: http.StatusOK, Data: data}
