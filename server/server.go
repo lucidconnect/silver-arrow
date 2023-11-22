@@ -82,7 +82,7 @@ func (s *Server) Routes() {
 	authRouter.HandleFunc("/verify", s.VerifyMerchant())
 
 	merchantRouter := s.router.PathPrefix("/merchant").Subrouter()
-	merchantRouter.Use(s.MerchantAuthMiddleware())
+	merchantRouter.Use(s.JWTMiddleware())
 	merchantRouter.Handle("/graphiql", playground.Handler("api/GraphQL playground", "/merchant/query"))
 	merchantRouter.Handle("/query", s.merchantGraphqlHandler())
 

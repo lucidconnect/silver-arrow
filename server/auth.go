@@ -1,11 +1,16 @@
 package server
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
+	"time"
 
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/golang-jwt/jwt"
+
 	"github.com/rs/zerolog/log"
 	"github.com/spruceid/siwe-go"
 )
@@ -29,16 +34,11 @@ func (s *Server) GetNonce() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		session, _ := s.sessionStore.Get(r, sessionName)
 		session.Values["nonce"] = siwe.GenerateNonce()
-		// session.Options.SameSite = http.SameSiteNoneMode
-		// session.Options.HttpOnly = true
-		// session.Options.Secure = true
-		// session.Options.MaxAge = int(24 * time.Hour.Seconds())
 
 		session.Save(r, w)
 		fmt.Println(session.ID)
 
 		w.Header().Set("Content-Type", "text/plain")
-		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(session.Values["nonce"].(string)))
 	}
 }
@@ -50,6 +50,7 @@ func (s *Server) VerifyMerchant() http.HandlerFunc {
 	}
 	type responseData struct {
 		Valid      bool   `json:"status"`
+		Token      string `json:"token"`
 		Address    string `json:"address,omitempty"`
 		MerchantId string `json:"merchant_id,omitempty"`
 	}
@@ -92,14 +93,21 @@ func (s *Server) VerifyMerchant() http.HandlerFunc {
 
 		address := crypto.PubkeyToAddress(*pkey)
 
-		session.Values["siwe"] = siweObj
-		fmt.Println("siwe:", session.Values["siwe"])
-		if err := session.Save(r, w); err != nil {
-			log.Err(err).Send()
+		// session.Values["siwe"] = siweObj
+		// fmt.Println("siwe:", session.Values["siwe"])
+		// if err := session.Save(r, w); err != nil {
+		// 	log.Err(err).Send()
+		// 	return
+		// }
+		// fmt.Println("session: ", session.Values)
+		jwt, err := generateJwt(address.Hex())
+		if err != nil {
+			log.Err(err).Msg("generating jwt failed")
+			response := &httpResponse{Status: http.StatusInternalServerError}
+			writeJsonResponse(w, response)
 			return
 		}
-		fmt.Println("session: ", session.Values)
-		data := &responseData{Valid: true, Address: address.Hex()}
+		data := &responseData{Valid: true, Address: address.Hex(), Token: jwt}
 
 		if merchant, err := s.database.FetchMerchantByAddress(address.Hex()); err == nil {
 			data.MerchantId = merchant.ID.String()
@@ -114,7 +122,32 @@ func (s *Server) VerifyMerchant() http.HandlerFunc {
 func writeJsonResponse(w http.ResponseWriter, response *httpResponse) {
 	if err := json.NewEncoder(w).Encode(response); err != nil {
 		log.Err(err).Send()
-		w.WriteHeader(http.StatusInternalServerError)
+		w.WriteHeader(response.Status)
 		return
 	}
+}
+
+func generateJwt(user string) (string, error) {
+	var secretKey = os.Getenv("JWT_SECRET")
+	key, err := hex.DecodeString(secretKey)
+	if err != nil {
+		log.Err(err).Msg("decoding secret key failed")
+		return "", err
+	}
+	log.Info().Msg(string(key))
+
+	claims := jwt.MapClaims{}
+	claims["exp"] = time.Now().Add(24 * time.Hour).Unix()
+	claims["authorized"] = true
+	claims["user"] = user
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	fmt.Println(token.Claims)
+
+	tokenString, err := token.SignedString(key)
+	if err != nil {
+		return "", err
+	}
+
+	return tokenString, nil
 }
