@@ -38,10 +38,10 @@ func (s *Subscription) BeforeCreate(tx *gorm.DB) (err error) {
 }
 
 type Payment struct {
-	ID                    uuid.UUID     `gorm:"primaryKey"`
-	Type                  string        `gorm:"not null"`
-	Chain                 int64         `gorm:"not null"`
-	Token                 string        `gorm:"not null"`
+	ID                    uuid.UUID `gorm:"primaryKey"`
+	Type                  string    `gorm:"not null"`
+	Chain                 int64     `gorm:"not null"`
+	Token                 string    `gorm:"not null"`
 	TokenAddress          string
 	Status                PaymentStatus `gorm:"not null"`
 	Amount                int64         `gorm:"not null"`

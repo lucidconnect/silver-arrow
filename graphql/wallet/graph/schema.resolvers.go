@@ -12,10 +12,10 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/lucidconnect/silver-arrow/graphql/wallet/graph/generated"
-	"github.com/lucidconnect/silver-arrow/graphql/wallet/graph/model"
 	"github.com/lucidconnect/silver-arrow/auth"
 	"github.com/lucidconnect/silver-arrow/gqlerror"
+	"github.com/lucidconnect/silver-arrow/graphql/wallet/graph/generated"
+	"github.com/lucidconnect/silver-arrow/graphql/wallet/graph/model"
 	"github.com/lucidconnect/silver-arrow/service/erc4337"
 	"github.com/lucidconnect/silver-arrow/service/wallet"
 	"github.com/rs/zerolog/log"
@@ -165,10 +165,15 @@ func (r *mutationResolver) ModifySubscriptionState(ctx context.Context, input mo
 	switch input.Toggle {
 	case model.StatusToggleCancel:
 		// cancel subscription
-		result, err = walletService.CancelSubscription(input.SubscriptionID)
+		useropHash, userop, err := walletService.CancelSubscription(input.SubscriptionID)
 		if err != nil {
 			return "", gqlerror.ErrToGraphQLError(gqlerror.InternalError, "Subscription could not be canceled", ctx)
 		}
+		if err = r.Cache.Set(useropHash, userop); err != nil {
+			log.Err(err).Send()
+			return "", gqlerror.ErrToGraphQLError(gqlerror.InternalError, "Subscription could not be canceled", ctx)
+		}
+		result = useropHash
 	case model.StatusToggleDisable:
 		// temporary disbale
 		result, err = walletService.DisableSubscription(input.SubscriptionID)
@@ -183,6 +188,35 @@ func (r *mutationResolver) ModifySubscriptionState(ctx context.Context, input mo
 		}
 	}
 	return result, nil
+}
+
+// ConfirmCancelSubscription is the resolver for the confirmCancelSubscription field.
+func (r *mutationResolver) ConfirmCancelSubscription(ctx context.Context, input model.RequestValidation) (string, error) {
+	opInterface, err := r.Cache.Get(input.UserOpHash)
+	if err != nil {
+		log.Err(err).Send()
+		return "", gqlerror.ErrToGraphQLError(gqlerror.InternalError, "validating subscription cancellation failed", ctx)
+	}
+	op, _ := opInterface.(map[string]any)
+	sig, err := hexutil.Decode(erc4337.SUDO_MODE)
+	if err != nil {
+		log.Err(err).Send()
+		return "", gqlerror.ErrToGraphQLError(gqlerror.InternalError, "validating subscription cancellation failed", ctx)
+	}
+	partialSig, err := hexutil.Decode(input.SignedMessage)
+
+	sig = append(sig, partialSig...)
+	op["signature"] = hexutil.Encode(sig)
+
+	chain := int64(input.Chain)
+
+	walletService := wallet.NewWalletService(r.Database, int64(input.Chain))
+
+	transactionData, err := walletService.ExecuteUserop(op, chain)
+	if err != nil {
+		return "", gqlerror.ErrToGraphQLError(gqlerror.InternalError, "validating token transfer failed", ctx)
+	}
+	return transactionData.TransactionExplorer, nil
 }
 
 // InitiateTransferRequest is the resolver for the initiateTransferRequest field.
@@ -236,7 +270,7 @@ func (r *mutationResolver) ValidateTransferRequest(ctx context.Context, input mo
 
 	walletService := wallet.NewWalletService(r.Database, int64(input.Chain))
 
-	td, err := walletService.ValidateTransfer(op, chain)
+	td, err := walletService.ExecuteUserop(op, chain)
 	if err != nil {
 		return nil, gqlerror.ErrToGraphQLError(gqlerror.InternalError, "validating token transfer failed", ctx)
 	}
@@ -249,6 +283,7 @@ func (r *queryResolver) FetchSubscriptions(ctx context.Context, account string) 
 	ws := wallet.NewWalletService(r.Database, 0)
 	subs, err := ws.FetchSubscriptions(account)
 	if err != nil {
+		log.Err(err).Send()
 		return nil, gqlerror.ErrToGraphQLError(gqlerror.InternalError, "failed to fetch subscriptions", ctx)
 	}
 	return subs, nil

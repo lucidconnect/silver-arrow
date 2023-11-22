@@ -14,10 +14,8 @@ import (
 )
 
 func CreateTransferCallData(toAddress, token string, chain int64, amount *big.Int) ([]byte, error) {
-	accountABI := getAccountABI()
-
 	if isNativeToken(token, chain) {
-		callData, err := GetExecuteFnData(accountABI, toAddress, amount, nil)
+		callData, err := GetExecuteFnData(toAddress, amount, nil)
 		if err != nil {
 			err = errors.Wrap(err, "CreateTransferCallData(): failed to create final call data")
 			return nil, err
@@ -34,7 +32,7 @@ func CreateTransferCallData(toAddress, token string, chain int64, amount *big.In
 	}
 
 	tokenAddress := erc20.GetTokenAddress(token, chain)
-	callData, err := GetExecuteFnData(accountABI, tokenAddress, common.Big0, erc20TransferData)
+	callData, err := GetExecuteFnData(tokenAddress, common.Big0, erc20TransferData)
 	if err != nil {
 		err = errors.Wrap(err, "CreateTransferCallData(): failed to create final call data")
 		return nil, err
