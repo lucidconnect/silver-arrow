@@ -52,7 +52,7 @@ func NewServer(db *repository.DB) *Server {
 	sesisonStore.SessionOpts = &sessions.Options{
 		Path:     "/",
 		MaxAge:   3600,
-		Secure:   false,
+		Secure:   true,
 		SameSite: http.SameSiteNoneMode,
 	}
 
