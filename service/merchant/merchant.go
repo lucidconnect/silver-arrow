@@ -51,7 +51,6 @@ func (m *MerchantService) CreateMerchant(input model.NewMerchant) (*model.Mercha
 
 	endpoint, err := convoyClient.Endpoints.Create(&convoy.CreateEndpointRequest{
 		Secret:       token,
-		URL:          *input.WebHookURL,
 		Description:  input.Name + "'s default endpoint",
 		SupportEmail: input.Email,
 	}, &convoy.EndpointQueryParam{
