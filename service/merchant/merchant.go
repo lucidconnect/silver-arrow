@@ -81,7 +81,6 @@ func (m *MerchantService) CreateMerchant(input model.NewMerchant) (*model.Mercha
 		OwnerAddress:     input.Owner,
 		WebhookToken:     token,
 		ConvoyEndpointID: endpoint.UID,
-		WebhookUrl:       *input.WebHookURL,
 	}
 
 	if err := m.repository.AddMerchant(merchant); err != nil {
