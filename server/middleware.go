@@ -89,7 +89,7 @@ func (s *Server) JWTMiddleware() func(http.Handler) http.Handler {
 					writeJsonResponse(w, response)
 					return
 				}
-				siwe, err := parseSiweClaim(claims["siwe"])
+				siwe, err := parseSiweClaim(claims)
 				if err != nil {
 					log.Err(err).Msg("parsing siwe claims failed")
 					response := &httpResponse{Status: http.StatusInternalServerError}

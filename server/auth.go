@@ -144,7 +144,7 @@ func generateJwt(siweMsg string) (string, error) {
 	claims["siwe"] = siweMsg
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	fmt.Println(token.Claims)
+	fmt.Println("claims", token.Claims)
 
 	tokenString, err := token.SignedString(key)
 	if err != nil {
