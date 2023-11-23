@@ -44,35 +44,35 @@ func (m *MerchantService) CreateMerchant(input model.NewMerchant) (*model.Mercha
 	id := uuid.New()
 
 	token := RandStringRunes(32)
-	convoyClient := convoy.New(convoy.Options{
-		APIKey:    os.Getenv("CONVOY_API_KEY"),
-		ProjectID: os.Getenv("CONVOY_PROJECT_ID"),
-	})
+	// convoyClient := convoy.New(convoy.Options{
+	// 	APIKey:    os.Getenv("CONVOY_API_KEY"),
+	// 	ProjectID: os.Getenv("CONVOY_PROJECT_ID"),
+	// })
 
-	endpoint, err := convoyClient.Endpoints.Create(&convoy.CreateEndpointRequest{
-		Secret:       token,
-		Description:  input.Name + "'s default endpoint",
-		SupportEmail: input.Email,
-	}, &convoy.EndpointQueryParam{
-		GroupID: os.Getenv("CONVOY_PROJECT_ID"),
-	})
+	// endpoint, err := convoyClient.Endpoints.Create(&convoy.CreateEndpointRequest{
+	// 	Secret:       token,
+	// 	Description:  input.Name + "'s default endpoint",
+	// 	SupportEmail: input.Email,
+	// }, &convoy.EndpointQueryParam{
+	// 	GroupID: os.Getenv("CONVOY_PROJECT_ID"),
+	// })
 
-	if err != nil {
-		log.Err(err).Msg("failed to create app endpoint")
-		return nil, errors.New("failed to create merchant's endpoint on Convoy")
-	}
+	// if err != nil {
+	// 	log.Err(err).Msg("failed to create app endpoint")
+	// 	return nil, errors.New("failed to create merchant's endpoint on Convoy")
+	// }
 
-	_, err = convoyClient.Subscriptions.Create(&convoy.CreateSubscriptionRequest{
-		Name:       input.Name + "'s default subscription",
-		EndpointID: endpoint.UID,
-		FilterConfig: &convoy.FilterConfiguration{
-			EventTypes: []string{"*"},
-		},
-	})
+	// _, err = convoyClient.Subscriptions.Create(&convoy.CreateSubscriptionRequest{
+	// 	Name:       input.Name + "'s default subscription",
+	// 	EndpointID: endpoint.UID,
+	// 	FilterConfig: &convoy.FilterConfiguration{
+	// 		EventTypes: []string{"*"},
+	// 	},
+	// })
 
-	if err != nil {
-		log.Err(err).Msgf("failed to create convoy subscription for merchant with convoy endpoint id %v.", endpoint.UID)
-	}
+	// if err != nil {
+	// 	log.Err(err).Msgf("failed to create convoy subscription for merchant with convoy endpoint id %v.", endpoint.UID)
+	// }
 
 	merchant := &models.Merchant{
 		ID:               id,
@@ -80,7 +80,7 @@ func (m *MerchantService) CreateMerchant(input model.NewMerchant) (*model.Mercha
 		Email:            input.Email,
 		OwnerAddress:     input.Owner,
 		WebhookToken:     token,
-		ConvoyEndpointID: endpoint.UID,
+		// ConvoyEndpointID: endpoint.UID,
 	}
 
 	if err := m.repository.AddMerchant(merchant); err != nil {
