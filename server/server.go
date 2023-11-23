@@ -6,6 +6,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
@@ -19,6 +20,7 @@ import (
 	"github.com/lucidconnect/silver-arrow/service/erc4337"
 	"github.com/rs/cors"
 	"github.com/rs/zerolog/log"
+	"github.com/wader/gormstore/v2"
 )
 
 type Server struct {
@@ -44,22 +46,25 @@ func NewServer(db *repository.DB) *Server {
 	}
 
 	router := mux.NewRouter()
+	sessionSecret := os.Getenv("JWT_SECRET")
+	sesisonStore := gormstore.New(db.Db, []byte(sessionSecret))
 
-	sesisonStore := sessions.NewFilesystemStore("", []byte("siwe-quickstart-secret"))
-
-	sesisonStore.Options = &sessions.Options{
-		Path: "/",
-		MaxAge: 3600*24,
-		Secure: false,
+	sesisonStore.SessionOpts = &sessions.Options{
+		Path:     "/",
+		MaxAge:   3600,
+		Secure:   false,
 		SameSite: http.SameSiteNoneMode,
 	}
+
+	quit := make(chan struct{})
+	go sesisonStore.PeriodicCleanup(1*time.Hour, quit)
 	loadCORS(router)
 	return &Server{
 		queue:        queue,
 		router:       router,
 		bundler:      bundler,
 		database:     db,
-		sessionStore:sesisonStore,
+		sessionStore: sesisonStore,
 	}
 }
 

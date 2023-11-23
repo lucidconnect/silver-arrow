@@ -33,6 +33,7 @@ require (
 	github.com/mmcloughlin/addchain v0.4.0 // indirect
 	github.com/relvacode/iso8601 v1.3.0 // indirect
 	github.com/supranational/blst v0.3.11 // indirect
+	github.com/wader/gormstore/v2 v2.0.3 // indirect
 	go.mongodb.org/mongo-driver v1.12.1 // indirect
 	golang.org/x/sync v0.3.0 // indirect
 	rsc.io/tmplfunc v0.0.3 // indirect
