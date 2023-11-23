@@ -82,7 +82,7 @@ func (s *Server) JWTMiddleware() func(http.Handler) http.Handler {
 					return
 				}
 
-				log.Info().Msgf("token claims", token.Claims)
+				log.Info().Msgf("token claims %v", token.Claims)
 				claims, ok := token.Claims.(jwt.MapClaims)
 				if !ok {
 					log.Error().Msg("parsing claims failed")
