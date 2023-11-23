@@ -27,7 +27,6 @@ func NewMerchantService(r repository.Database) *MerchantService {
 	}
 }
 
-var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 var alphaNumericRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
 
 func RandStringRunes(length int) string {
@@ -35,7 +34,7 @@ func RandStringRunes(length int) string {
 	var b strings.Builder
 	for i := 0; i < length; i++ {
 		n, _ := rand.Int(rand.Reader, big.NewInt(int64(runeLength)))
-		b.WriteRune(letterRunes[n.Int64()])
+		b.WriteRune(alphaNumericRunes[n.Int64()])
 	}
 	str := b.String()
 	return str
