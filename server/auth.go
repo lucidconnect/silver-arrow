@@ -75,6 +75,7 @@ func (s *Server) VerifyMerchant() http.HandlerFunc {
 			writeJsonResponse(w, response)
 			return
 		}
+		log.Info().Msgf("siwe message %v",message)
 		siweObj, err := siwe.ParseMessage(message)
 		if err != nil {
 			log.Err(err).Msg("parsing siwe message failed")
