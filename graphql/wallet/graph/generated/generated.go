@@ -46,12 +46,13 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	Mutation struct {
-		AddAccount              func(childComplexity int, input model.Account) int
-		CreatePaymentIntent     func(childComplexity int, input model.PaymentIntent) int
-		InitiateTransferRequest func(childComplexity int, input model.NewTransferRequest) int
-		ModifySubscriptionState func(childComplexity int, input model.SubscriptionMod) int
-		ValidatePaymentIntent   func(childComplexity int, input model.RequestValidation) int
-		ValidateTransferRequest func(childComplexity int, input model.RequestValidation) int
+		AddAccount                func(childComplexity int, input model.Account) int
+		ConfirmCancelSubscription func(childComplexity int, input model.RequestValidation) int
+		CreatePaymentIntent       func(childComplexity int, input model.PaymentIntent) int
+		InitiateTransferRequest   func(childComplexity int, input model.NewTransferRequest) int
+		ModifySubscriptionState   func(childComplexity int, input model.SubscriptionMod) int
+		ValidatePaymentIntent     func(childComplexity int, input model.RequestValidation) int
+		ValidateTransferRequest   func(childComplexity int, input model.RequestValidation) int
 	}
 
 	Payment struct {
@@ -110,6 +111,7 @@ type MutationResolver interface {
 	CreatePaymentIntent(ctx context.Context, input model.PaymentIntent) (string, error)
 	ValidatePaymentIntent(ctx context.Context, input model.RequestValidation) (*model.TransactionData, error)
 	ModifySubscriptionState(ctx context.Context, input model.SubscriptionMod) (string, error)
+	ConfirmCancelSubscription(ctx context.Context, input model.RequestValidation) (string, error)
 	InitiateTransferRequest(ctx context.Context, input model.NewTransferRequest) (string, error)
 	ValidateTransferRequest(ctx context.Context, input model.RequestValidation) (*model.TransactionData, error)
 }
@@ -144,6 +146,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.AddAccount(childComplexity, args["input"].(model.Account)), true
+
+	case "Mutation.confirmCancelSubscription":
+		if e.complexity.Mutation.ConfirmCancelSubscription == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_confirmCancelSubscription_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.ConfirmCancelSubscription(childComplexity, args["input"].(model.RequestValidation)), true
 
 	case "Mutation.createPaymentIntent":
 		if e.complexity.Mutation.CreatePaymentIntent == nil {
@@ -587,6 +601,7 @@ type Mutation {
 
   # user's dashboard ops
   modifySubscriptionState(input: SubscriptionMod!): String!
+  confirmCancelSubscription(input: RequestValidation!): String!
   initiateTransferRequest(input: NewTransferRequest!): String!
   validateTransferRequest(input: RequestValidation!): TransactionData!
 }
@@ -707,7 +722,22 @@ func (ec *executionContext) field_Mutation_addAccount_args(ctx context.Context, 
 	var arg0 model.Account
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNAccount2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋapiᚋgraphqlᚋwalletᚋgraphᚋmodelᚐAccount(ctx, tmp)
+		arg0, err = ec.unmarshalNAccount2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐAccount(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_confirmCancelSubscription_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.RequestValidation
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNRequestValidation2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐRequestValidation(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -722,7 +752,7 @@ func (ec *executionContext) field_Mutation_createPaymentIntent_args(ctx context.
 	var arg0 model.PaymentIntent
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNPaymentIntent2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋapiᚋgraphqlᚋwalletᚋgraphᚋmodelᚐPaymentIntent(ctx, tmp)
+		arg0, err = ec.unmarshalNPaymentIntent2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐPaymentIntent(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -737,7 +767,7 @@ func (ec *executionContext) field_Mutation_initiateTransferRequest_args(ctx cont
 	var arg0 model.NewTransferRequest
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNNewTransferRequest2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋapiᚋgraphqlᚋwalletᚋgraphᚋmodelᚐNewTransferRequest(ctx, tmp)
+		arg0, err = ec.unmarshalNNewTransferRequest2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐNewTransferRequest(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -752,7 +782,7 @@ func (ec *executionContext) field_Mutation_modifySubscriptionState_args(ctx cont
 	var arg0 model.SubscriptionMod
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNSubscriptionMod2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋapiᚋgraphqlᚋwalletᚋgraphᚋmodelᚐSubscriptionMod(ctx, tmp)
+		arg0, err = ec.unmarshalNSubscriptionMod2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐSubscriptionMod(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -767,7 +797,7 @@ func (ec *executionContext) field_Mutation_validatePaymentIntent_args(ctx contex
 	var arg0 model.RequestValidation
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNRequestValidation2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋapiᚋgraphqlᚋwalletᚋgraphᚋmodelᚐRequestValidation(ctx, tmp)
+		arg0, err = ec.unmarshalNRequestValidation2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐRequestValidation(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -782,7 +812,7 @@ func (ec *executionContext) field_Mutation_validateTransferRequest_args(ctx cont
 	var arg0 model.RequestValidation
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNRequestValidation2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋapiᚋgraphqlᚋwalletᚋgraphᚋmodelᚐRequestValidation(ctx, tmp)
+		arg0, err = ec.unmarshalNRequestValidation2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐRequestValidation(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1012,7 +1042,7 @@ func (ec *executionContext) _Mutation_validatePaymentIntent(ctx context.Context,
 	}
 	res := resTmp.(*model.TransactionData)
 	fc.Result = res
-	return ec.marshalNTransactionData2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋapiᚋgraphqlᚋwalletᚋgraphᚋmodelᚐTransactionData(ctx, field.Selections, res)
+	return ec.marshalNTransactionData2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐTransactionData(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_validatePaymentIntent(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1122,6 +1152,61 @@ func (ec *executionContext) fieldContext_Mutation_modifySubscriptionState(ctx co
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_confirmCancelSubscription(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_confirmCancelSubscription(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().ConfirmCancelSubscription(rctx, fc.Args["input"].(model.RequestValidation))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_confirmCancelSubscription(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_confirmCancelSubscription_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_initiateTransferRequest(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Mutation_initiateTransferRequest(ctx, field)
 	if err != nil {
@@ -1205,7 +1290,7 @@ func (ec *executionContext) _Mutation_validateTransferRequest(ctx context.Contex
 	}
 	res := resTmp.(*model.TransactionData)
 	fc.Result = res
-	return ec.marshalNTransactionData2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋapiᚋgraphqlᚋwalletᚋgraphᚋmodelᚐTransactionData(ctx, field.Selections, res)
+	return ec.marshalNTransactionData2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐTransactionData(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_validateTransferRequest(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1376,7 +1461,7 @@ func (ec *executionContext) _Payment_status(ctx context.Context, field graphql.C
 	}
 	res := resTmp.(model.PaymentStatus)
 	fc.Result = res
-	return ec.marshalNPaymentStatus2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋapiᚋgraphqlᚋwalletᚋgraphᚋmodelᚐPaymentStatus(ctx, field.Selections, res)
+	return ec.marshalNPaymentStatus2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐPaymentStatus(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Payment_status(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1596,7 +1681,7 @@ func (ec *executionContext) _Query_fetchSubscriptions(ctx context.Context, field
 	}
 	res := resTmp.([]*model.SubscriptionData)
 	fc.Result = res
-	return ec.marshalNSubscriptionData2ᚕᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋapiᚋgraphqlᚋwalletᚋgraphᚋmodelᚐSubscriptionDataᚄ(ctx, field.Selections, res)
+	return ec.marshalNSubscriptionData2ᚕᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐSubscriptionDataᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_fetchSubscriptions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1677,7 +1762,7 @@ func (ec *executionContext) _Query_fetchPayment(ctx context.Context, field graph
 	}
 	res := resTmp.(*model.Payment)
 	fc.Result = res
-	return ec.marshalNPayment2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋapiᚋgraphqlᚋwalletᚋgraphᚋmodelᚐPayment(ctx, field.Selections, res)
+	return ec.marshalNPayment2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐPayment(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_fetchPayment(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2446,7 +2531,7 @@ func (ec *executionContext) _TransactionData_type(ctx context.Context, field gra
 	}
 	res := resTmp.(model.PaymentType)
 	fc.Result = res
-	return ec.marshalNPaymentType2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋapiᚋgraphqlᚋwalletᚋgraphᚋmodelᚐPaymentType(ctx, field.Selections, res)
+	return ec.marshalNPaymentType2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐPaymentType(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TransactionData_type(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4893,7 +4978,7 @@ func (ec *executionContext) unmarshalInputPaymentIntent(ctx context.Context, obj
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
-			data, err := ec.unmarshalNPaymentType2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋapiᚋgraphqlᚋwalletᚋgraphᚋmodelᚐPaymentType(ctx, v)
+			data, err := ec.unmarshalNPaymentType2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐPaymentType(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -5059,7 +5144,7 @@ func (ec *executionContext) unmarshalInputSubscriptionMod(ctx context.Context, o
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("toggle"))
-			data, err := ec.unmarshalNStatusToggle2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋapiᚋgraphqlᚋwalletᚋgraphᚋmodelᚐStatusToggle(ctx, v)
+			data, err := ec.unmarshalNStatusToggle2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐStatusToggle(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -5121,6 +5206,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "modifySubscriptionState":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_modifySubscriptionState(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "confirmCancelSubscription":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_confirmCancelSubscription(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -5880,7 +5972,7 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
-func (ec *executionContext) unmarshalNAccount2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋapiᚋgraphqlᚋwalletᚋgraphᚋmodelᚐAccount(ctx context.Context, v interface{}) (model.Account, error) {
+func (ec *executionContext) unmarshalNAccount2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐAccount(ctx context.Context, v interface{}) (model.Account, error) {
 	res, err := ec.unmarshalInputAccount(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -5945,16 +6037,16 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 	return res
 }
 
-func (ec *executionContext) unmarshalNNewTransferRequest2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋapiᚋgraphqlᚋwalletᚋgraphᚋmodelᚐNewTransferRequest(ctx context.Context, v interface{}) (model.NewTransferRequest, error) {
+func (ec *executionContext) unmarshalNNewTransferRequest2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐNewTransferRequest(ctx context.Context, v interface{}) (model.NewTransferRequest, error) {
 	res, err := ec.unmarshalInputNewTransferRequest(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNPayment2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋapiᚋgraphqlᚋwalletᚋgraphᚋmodelᚐPayment(ctx context.Context, sel ast.SelectionSet, v model.Payment) graphql.Marshaler {
+func (ec *executionContext) marshalNPayment2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐPayment(ctx context.Context, sel ast.SelectionSet, v model.Payment) graphql.Marshaler {
 	return ec._Payment(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNPayment2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋapiᚋgraphqlᚋwalletᚋgraphᚋmodelᚐPayment(ctx context.Context, sel ast.SelectionSet, v *model.Payment) graphql.Marshaler {
+func (ec *executionContext) marshalNPayment2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐPayment(ctx context.Context, sel ast.SelectionSet, v *model.Payment) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -5964,43 +6056,43 @@ func (ec *executionContext) marshalNPayment2ᚖgithubᚗcomᚋlucidconnectᚋsil
 	return ec._Payment(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNPaymentIntent2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋapiᚋgraphqlᚋwalletᚋgraphᚋmodelᚐPaymentIntent(ctx context.Context, v interface{}) (model.PaymentIntent, error) {
+func (ec *executionContext) unmarshalNPaymentIntent2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐPaymentIntent(ctx context.Context, v interface{}) (model.PaymentIntent, error) {
 	res, err := ec.unmarshalInputPaymentIntent(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNPaymentStatus2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋapiᚋgraphqlᚋwalletᚋgraphᚋmodelᚐPaymentStatus(ctx context.Context, v interface{}) (model.PaymentStatus, error) {
+func (ec *executionContext) unmarshalNPaymentStatus2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐPaymentStatus(ctx context.Context, v interface{}) (model.PaymentStatus, error) {
 	var res model.PaymentStatus
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNPaymentStatus2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋapiᚋgraphqlᚋwalletᚋgraphᚋmodelᚐPaymentStatus(ctx context.Context, sel ast.SelectionSet, v model.PaymentStatus) graphql.Marshaler {
+func (ec *executionContext) marshalNPaymentStatus2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐPaymentStatus(ctx context.Context, sel ast.SelectionSet, v model.PaymentStatus) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) unmarshalNPaymentType2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋapiᚋgraphqlᚋwalletᚋgraphᚋmodelᚐPaymentType(ctx context.Context, v interface{}) (model.PaymentType, error) {
+func (ec *executionContext) unmarshalNPaymentType2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐPaymentType(ctx context.Context, v interface{}) (model.PaymentType, error) {
 	var res model.PaymentType
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNPaymentType2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋapiᚋgraphqlᚋwalletᚋgraphᚋmodelᚐPaymentType(ctx context.Context, sel ast.SelectionSet, v model.PaymentType) graphql.Marshaler {
+func (ec *executionContext) marshalNPaymentType2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐPaymentType(ctx context.Context, sel ast.SelectionSet, v model.PaymentType) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) unmarshalNRequestValidation2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋapiᚋgraphqlᚋwalletᚋgraphᚋmodelᚐRequestValidation(ctx context.Context, v interface{}) (model.RequestValidation, error) {
+func (ec *executionContext) unmarshalNRequestValidation2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐRequestValidation(ctx context.Context, v interface{}) (model.RequestValidation, error) {
 	res, err := ec.unmarshalInputRequestValidation(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNStatusToggle2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋapiᚋgraphqlᚋwalletᚋgraphᚋmodelᚐStatusToggle(ctx context.Context, v interface{}) (model.StatusToggle, error) {
+func (ec *executionContext) unmarshalNStatusToggle2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐStatusToggle(ctx context.Context, v interface{}) (model.StatusToggle, error) {
 	var res model.StatusToggle
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNStatusToggle2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋapiᚋgraphqlᚋwalletᚋgraphᚋmodelᚐStatusToggle(ctx context.Context, sel ast.SelectionSet, v model.StatusToggle) graphql.Marshaler {
+func (ec *executionContext) marshalNStatusToggle2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐStatusToggle(ctx context.Context, sel ast.SelectionSet, v model.StatusToggle) graphql.Marshaler {
 	return v
 }
 
@@ -6019,7 +6111,7 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	return res
 }
 
-func (ec *executionContext) marshalNSubscriptionData2ᚕᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋapiᚋgraphqlᚋwalletᚋgraphᚋmodelᚐSubscriptionDataᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.SubscriptionData) graphql.Marshaler {
+func (ec *executionContext) marshalNSubscriptionData2ᚕᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐSubscriptionDataᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.SubscriptionData) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -6043,7 +6135,7 @@ func (ec *executionContext) marshalNSubscriptionData2ᚕᚖgithubᚗcomᚋlucidc
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNSubscriptionData2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋapiᚋgraphqlᚋwalletᚋgraphᚋmodelᚐSubscriptionData(ctx, sel, v[i])
+			ret[i] = ec.marshalNSubscriptionData2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐSubscriptionData(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -6063,7 +6155,7 @@ func (ec *executionContext) marshalNSubscriptionData2ᚕᚖgithubᚗcomᚋlucidc
 	return ret
 }
 
-func (ec *executionContext) marshalNSubscriptionData2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋapiᚋgraphqlᚋwalletᚋgraphᚋmodelᚐSubscriptionData(ctx context.Context, sel ast.SelectionSet, v *model.SubscriptionData) graphql.Marshaler {
+func (ec *executionContext) marshalNSubscriptionData2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐSubscriptionData(ctx context.Context, sel ast.SelectionSet, v *model.SubscriptionData) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -6073,7 +6165,7 @@ func (ec *executionContext) marshalNSubscriptionData2ᚖgithubᚗcomᚋlucidconn
 	return ec._SubscriptionData(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNSubscriptionMod2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋapiᚋgraphqlᚋwalletᚋgraphᚋmodelᚐSubscriptionMod(ctx context.Context, v interface{}) (model.SubscriptionMod, error) {
+func (ec *executionContext) unmarshalNSubscriptionMod2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐSubscriptionMod(ctx context.Context, v interface{}) (model.SubscriptionMod, error) {
 	res, err := ec.unmarshalInputSubscriptionMod(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -6093,11 +6185,11 @@ func (ec *executionContext) marshalNTime2timeᚐTime(ctx context.Context, sel as
 	return res
 }
 
-func (ec *executionContext) marshalNTransactionData2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋapiᚋgraphqlᚋwalletᚋgraphᚋmodelᚐTransactionData(ctx context.Context, sel ast.SelectionSet, v model.TransactionData) graphql.Marshaler {
+func (ec *executionContext) marshalNTransactionData2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐTransactionData(ctx context.Context, sel ast.SelectionSet, v model.TransactionData) graphql.Marshaler {
 	return ec._TransactionData(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNTransactionData2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋapiᚋgraphqlᚋwalletᚋgraphᚋmodelᚐTransactionData(ctx context.Context, sel ast.SelectionSet, v *model.TransactionData) graphql.Marshaler {
+func (ec *executionContext) marshalNTransactionData2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐTransactionData(ctx context.Context, sel ast.SelectionSet, v *model.TransactionData) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")

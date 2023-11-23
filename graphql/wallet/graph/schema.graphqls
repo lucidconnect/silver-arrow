@@ -15,6 +15,7 @@ type Mutation {
 
   # user's dashboard ops
   modifySubscriptionState(input: SubscriptionMod!): String!
+  confirmCancelSubscription(input: RequestValidation!): String!
   initiateTransferRequest(input: NewTransferRequest!): String!
   validateTransferRequest(input: RequestValidation!): TransactionData!
 }
