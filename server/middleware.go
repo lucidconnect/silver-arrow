@@ -83,6 +83,7 @@ func (s *Server) JWTMiddleware() func(http.Handler) http.Handler {
 				}
 
 				log.Info().Msgf("token claims %v", token.Claims)
+
 				claims, ok := token.Claims.(jwt.MapClaims)
 				if !ok {
 					log.Error().Msg("parsing claims failed")
@@ -90,14 +91,14 @@ func (s *Server) JWTMiddleware() func(http.Handler) http.Handler {
 					writeJsonResponse(w, response)
 					return
 				}
-				siwe, err := parseSiweClaim(claims)
-				if err != nil {
-					log.Err(err).Msg("parsing siwe claims failed")
-					response := &httpResponse{Status: http.StatusInternalServerError}
-					writeJsonResponse(w, response)
-					return
-				}
-				merchantAddress := siwe.GetAddress().Hex()
+				// siwe, err := parseSiweClaim(claims)
+				// if err != nil {
+				// 	log.Err(err).Msg("parsing siwe claims failed")
+				// 	response := &httpResponse{Status: http.StatusInternalServerError}
+				// 	writeJsonResponse(w, response)
+				// 	return
+				// }
+				merchantAddress := claims["address"].(string)
 				merchant, err := s.database.FetchMerchantByAddress(merchantAddress)
 				if err != nil {
 					log.Err(err).Send()

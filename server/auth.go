@@ -102,7 +102,7 @@ func (s *Server) VerifyMerchant() http.HandlerFunc {
 		// 	return
 		// }
 		// fmt.Println("session: ", session.Values)
-		jwt, err := generateJwt(message)
+		jwt, err := generateJwt(address.Hex())
 		if err != nil {
 			log.Err(err).Msg("generating jwt failed")
 			response := &httpResponse{Status: http.StatusInternalServerError}
@@ -130,7 +130,7 @@ func writeJsonResponse(w http.ResponseWriter, response *httpResponse) {
 	}
 }
 
-func generateJwt(siweMsg string) (string, error) {
+func generateJwt(address string) (string, error) {
 	var secretKey = os.Getenv("JWT_SECRET")
 	key, err := hex.DecodeString(secretKey)
 	if err != nil {
@@ -142,7 +142,7 @@ func generateJwt(siweMsg string) (string, error) {
 	claims := jwt.MapClaims{}
 	claims["exp"] = time.Now().Add(24 * time.Hour).Unix()
 	claims["authorized"] = true
-	claims["siwe"] = siweMsg
+	claims["address"] = address
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	fmt.Println("claims", token.Claims)
