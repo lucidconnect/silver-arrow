@@ -36,7 +36,7 @@ func (s *Server) GetNonce() http.HandlerFunc {
 		session.Values["nonce"] = siwe.GenerateNonce()
 
 		session.Save(r, w)
-		fmt.Println(session.ID)
+		fmt.Println("session", session.ID)
 
 		w.Header().Set("Content-Type", "text/plain")
 		w.Write([]byte(session.Values["nonce"].(string)))
@@ -65,7 +65,7 @@ func (s *Server) VerifyMerchant() http.HandlerFunc {
 		}
 
 		session, _ := s.sessionStore.Get(r, sessionName)
-		fmt.Println(session.ID)
+		fmt.Println("session", session.ID)
 		message := request.Message
 		signature := request.Signature
 		nonce, ok := session.Values["nonce"].(string)
@@ -101,7 +101,7 @@ func (s *Server) VerifyMerchant() http.HandlerFunc {
 		// 	return
 		// }
 		// fmt.Println("session: ", session.Values)
-		jwt, err := generateJwt(address.Hex())
+		jwt, err := generateJwt(siweObj)
 		if err != nil {
 			log.Err(err).Msg("generating jwt failed")
 			response := &httpResponse{Status: http.StatusInternalServerError}
@@ -129,7 +129,7 @@ func writeJsonResponse(w http.ResponseWriter, response *httpResponse) {
 	}
 }
 
-func generateJwt(user string) (string, error) {
+func generateJwt(siwe *siwe.Message) (string, error) {
 	var secretKey = os.Getenv("JWT_SECRET")
 	key, err := hex.DecodeString(secretKey)
 	if err != nil {
@@ -141,7 +141,7 @@ func generateJwt(user string) (string, error) {
 	claims := jwt.MapClaims{}
 	claims["exp"] = time.Now().Add(24 * time.Hour).Unix()
 	claims["authorized"] = true
-	claims["user"] = user
+	claims["siwe"] = siwe
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	fmt.Println(token.Claims)

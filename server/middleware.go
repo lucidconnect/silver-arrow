@@ -89,8 +89,8 @@ func (s *Server) JWTMiddleware() func(http.Handler) http.Handler {
 					writeJsonResponse(w, response)
 					return
 				}
-
-				merchantAddress := claims["user"].(string)
+				siwe := claims["siwe"].(*siwe.Message)
+				merchantAddress := siwe.GetAddress().Hex()
 				merchant, err := s.database.FetchMerchantByAddress(merchantAddress)
 				if err != nil {
 					log.Err(err).Send()
