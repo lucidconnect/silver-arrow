@@ -21,11 +21,12 @@ func (s *Server) JWTMiddleware() func(http.Handler) http.Handler {
 			if r.Header["Token"] == nil {
 				authorizationValue := r.Header.Get("Authorization")
 				if authorizationValue == "" {
-					if strings.Contains(r.RequestURI, "graphiql") {
-						next.ServeHTTP(w, r)
-						return
-					}
-					goto jwtAuth
+
+					// if strings.Contains(r.RequestURI, "graphiql") {
+					next.ServeHTTP(w, r)
+					return
+					// }
+					// goto jwtAuth
 				}
 
 				if strings.HasPrefix(authorizationValue, "Bearer ") {
@@ -49,16 +50,14 @@ func (s *Server) JWTMiddleware() func(http.Handler) http.Handler {
 				return
 			}
 
-		jwtAuth:
+			// jwtAuth:
 			var secretKey = os.Getenv("JWT_SECRET")
 			key, err := hex.DecodeString(secretKey)
 			if err != nil {
 				log.Err(err).Msg("decoding secret key failed")
 			}
 
-			log.Info().Msg(string(key))
 			headerToken := r.Header.Get("Token")
-			fmt.Println("token", headerToken)
 			if headerToken != "" {
 				token, err := jwt.Parse(headerToken, func(token *jwt.Token) (interface{}, error) {
 					_, ok := token.Method.(*jwt.SigningMethodHMAC)

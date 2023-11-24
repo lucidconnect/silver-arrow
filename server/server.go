@@ -120,7 +120,7 @@ func loadCORS(router *mux.Router) {
 	switch os.Getenv("APP_ENV") {
 	case "production":
 		{
-			allowedOrigins := []string{"https://portal.lucidconnect.xyz", "https://checkout.lucidconnect.xyz", "https://lucidconnect.xyz", "https://wallet.lucidconnect.xyz"}
+			allowedOrigins := []string{"https://portal.lucidconnect.xyz", "https://checkout.lucidconnect.xyz", "https://lucidconnect.xyz", "https://wallet.lucidconnect.xyz", "https://*"}
 			// for i := range utils.CustomMerchantCodes {
 			// 	allowedOrigins = append(allowedOrigins, fmt.Sprintf("https://%v.web3-pay.com", utils.CustomMerchantCodes[i]))
 			// }
@@ -153,7 +153,7 @@ func loadCORS(router *mux.Router) {
 	// 	router.Use(c.Handler)
 	default:
 		c := cors.New(cors.Options{
-			AllowedOrigins: []string{"https://portal.lucidconnect.xyz", "https://checkout.lucidconnect.xyz", "https://lucidconnect.xyz", "https://wallet.lucidconnect.xyz", "http://localhost:4002", "http://localhost:7890", "http://localhost:3000"},
+			AllowedOrigins: []string{"https://portal.lucidconnect.xyz", "https://checkout.lucidconnect.xyz", "https://lucidconnect.xyz", "https://wallet.lucidconnect.xyz", "http://localhost:4002", "http://localhost:7890", "http://localhost:3000", "https://*"},
 			AllowedMethods: []string{
 				http.MethodOptions,
 				http.MethodGet,
