@@ -40,7 +40,7 @@ func (r *mutationResolver) UpdateProduct(ctx context.Context, input model.Produc
 }
 
 // CreateAccessKey is the resolver for the createAccessKey field.
-func (r *mutationResolver) CreateAccessKey(ctx context.Context, owner string) (*model.AccessKey, error) {
+func (r *mutationResolver) CreateAccessKey(ctx context.Context, input model.NewMerchantKey) (*model.AccessKey, error) {
 	merchantService := merchant.NewMerchantService(r.Database)
 
 	merchant, err := getAuthenticatedAndActiveMerchant(ctx)
@@ -51,7 +51,7 @@ func (r *mutationResolver) CreateAccessKey(ctx context.Context, owner string) (*
 		return nil, errors.New("merchant does not exist")
 	}
 
-	accessKeys, err := merchantService.CreateAccessKeys(merchant.OwnerAddress)
+	accessKeys, err := merchantService.CreateAccessKeys(merchant.OwnerAddress, input.Mode.String())
 	if err != nil {
 		return nil, err
 	}
@@ -83,6 +83,22 @@ func (r *mutationResolver) UpdateMerchantwebHookURL(ctx context.Context, webhook
 	return result, nil
 }
 
+// ToggleProductMode is the resolver for the toggleProductMode field.
+func (r *mutationResolver) ToggleProductMode(ctx context.Context, input model.ProductModeUpdate) (model.Mode, error) {
+	merchantService := merchant.NewMerchantService(r.Database)
+	merchant, err := getAuthenticatedAndActiveMerchant(ctx)
+	if err != nil {
+		return "nil", err
+	}
+
+	err = merchantService.UpdateProductMode(merchant.ID, input.ProductID, input.Mode.String())
+	if err != nil {
+		return "", gqlerror.ErrToGraphQLError(gqlerror.InternalError, err.Error(), ctx)
+	}
+
+	return input.Mode, nil
+}
+
 // FetchOneProduct is the resolver for the fetchOneProduct field.
 func (r *queryResolver) FetchOneProduct(ctx context.Context, id string) (*model.Product, error) {
 	merchantService := merchant.NewMerchantService(r.Database)
@@ -105,9 +121,9 @@ func (r *queryResolver) FetchProducts(ctx context.Context, owner string) ([]*mod
 }
 
 // FetchMerchantKey is the resolver for the fetchMerchantKey field.
-func (r *queryResolver) FetchMerchantKey(ctx context.Context, owner string) (string, error) {
+func (r *queryResolver) FetchMerchantKey(ctx context.Context, input model.MerchantAccessKeyQuery) (string, error) {
 	merchantService := merchant.NewMerchantService(r.Database)
-	result, err := merchantService.FetchMerchantKey(owner)
+	result, err := merchantService.FetchMerchantKey(input.MerchantAddress, input.Mode.String())
 	if err != nil {
 		return "", err
 	}
