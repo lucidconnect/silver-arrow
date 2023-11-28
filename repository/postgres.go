@@ -187,13 +187,22 @@ func (p *DB) FetchProductsByOwner(owner string) ([]models.Product, error) {
 	return products, nil
 }
 
+func (p *DB) UpdateProduct(id, merchantId uuid.UUID, update map[string]interface{}) error {
+	var product *models.Product
+
+	if err := p.Db.Model(&product).Where("id = ? AND merchant_id = ?", id, merchantId).Updates(update).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
 func (p *DB) AddMerchant(merchant *models.Merchant) error {
 	return p.Db.Create(merchant).Error
 }
 
 func (p *DB) FetchMerchantByAddress(address string) (*models.Merchant, error) {
 	var merchant *models.Merchant
-	if err := p.Db.Where("owner_address = ?", address).First(&merchant).Error; err != nil {
+	if err := p.Db.Where("owner_address = ?", address).Preload("MerchantAccessKeys").First(&merchant).Error; err != nil {
 		return nil, err
 	}
 	return merchant, nil
@@ -201,19 +210,38 @@ func (p *DB) FetchMerchantByAddress(address string) (*models.Merchant, error) {
 
 func (p *DB) FetchMerchantByPublicKey(key string) (*models.Merchant, error) {
 	var merchant *models.Merchant
-	if err := p.Db.Where("public_key = ?", key).First(&merchant).Error; err != nil {
+
+	if err := p.Db.Joins("JOIN access_keys ON access_keys.merchant_id = merchants.id").Where("access_keys.public_key = ?", key).First(&merchant).Error; err != nil {
 		return nil, err
 	}
+
 	return merchant, nil
 }
 
-func (p *DB) UpdateMerchantKey(id uuid.UUID, key string) error {
-	var merchant *models.Merchant
+func (p *DB) UpdateMerchantKey(id uuid.UUID, key, mode string) error {
+	var accessKey *models.MerchantAccessKey
 
-	if err := p.Db.Model(&merchant).Where("id = ?", id).Update("public_key", key).Error; err != nil {
+	err := p.Db.Model(&accessKey).Where("merchant_id = ? AND mode = ?", id, mode).Update("public_key", key).Error
+	if err != nil {
 		return err
 	}
 	return nil
+}
+
+func (p *DB) FetchMerchantKey(key string) (*models.MerchantAccessKey, error) {
+	var accessKey *models.MerchantAccessKey
+	if err := p.Db.Where("public_key = ?", key).First(&accessKey).Error; err != nil {
+		return nil, err
+	}
+	return accessKey, nil
+}
+
+func (p *DB) CreateMerchantAccessKeys(key *models.MerchantAccessKey) error {
+	return p.Db.Create(key).Error
+}
+
+func (p *DB) DeleteMerchantAccessKey(id uuid.UUID, key *models.MerchantAccessKey) error {
+	return p.Db.Where("id = ?", id).Delete(key).Error
 }
 
 func (p *DB) UpdateMerchantWebhookUrl(id uuid.UUID, webhookUrl string) error {
@@ -286,7 +314,7 @@ func (p *DB) FetchAllPaymentsByProduct(productId uuid.UUID) ([]models.Payment, e
 
 func (p *DB) FetchMerchantById(id uuid.UUID) (*models.Merchant, error) {
 	var merchant *models.Merchant
-	if err := p.Db.Where("id = ?", id).First(&merchant).Error; err != nil {
+	if err := p.Db.Where("id = ?", id).Preload("MerchantAccessKeys").First(&merchant).Error; err != nil {
 		return nil, err
 	}
 

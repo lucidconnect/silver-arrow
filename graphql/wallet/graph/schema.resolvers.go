@@ -36,21 +36,33 @@ func (r *mutationResolver) AddAccount(ctx context.Context, input model.Account) 
 }
 
 // CreatePaymentIntent is the resolver for the createPaymentIntent field.
+// ideally, a user should be able to pay on any chain.
 func (r *mutationResolver) CreatePaymentIntent(ctx context.Context, input model.PaymentIntent) (string, error) {
 	merchant, err := getAuthenticatedAndActiveMerchant(ctx)
 	if err != nil {
 		return "", err
 	}
-	merchantId := merchant.ID
-	signature, err := auth.SignatureContext(ctx, merchant.PublicKey)
+	// fetch the mode from context
+	// fetch public key from context
+	// validate the signature
+	key, err := auth.KeyModeContext(ctx)
 	if err != nil {
-		return "", err
+		log.Err(err).Msg("no key found in context")
+		return "", gqlerror.ErrToGraphQLError(gqlerror.MerchantAuthorisationFailed, err.Error(), ctx)
 	}
-	log.Info().Msgf("Authenticated Merchant: %v", merchantId)
+
+	merchantId := merchant.ID
+	signature, err := auth.SignatureContext(ctx, merchant.MerchantAccessKeys[0].PublicKey)
+	if err != nil {
+		log.Err(err).Msg("no signature in context")
+		return "", gqlerror.ErrToGraphQLError(gqlerror.MerchantAuthorisationFailed, err.Error(), ctx)
+	}
+
+	log.Debug().Msgf("Authenticated Merchant: %v", merchantId)
 	// validate signature
 	// amount:token:interval:productId
 	signatureCheck := fmt.Sprintf("%v", input.Amount) + ":" + input.Token + ":" + fmt.Sprintf("%v", input.Interval) + ":" + input.ProductID
-	err = validateSignature(signatureCheck, signature, merchant.PublicKey)
+	err = validateSignature(signatureCheck, signature, key.PublicKey)
 	if err != nil {
 		log.Debug().Err(err).Ctx(ctx).Send()
 		return "", gqlerror.ErrToGraphQLError(gqlerror.MerchantAuthorisationFailed, err.Error(), ctx)
@@ -60,6 +72,11 @@ func (r *mutationResolver) CreatePaymentIntent(ctx context.Context, input model.
 	product, err := r.Database.FetchProduct(productId)
 	if err != nil {
 		return "", gqlerror.ErrToGraphQLError(gqlerror.MerchantDataInvalid, "product not found", ctx)
+	}
+
+	// validate product mode
+	if !validateProductMode(product, key) {
+		return "", gqlerror.ErrToGraphQLError(gqlerror.MerchantDataInvalid, "invalid key used", ctx)
 	}
 
 	walletService := wallet.NewWalletService(r.Database, int64(input.Chain))

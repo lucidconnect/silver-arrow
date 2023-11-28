@@ -217,7 +217,22 @@ func (s *Server) CheckoutMiddleware() func(http.Handler) http.Handler {
 				next.ServeHTTP(w, r)
 				return
 			}
-			merchant, err := s.database.FetchMerchantByPublicKey(authorizationValue)
+			// use the public key to fetch the key, 
+			// determine it's mode (test or live?)
+			// fetch the merchant with the merchantID,
+			// attach the mode to the context
+			// attach the merchant to the context
+			// attach the public key to the context
+
+			key, err := s.database.FetchMerchantKey(authorizationValue)
+			if err != nil {
+				log.Err(err).Send()
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			// mode := key.Mode
+			merchant, err := s.database.FetchMerchantById(key.MerchantID)
 			if err != nil {
 				log.Err(err).Send()
 				next.ServeHTTP(w, r)
@@ -230,6 +245,8 @@ func (s *Server) CheckoutMiddleware() func(http.Handler) http.Handler {
 			signatureCtx := context.WithValue(r.Context(), auth.AuthSignatureCtxKey, signature)
 			r = r.WithContext(signatureCtx)
 
+			modeCtx := context.WithValue(r.Context(), auth.ModeCtxKey, key)
+			r = r.WithContext(modeCtx)
 			next.ServeHTTP(w, r)
 		})
 	}

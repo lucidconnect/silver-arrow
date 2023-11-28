@@ -35,14 +35,18 @@ type Database interface {
 	FetchProduct(uuid.UUID) (*models.Product, error)
 	FetchProductsByOwner(string) ([]models.Product, error)
 	FetchAllPaymentsByProduct(productId uuid.UUID) ([]models.Payment, error)
+	UpdateProduct(productId uuid.UUID, merchantId uuid.UUID, update map[string]interface{}) error
 
 	// Merchant
 	AddMerchant(*models.Merchant) error
 	FetchMerchantById(uuid.UUID) (*models.Merchant, error)
 	FetchMerchantByAddress(string) (*models.Merchant, error)
 	FetchMerchantByPublicKey(string) (*models.Merchant, error)
-	UpdateMerchantKey(uuid.UUID, string) error
+	UpdateMerchantKey(id uuid.UUID, key, mode string) error
 	UpdateMerchantWebhookUrl(uuid.UUID, string) error
+	CreateMerchantAccessKeys(*models.MerchantAccessKey) error
+	FetchMerchantKey(string) (*models.MerchantAccessKey, error)
+	DeleteMerchantAccessKey(id uuid.UUID, key *models.MerchantAccessKey) error
 
 	// Webhook
 	CreateWebhookEvent(*models.WebhookEvent) error
