@@ -70,8 +70,15 @@ type ComplexityRoot struct {
 		CreateAccessKey          func(childComplexity int, input model.NewMerchantKey) int
 		CreateMerchant           func(childComplexity int, input model.NewMerchant) int
 		ToggleProductMode        func(childComplexity int, input model.ProductModeUpdate) int
+		CreatePaymentLink        func(childComplexity int, input model.NewPaymentLink) int
 		UpdateMerchantwebHookURL func(childComplexity int, webhookURL string) int
 		UpdateProduct            func(childComplexity int, input model.ProductUpdate) int
+	}
+
+	PaymentLink struct {
+		ID        func(childComplexity int) int
+		ProductID func(childComplexity int) int
+		PublicKey func(childComplexity int) int
 	}
 
 	Product struct {
@@ -111,6 +118,7 @@ type MutationResolver interface {
 	CreateMerchant(ctx context.Context, input model.NewMerchant) (*model.Merchant, error)
 	UpdateMerchantwebHookURL(ctx context.Context, webhookURL string) (*model.Merchant, error)
 	ToggleProductMode(ctx context.Context, input model.ProductModeUpdate) (model.Mode, error)
+	CreatePaymentLink(ctx context.Context, input model.NewPaymentLink) (*model.PaymentLink, error)
 }
 type QueryResolver interface {
 	FetchOneProduct(ctx context.Context, id string) (*model.Product, error)
@@ -266,6 +274,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.ToggleProductMode(childComplexity, args["input"].(model.ProductModeUpdate)), true
 
+	case "Mutation.createPaymentLink":
+		if e.complexity.Mutation.CreatePaymentLink == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createPaymentLink_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreatePaymentLink(childComplexity, args["input"].(model.NewPaymentLink)), true
+
 	case "Mutation.updateMerchantwebHookUrl":
 		if e.complexity.Mutation.UpdateMerchantwebHookURL == nil {
 			break
@@ -289,6 +309,27 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.UpdateProduct(childComplexity, args["input"].(model.ProductUpdate)), true
+
+	case "PaymentLink.id":
+		if e.complexity.PaymentLink.ID == nil {
+			break
+		}
+
+		return e.complexity.PaymentLink.ID(childComplexity), true
+
+	case "PaymentLink.productId":
+		if e.complexity.PaymentLink.ProductID == nil {
+			break
+		}
+
+		return e.complexity.PaymentLink.ProductID(childComplexity), true
+
+	case "PaymentLink.publicKey":
+		if e.complexity.PaymentLink.PublicKey == nil {
+			break
+		}
+
+		return e.complexity.PaymentLink.PublicKey(childComplexity), true
 
 	case "Product.chain":
 		if e.complexity.Product.Chain == nil {
@@ -462,6 +503,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputMerchantUpdate,
 		ec.unmarshalInputNewMerchant,
 		ec.unmarshalInputNewMerchantKey,
+		ec.unmarshalInputNewPaymentLink,
 		ec.unmarshalInputNewProduct,
 		ec.unmarshalInputProductModeUpdate,
 		ec.unmarshalInputProductUpdate,
@@ -580,6 +622,7 @@ type Mutation {
   createMerchant(input: NewMerchant!): Merchant!
   updateMerchantwebHookUrl(webhookUrl: String!): Merchant!
   toggleProductMode(input: ProductModeUpdate!): Mode!
+  createPaymentLink(input: NewPaymentLink!): PaymentLink!
 }
 
 input NewMerchant {
@@ -617,6 +660,10 @@ input NewProduct {
   receivingAddress: String!
 }
 
+input NewPaymentLink {
+  productId: String!
+}
+
 input ProductUpdate {
   name: String
   receivingAddress: String
@@ -633,6 +680,12 @@ input MerchantUpdate {
   email: String
   isActive: Boolean
   webHookUrl: String
+}
+
+type PaymentLink {
+  id: ID!
+  productId: String!
+  publicKey: String!
 }
 
 type Sub {
@@ -734,6 +787,21 @@ func (ec *executionContext) field_Mutation_toggleProductMode_args(ctx context.Co
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 		arg0, err = ec.unmarshalNProductModeUpdate2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐProductModeUpdate(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_createPaymentLink_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.NewPaymentLink
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNNewPaymentLink2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐNewPaymentLink(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1827,6 +1895,201 @@ func (ec *executionContext) fieldContext_Mutation_toggleProductMode(ctx context.
 	if fc.Args, err = ec.field_Mutation_toggleProductMode_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_createPaymentLink(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_createPaymentLink(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CreatePaymentLink(rctx, fc.Args["input"].(model.NewPaymentLink))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.PaymentLink)
+	fc.Result = res
+	return ec.marshalNPaymentLink2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐPaymentLink(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_createPaymentLink(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_PaymentLink_id(ctx, field)
+			case "productId":
+				return ec.fieldContext_PaymentLink_productId(ctx, field)
+			case "publicKey":
+				return ec.fieldContext_PaymentLink_publicKey(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PaymentLink", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createPaymentLink_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PaymentLink_id(ctx context.Context, field graphql.CollectedField, obj *model.PaymentLink) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PaymentLink_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PaymentLink_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PaymentLink",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PaymentLink_productId(ctx context.Context, field graphql.CollectedField, obj *model.PaymentLink) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PaymentLink_productId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ProductID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PaymentLink_productId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PaymentLink",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PaymentLink_publicKey(ctx context.Context, field graphql.CollectedField, obj *model.PaymentLink) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PaymentLink_publicKey(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PublicKey, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PaymentLink_publicKey(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PaymentLink",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
 	}
 	return fc, nil
 }
@@ -4914,6 +5177,35 @@ func (ec *executionContext) unmarshalInputNewMerchantKey(ctx context.Context, ob
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputNewPaymentLink(ctx context.Context, obj interface{}) (model.NewPaymentLink, error) {
+	var it model.NewPaymentLink
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"productId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "productId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("productId"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ProductID = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputNewProduct(ctx context.Context, obj interface{}) (model.NewProduct, error) {
 	var it model.NewProduct
 	asMap := map[string]interface{}{}
@@ -5283,6 +5575,62 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_toggleProductMode(ctx, field)
 			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createPaymentLink":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createPaymentLink(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var paymentLinkImplementors = []string{"PaymentLink"}
+
+func (ec *executionContext) _PaymentLink(ctx context.Context, sel ast.SelectionSet, obj *model.PaymentLink) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, paymentLinkImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("PaymentLink")
+		case "id":
+			out.Values[i] = ec._PaymentLink_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "productId":
+			out.Values[i] = ec._PaymentLink_productId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "publicKey":
+			out.Values[i] = ec._PaymentLink_publicKey(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -6027,9 +6375,28 @@ func (ec *executionContext) unmarshalNNewMerchantKey2githubᚗcomᚋlucidconnect
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalNNewPaymentLink2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐNewPaymentLink(ctx context.Context, v interface{}) (model.NewPaymentLink, error) {
+	res, err := ec.unmarshalInputNewPaymentLink(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNNewProduct2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐNewProduct(ctx context.Context, v interface{}) (model.NewProduct, error) {
 	res, err := ec.unmarshalInputNewProduct(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNPaymentLink2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐPaymentLink(ctx context.Context, sel ast.SelectionSet, v model.PaymentLink) graphql.Marshaler {
+	return ec._PaymentLink(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNPaymentLink2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐPaymentLink(ctx context.Context, sel ast.SelectionSet, v *model.PaymentLink) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._PaymentLink(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNProduct2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐProduct(ctx context.Context, sel ast.SelectionSet, v model.Product) graphql.Marshaler {

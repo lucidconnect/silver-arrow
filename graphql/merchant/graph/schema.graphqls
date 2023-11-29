@@ -16,6 +16,7 @@ type Mutation {
   createMerchant(input: NewMerchant!): Merchant!
   updateMerchantwebHookUrl(webhookUrl: String!): Merchant!
   toggleProductMode(input: ProductModeUpdate!): Mode!
+  createPaymentLink(input: NewPaymentLink!): PaymentLink!
 }
 
 input NewMerchant {
@@ -53,6 +54,10 @@ input NewProduct {
   receivingAddress: String!
 }
 
+input NewPaymentLink {
+  productId: String!
+}
+
 input ProductUpdate {
   name: String
   receivingAddress: String
@@ -69,6 +74,12 @@ input MerchantUpdate {
   email: String
   isActive: Boolean
   webHookUrl: String
+}
+
+type PaymentLink {
+  id: ID!
+  productId: String!
+  publicKey: String!
 }
 
 type Sub {
