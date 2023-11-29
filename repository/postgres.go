@@ -146,6 +146,14 @@ func (p *DB) FindSubscriptionById(id uuid.UUID) (*models.Subscription, error) {
 	return subscription, nil
 }
 
+func (p *DB) FindSubscriptionByProductId(id uuid.UUID) (*models.Subscription, error) {
+	var subscription *models.Subscription
+	if err := p.Db.Where("product_id = ? AND active = ?", id, true).First(&subscription).Error; err != nil {
+		return nil, err
+	}
+	return subscription, nil
+}
+
 // returns the private key ID
 func (p *DB) GetSubscriptionKey(publicKey string) (string, error) {
 	var key models.Key

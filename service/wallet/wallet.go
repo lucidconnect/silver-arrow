@@ -245,6 +245,13 @@ func (ws *WalletService) AddSubscription(merchantId uuid.UUID, input model.NewSu
 	var initCode []byte
 	var nonce, amount *big.Int
 
+	// check if a subscription already exists for this product
+	pid := input.ProductID
+	existingSub, _ := ws.database.FindSubscriptionByProductId(pid)
+	if existingSub != nil {
+		return nil, nil, errors.New("an active subscription exists for this product")
+	}
+
 	tagId, orgId, walletID, err := ws.database.GetWalletMetadata(input.WalletAddress)
 	if err != nil {
 		log.Err(err).Msgf("failed to fetch private key tag for wallet - %v", input.WalletAddress)
