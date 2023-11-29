@@ -83,6 +83,11 @@ func (r *mutationResolver) UpdateMerchantwebHookURL(ctx context.Context, webhook
 	return result, nil
 }
 
+// CreatePaymentLink is the resolver for the createPaymentLink field.
+func (r *mutationResolver) CreatePaymentLink(ctx context.Context, input model.NewPaymentLink) (*model.PaymentLink, error) {
+	panic(fmt.Errorf("not implemented: CreatePaymentLink - createPaymentLink"))
+}
+
 // FetchOneProduct is the resolver for the fetchOneProduct field.
 func (r *queryResolver) FetchOneProduct(ctx context.Context, id string) (*model.Product, error) {
 	merchantService := merchant.NewMerchantService(r.Database)

@@ -37,12 +37,22 @@ type NewMerchant struct {
 	WebHookURL *string `json:"webHookUrl,omitempty"`
 }
 
+type NewPaymentLink struct {
+	ProductID string `json:"productId"`
+}
+
 type NewProduct struct {
 	Name             string `json:"name"`
 	Owner            string `json:"owner"`
 	Chain            int    `json:"chain"`
 	Token            string `json:"token"`
 	ReceivingAddress string `json:"receivingAddress"`
+}
+
+type PaymentLink struct {
+	ID        string `json:"id"`
+	ProductID string `json:"productId"`
+	PublicKey string `json:"publicKey"`
 }
 
 type Product struct {
