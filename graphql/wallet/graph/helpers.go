@@ -2,14 +2,12 @@ package graph
 
 import (
 	"context"
-	"encoding/base64"
 	"fmt"
 	"os"
 	"strconv"
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/google/uuid"
 	"github.com/lucidconnect/silver-arrow/auth"
 	"github.com/lucidconnect/silver-arrow/repository/models"
 	"github.com/pkg/errors"
@@ -52,8 +50,8 @@ func validateSignature(rawString, signature, pk string) error {
 	return nil
 }
 
-func parseUUID(mid string) uuid.UUID {
-	b, _ := base64.RawURLEncoding.DecodeString(mid)
-	id, _ := uuid.FromBytes(b)
-	return id
-}
+// func parseUUID(mid string) uuid.UUID {
+// 	b, _ := base64.RawURLEncoding.DecodeString(mid)
+// 	id, _ := uuid.FromBytes(b)
+// 	return id
+// }
