@@ -278,6 +278,11 @@ func (r *mutationResolver) ValidateTransferRequest(ctx context.Context, input mo
 	return td, nil
 }
 
+// FetchSubscriptionsByMerchant is the resolver for the fetchSubscriptionsByMerchant field.
+func (r *queryResolver) FetchSubscriptionsByMerchant(ctx context.Context, account string, merchantID string) ([]*model.SubscriptionData, error) {
+	panic(fmt.Errorf("not implemented: FetchSubscriptionsByMerchant - fetchSubscriptionsByMerchant"))
+}
+
 // FetchSubscriptions is the resolver for the fetchSubscriptions field.
 func (r *queryResolver) FetchSubscriptions(ctx context.Context, account string) ([]*model.SubscriptionData, error) {
 	ws := wallet.NewWalletService(r.Database, 0)

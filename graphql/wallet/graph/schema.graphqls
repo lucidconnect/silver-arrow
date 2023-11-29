@@ -3,6 +3,7 @@
 # https://gqlgen.com/getting-started/
 
 type Query {
+  fetchSubscriptionsByMerchant(account: String!, merchantId: ID!): [SubscriptionData!]!
   fetchSubscriptions(account: String!): [SubscriptionData!]!
   fetchPayment(reference: String!): Payment!
 }
