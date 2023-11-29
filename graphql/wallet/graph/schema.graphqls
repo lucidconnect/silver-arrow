@@ -68,6 +68,7 @@ type SubscriptionData {
   amount: Int!
 	interval: Int!
   productId: String!
+  merchantId: String!
   productName: String!
 	walletAddress: String!
   subscriptionKey: String!

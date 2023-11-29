@@ -58,6 +58,7 @@ type SubscriptionData struct {
 	Amount              int       `json:"amount"`
 	Interval            int       `json:"interval"`
 	ProductID           string    `json:"productId"`
+	MerchantID          string    `json:"merchantId"`
 	ProductName         string    `json:"productName"`
 	WalletAddress       string    `json:"walletAddress"`
 	SubscriptionKey     string    `json:"subscriptionKey"`

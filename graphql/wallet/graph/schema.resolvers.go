@@ -12,6 +12,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/google/uuid"
 	"github.com/lucidconnect/silver-arrow/auth"
 	"github.com/lucidconnect/silver-arrow/gqlerror"
 	"github.com/lucidconnect/silver-arrow/graphql/wallet/graph/generated"
@@ -56,7 +57,8 @@ func (r *mutationResolver) CreatePaymentIntent(ctx context.Context, input model.
 		return "", gqlerror.ErrToGraphQLError(gqlerror.MerchantAuthorisationFailed, err.Error(), ctx)
 	}
 
-	productId := parseUUID(input.ProductID)
+	// productId := parseUUID(input.ProductID)
+	productId := uuid.MustParse(input.ProductID)
 	product, err := r.Database.FetchProduct(productId)
 	if err != nil {
 		return "", gqlerror.ErrToGraphQLError(gqlerror.MerchantDataInvalid, "product not found", ctx)
@@ -280,7 +282,20 @@ func (r *mutationResolver) ValidateTransferRequest(ctx context.Context, input mo
 
 // FetchSubscriptionsByMerchant is the resolver for the fetchSubscriptionsByMerchant field.
 func (r *queryResolver) FetchSubscriptionsByMerchant(ctx context.Context, account string, merchantID string) ([]*model.SubscriptionData, error) {
-	panic(fmt.Errorf("not implemented: FetchSubscriptionsByMerchant - fetchSubscriptionsByMerchant"))
+	ws := wallet.NewWalletService(r.Database, 0)
+	subs, err := ws.FetchSubscriptions(account)
+	if err != nil {
+		log.Err(err).Send()
+		return nil, gqlerror.ErrToGraphQLError(gqlerror.InternalError, "failed to fetch subscriptions", ctx)
+	}
+
+	var merchantSubs []*model.SubscriptionData
+	for _, sub := range subs {
+		if sub.MerchantID == merchantID {
+			merchantSubs = append(merchantSubs, sub)
+		}
+	}
+	return merchantSubs, nil
 }
 
 // FetchSubscriptions is the resolver for the fetchSubscriptions field.
