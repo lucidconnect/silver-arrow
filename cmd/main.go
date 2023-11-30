@@ -26,7 +26,7 @@ var (
 func main() {
 	bootstrap()
 
-	database := repository.NewDB(db)
+	database := repository.NewPostgresDB(db)
 	database.RunMigrations()
 	// jobRunner := scheduler.NewScheduler(database)
 	// setupJobs(jobRunner)
