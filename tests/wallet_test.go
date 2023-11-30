@@ -21,7 +21,7 @@ import (
 )
 
 func TestAddSubscription(t *testing.T) {
-	r := repository.NewDB(db)
+	r := repository.NewPostgresDB(db)
 	ms := merchant.NewMerchantService(r)
 	ws := wallet.NewWalletService(r, defaultChain)
 	// mId := randKey()
@@ -84,7 +84,7 @@ func TestAddSubscription(t *testing.T) {
 }
 
 func TestSubscriptionIsUnique(t *testing.T) {
-	r := repository.NewDB(db)
+	r := repository.NewPostgresDB(db)
 	ws := wallet.NewWalletService(r, defaultChain)
 
 	newSub := model.NewSubscription{
