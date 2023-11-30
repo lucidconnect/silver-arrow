@@ -17,6 +17,7 @@ import (
 
 // create a valid the user op and add it to a queue
 func (s *Server) SubscriptionJob() {
+	log.Info().Msg("running subscription job")
 	// read from the database and fetch subscriptions expiring in 3 days
 	subsDueIn3, err := s.database.FetchDueSubscriptions(3)
 	if err != nil {
