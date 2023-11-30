@@ -50,7 +50,8 @@ type Product struct {
 	Owner            string  `json:"owner"`
 	Chain            int     `json:"chain"`
 	Token            string  `json:"token"`
-	ProductID        string  `json:"ProductId"`
+	ProductID        string  `json:"productId"`
+	MerchantID       string  `json:"merchantId"`
 	ReceivingAddress string  `json:"receivingAddress"`
 	Subscriptions    []*Sub  `json:"subscriptions,omitempty"`
 	CreatedAt        *string `json:"createdAt,omitempty"`
