@@ -162,7 +162,17 @@ func (r *mutationResolver) ValidatePaymentIntent(ctx context.Context, input mode
 func (r *mutationResolver) ModifySubscriptionState(ctx context.Context, input model.SubscriptionMod) (string, error) {
 	var err error
 	var result string
-	walletService := wallet.NewWalletService(r.Database, 0)
+
+	subId, err := uuid.Parse(input.SubscriptionID)
+	if err != nil {
+		return "", gqlerror.ErrToGraphQLError(gqlerror.NilError, "Invalid subscription Id", ctx)
+	}
+
+	subscription, err := r.Database.FindSubscriptionById(subId)
+	if err != nil {
+		return "", gqlerror.ErrToGraphQLError(gqlerror.NilError, "Invalid Subscription", ctx)
+	}
+	walletService := wallet.NewWalletService(r.Database, subscription.Chain)
 
 	switch input.Toggle {
 	case model.StatusToggleCancel:
