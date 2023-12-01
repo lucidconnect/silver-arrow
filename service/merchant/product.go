@@ -98,7 +98,14 @@ func parseMerchantSubscriptions(subs []models.Subscription) ([]*model.Sub, error
 }
 
 func (m *MerchantService) FetchProduct(pid string) (*model.Product, error) {
-	id := uuid.MustParse(pid)
+	id, err := uuid.Parse(pid)
+	if err != nil {
+		id, err = parseUUID(pid)
+		if err != nil {
+			log.Err(err).Send()
+			return nil, errors.New("invalid product id")
+		}
+	}
 	v, _ := m.repository.FetchProduct(id)
 
 	subscriptions, err := parseMerchantSubscriptions(v.Subscriptions)
@@ -130,10 +137,16 @@ func Base64EncodeUUID(id uuid.UUID) (string, error) {
 	return base64.RawURLEncoding.EncodeToString(b), nil
 }
 
-func ParseUUID(mid string) uuid.UUID {
-	b, _ := base64.RawURLEncoding.DecodeString(mid)
-	id, _ := uuid.FromBytes(b)
-	return id
+func parseUUID(mid string) (uuid.UUID, error) {
+	b, err := base64.RawURLEncoding.DecodeString(mid)
+	if err != nil {
+		return uuid.Nil, err
+	}
+	id, err := uuid.FromBytes(b)
+	if err != nil {
+		return uuid.Nil, err
+	}
+	return id, nil
 }
 
 func removeUnderscore(s string) string {
