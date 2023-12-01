@@ -21,7 +21,6 @@ import (
 	"github.com/lucidconnect/silver-arrow/repository"
 	"github.com/lucidconnect/silver-arrow/repository/models"
 	"github.com/lucidconnect/silver-arrow/service/erc4337"
-	"github.com/lucidconnect/silver-arrow/service/merchant"
 	"github.com/lucidconnect/silver-arrow/service/turnkey"
 	"github.com/pkg/errors"
 	"github.com/rmanzoku/ethutils/ecrecover"
@@ -139,7 +138,7 @@ func (ws *WalletService) ValidateSubscription(userop map[string]any, chain int64
 		return nil, err
 	}
 
-	productId, err := merchant.Base64EncodeUUID(result.ProductID)
+	productId := result.ProductID.String()
 	if err != nil {
 		log.Err(err).Msg("encoding product id failed")
 		return nil, err
@@ -245,6 +244,13 @@ func (ws *WalletService) AddSubscription(merchantId uuid.UUID, input model.NewSu
 	var nextChargeAt time.Time
 	var initCode []byte
 	var nonce, amount *big.Int
+
+	// check if a subscription already exists for this product
+	pid := input.ProductID
+	existingSub, _ := ws.database.FindSubscriptionByProductId(pid)
+	if existingSub != nil {
+		return nil, nil, errors.New("an active subscription exists for this product")
+	}
 
 	tagId, orgId, walletID, err := ws.database.GetWalletMetadata(input.WalletAddress)
 	if err != nil {
@@ -375,6 +381,7 @@ func (w *WalletService) FetchSubscriptions(walletAddress string) ([]*model.Subsc
 			Token:          v.Token,
 			Amount:         int(v.Amount),
 			Interval:       int(interval),
+			MerchantID:     v.MerchantId,
 			ProductID:      v.ProductID.String(),
 			ProductName:    product.Name,
 			CreatedAt:      createdAt,

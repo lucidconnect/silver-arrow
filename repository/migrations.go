@@ -6,7 +6,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func (db *DB) RunMigrations() {
+func (db *PostgresDB) RunMigrations() {
 	migrator := gormigrate.New(db.Db, gormigrate.DefaultOptions, []*gormigrate.Migration{
 		migrations.DropPublicKeysColumnFromProductsTable,
 	})

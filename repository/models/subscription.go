@@ -57,6 +57,7 @@ type Payment struct {
 	TransactionHash       string
 	BlockExplorerTx       string
 	SubscriptionPublicKey string
+	CreatedAt             time.Time
 	WebhookAcknowledgedAt time.Time
 }
 

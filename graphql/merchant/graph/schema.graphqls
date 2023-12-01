@@ -68,7 +68,8 @@ type Product {
   owner: String!
   chain: Int!
   token: String!
-  ProductId: String!
+  productId: String!
+  merchantId: String!
   receivingAddress: String!
   subscriptions: [Sub!]
   createdAt: String

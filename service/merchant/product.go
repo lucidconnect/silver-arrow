@@ -18,7 +18,7 @@ import (
 // ProductId is base64 encoded
 
 func (m *MerchantService) CreateProduct(input model.NewProduct) (*model.Product, error) {
-	id := uuid.New()
+	productID := uuid.New()
 
 	merchant, err := m.repository.FetchMerchantByAddress(input.Owner)
 	if err != nil {
@@ -26,7 +26,7 @@ func (m *MerchantService) CreateProduct(input model.NewProduct) (*model.Product,
 	}
 	chainId := int64(input.Chain)
 	product := &models.Product{
-		ID:             id,
+		ID:             productID,
 		Name:           input.Name,
 		Chain:          chainId,
 		Owner:          input.Owner,
@@ -40,13 +40,12 @@ func (m *MerchantService) CreateProduct(input model.NewProduct) (*model.Product,
 		return nil, err
 	}
 
-	productID, _ := Base64EncodeUUID(id)
 	productObj := &model.Product{
 		Name:             input.Name,
 		Chain:            input.Chain,
 		Owner:            input.Owner,
 		Token:            input.Token,
-		ProductID:        productID,
+		ProductID:        productID.String(),
 		ReceivingAddress: input.ReceivingAddress,
 	}
 	return productObj, nil
@@ -61,7 +60,6 @@ func (m *MerchantService) FetchProductsByOwner(owner string) ([]*model.Product, 
 	}
 
 	for _, v := range ms {
-		ProductID, _ := Base64EncodeUUID(v.ID)
 		subscriptions, err := parseMerchantSubscriptions(v.Subscriptions)
 		if err != nil {
 			log.Err(err).Send()
@@ -71,7 +69,8 @@ func (m *MerchantService) FetchProductsByOwner(owner string) ([]*model.Product, 
 			Name:             v.Name,
 			Owner:            v.Owner,
 			Chain:            int(v.Chain),
-			ProductID:        ProductID,
+			ProductID:        v.ID.String(),
+			MerchantID:       v.MerchantID.String(),
 			ReceivingAddress: v.DepositAddress,
 			Subscriptions:    subscriptions,
 		}
@@ -99,7 +98,14 @@ func parseMerchantSubscriptions(subs []models.Subscription) ([]*model.Sub, error
 }
 
 func (m *MerchantService) FetchProduct(pid string) (*model.Product, error) {
-	id := ParseUUID(pid)
+	id, err := uuid.Parse(pid)
+	if err != nil {
+		id, err = parseUUID(pid)
+		if err != nil {
+			log.Err(err).Send()
+			return nil, errors.New("invalid product id")
+		}
+	}
 	v, _ := m.repository.FetchProduct(id)
 
 	subscriptions, err := parseMerchantSubscriptions(v.Subscriptions)
@@ -113,6 +119,7 @@ func (m *MerchantService) FetchProduct(pid string) (*model.Product, error) {
 		Owner:            v.Owner,
 		Chain:            int(v.Chain),
 		ProductID:        pid,
+		MerchantID:       v.MerchantID.String(),
 		ReceivingAddress: v.DepositAddress,
 		CreatedAt:        &createdAt,
 		Subscriptions:    subscriptions,
@@ -130,10 +137,16 @@ func Base64EncodeUUID(id uuid.UUID) (string, error) {
 	return base64.RawURLEncoding.EncodeToString(b), nil
 }
 
-func ParseUUID(mid string) uuid.UUID {
-	b, _ := base64.RawURLEncoding.DecodeString(mid)
-	id, _ := uuid.FromBytes(b)
-	return id
+func parseUUID(mid string) (uuid.UUID, error) {
+	b, err := base64.RawURLEncoding.DecodeString(mid)
+	if err != nil {
+		return uuid.Nil, err
+	}
+	id, err := uuid.FromBytes(b)
+	if err != nil {
+		return uuid.Nil, err
+	}
+	return id, nil
 }
 
 func removeUnderscore(s string) string {

@@ -32,7 +32,7 @@ type Server struct {
 	// walletGraphqlHandler, merchantGraphqlHandler *handler.Server
 }
 
-func NewServer(db *repository.DB) *Server {
+func NewServer(db *repository.PostgresDB) *Server {
 	queue := repository.NewDeque()
 	chain := os.Getenv("DEFAULT_CHAIN")
 	defaultChain, err := strconv.ParseInt(chain, 10, 64)

@@ -12,7 +12,6 @@ import (
 	"github.com/lucidconnect/silver-arrow/logger"
 	"github.com/lucidconnect/silver-arrow/repository"
 	"github.com/lucidconnect/silver-arrow/server"
-	"github.com/lucidconnect/silver-arrow/service/scheduler"
 	"github.com/robfig/cron/v3"
 	"github.com/rs/cors"
 	"github.com/rs/zerolog/log"
@@ -27,13 +26,14 @@ var (
 func main() {
 	bootstrap()
 
-	database := repository.NewDB(db)
+	database := repository.NewPostgresDB(db)
 	database.RunMigrations()
-	jobRunner := scheduler.NewScheduler(database)
-	setupJobs(jobRunner)
+	// jobRunner := scheduler.NewScheduler(database)
+	// setupJobs(jobRunner)
 
 	httpServer := server.NewServer(database)
 	httpServer.Routes()
+	setupJobs(httpServer)
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = defaultPort
@@ -75,7 +75,7 @@ func loadEnv(app string) {
 	}
 }
 
-func setupJobs(runner *scheduler.Scheduler) {
+func setupJobs(runner *server.Server) {
 	log.Print("Setting up jobs...")
 	c := cron.New(
 		cron.WithChain(
