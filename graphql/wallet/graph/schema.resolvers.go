@@ -97,6 +97,7 @@ func (r *mutationResolver) CreatePaymentIntent(ctx context.Context, input model.
 			Amount:         input.Amount,
 			Interval:       input.Interval,
 			ProductID:      productId,
+			ProductName:    product.Name,
 			OwnerAddress:   input.OwnerAddress,
 			WalletAddress:  input.WalletAddress,
 			DepositAddress: product.DepositAddress,

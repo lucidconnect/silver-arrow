@@ -13,6 +13,7 @@ type NewSubscription struct {
 	Amount         float64
 	Interval       int
 	ProductID      uuid.UUID
+	ProductName    string
 	OwnerAddress   string
 	WalletAddress  string
 	DepositAddress string
