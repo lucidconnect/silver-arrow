@@ -392,6 +392,7 @@ func (w *WalletService) FetchSubscriptions(walletAddress string) ([]*model.Subsc
 			CreatedAt:      createdAt,
 			NextChargeDate: v.NextChargeAt,
 			Payments:       payments,
+			WalletAddress:  walletAddress,
 		}
 		subData = append(subData, sd)
 	}
