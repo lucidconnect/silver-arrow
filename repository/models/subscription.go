@@ -18,6 +18,7 @@ type Subscription struct {
 	UserOpHash             string    `gorm:"index"`
 	MerchantId             string    `gorm:"index"`
 	ProductID              uuid.UUID `gorm:"index"`
+	ProductName            string
 	MerchantDepositAddress string
 	ExpiresAt              time.Time `gorm:"index;type:timestamptz"`
 	NextChargeAt           time.Time `gorm:"index;type:timestamptz"`
@@ -57,6 +58,7 @@ type Payment struct {
 	TransactionHash       string
 	BlockExplorerTx       string
 	SubscriptionPublicKey string
+	CreatedAt             time.Time
 	WebhookAcknowledgedAt time.Time
 }
 

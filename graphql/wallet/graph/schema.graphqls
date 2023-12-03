@@ -3,6 +3,7 @@
 # https://gqlgen.com/getting-started/
 
 type Query {
+  fetchSubscriptionsByMerchant(account: String!, merchantId: ID!): [SubscriptionData!]!
   fetchSubscriptions(account: String!): [SubscriptionData!]!
   fetchPayment(reference: String!): Payment!
 }
@@ -67,6 +68,7 @@ type SubscriptionData {
   amount: Int!
 	interval: Int!
   productId: String!
+  merchantId: String!
   productName: String!
 	walletAddress: String!
   subscriptionKey: String!
@@ -74,6 +76,7 @@ type SubscriptionData {
   nextChargeDate: Time!
   transactionHash: String!
   transactionExplorer: String!
+  payments: [Payment!]
 }
 
 type TransactionData {

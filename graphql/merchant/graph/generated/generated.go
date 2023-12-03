@@ -74,6 +74,7 @@ type ComplexityRoot struct {
 	Product struct {
 		Chain            func(childComplexity int) int
 		CreatedAt        func(childComplexity int) int
+		MerchantID       func(childComplexity int) int
 		Name             func(childComplexity int) int
 		Owner            func(childComplexity int) int
 		ProductID        func(childComplexity int) int
@@ -272,6 +273,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Product.CreatedAt(childComplexity), true
 
+	case "Product.merchantId":
+		if e.complexity.Product.MerchantID == nil {
+			break
+		}
+
+		return e.complexity.Product.MerchantID(childComplexity), true
+
 	case "Product.name":
 		if e.complexity.Product.Name == nil {
 			break
@@ -286,7 +294,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Product.Owner(childComplexity), true
 
-	case "Product.ProductId":
+	case "Product.productId":
 		if e.complexity.Product.ProductID == nil {
 			break
 		}
@@ -583,7 +591,8 @@ type Product {
   owner: String!
   chain: Int!
   token: String!
-  ProductId: String!
+  productId: String!
+  merchantId: String!
   receivingAddress: String!
   subscriptions: [Sub!]
   createdAt: String
@@ -1282,8 +1291,10 @@ func (ec *executionContext) fieldContext_Mutation_addProduct(ctx context.Context
 				return ec.fieldContext_Product_chain(ctx, field)
 			case "token":
 				return ec.fieldContext_Product_token(ctx, field)
-			case "ProductId":
-				return ec.fieldContext_Product_ProductId(ctx, field)
+			case "productId":
+				return ec.fieldContext_Product_productId(ctx, field)
+			case "merchantId":
+				return ec.fieldContext_Product_merchantId(ctx, field)
 			case "receivingAddress":
 				return ec.fieldContext_Product_receivingAddress(ctx, field)
 			case "subscriptions":
@@ -1355,8 +1366,10 @@ func (ec *executionContext) fieldContext_Mutation_updateProduct(ctx context.Cont
 				return ec.fieldContext_Product_chain(ctx, field)
 			case "token":
 				return ec.fieldContext_Product_token(ctx, field)
-			case "ProductId":
-				return ec.fieldContext_Product_ProductId(ctx, field)
+			case "productId":
+				return ec.fieldContext_Product_productId(ctx, field)
+			case "merchantId":
+				return ec.fieldContext_Product_merchantId(ctx, field)
 			case "receivingAddress":
 				return ec.fieldContext_Product_receivingAddress(ctx, field)
 			case "subscriptions":
@@ -1752,8 +1765,8 @@ func (ec *executionContext) fieldContext_Product_token(ctx context.Context, fiel
 	return fc, nil
 }
 
-func (ec *executionContext) _Product_ProductId(ctx context.Context, field graphql.CollectedField, obj *model.Product) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Product_ProductId(ctx, field)
+func (ec *executionContext) _Product_productId(ctx context.Context, field graphql.CollectedField, obj *model.Product) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Product_productId(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1783,7 +1796,51 @@ func (ec *executionContext) _Product_ProductId(ctx context.Context, field graphq
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Product_ProductId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Product_productId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Product",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Product_merchantId(ctx context.Context, field graphql.CollectedField, obj *model.Product) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Product_merchantId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MerchantID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Product_merchantId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Product",
 		Field:      field,
@@ -1983,8 +2040,10 @@ func (ec *executionContext) fieldContext_Query_fetchOneProduct(ctx context.Conte
 				return ec.fieldContext_Product_chain(ctx, field)
 			case "token":
 				return ec.fieldContext_Product_token(ctx, field)
-			case "ProductId":
-				return ec.fieldContext_Product_ProductId(ctx, field)
+			case "productId":
+				return ec.fieldContext_Product_productId(ctx, field)
+			case "merchantId":
+				return ec.fieldContext_Product_merchantId(ctx, field)
 			case "receivingAddress":
 				return ec.fieldContext_Product_receivingAddress(ctx, field)
 			case "subscriptions":
@@ -2056,8 +2115,10 @@ func (ec *executionContext) fieldContext_Query_fetchProducts(ctx context.Context
 				return ec.fieldContext_Product_chain(ctx, field)
 			case "token":
 				return ec.fieldContext_Product_token(ctx, field)
-			case "ProductId":
-				return ec.fieldContext_Product_ProductId(ctx, field)
+			case "productId":
+				return ec.fieldContext_Product_productId(ctx, field)
+			case "merchantId":
+				return ec.fieldContext_Product_merchantId(ctx, field)
 			case "receivingAddress":
 				return ec.fieldContext_Product_receivingAddress(ctx, field)
 			case "subscriptions":
@@ -4858,8 +4919,13 @@ func (ec *executionContext) _Product(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "ProductId":
-			out.Values[i] = ec._Product_ProductId(ctx, field, obj)
+		case "productId":
+			out.Values[i] = ec._Product_productId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "merchantId":
+			out.Values[i] = ec._Product_merchantId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

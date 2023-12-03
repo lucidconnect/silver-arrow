@@ -12,6 +12,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/google/uuid"
 	"github.com/lucidconnect/silver-arrow/auth"
 	"github.com/lucidconnect/silver-arrow/gqlerror"
 	"github.com/lucidconnect/silver-arrow/graphql/wallet/graph/generated"
@@ -56,9 +57,14 @@ func (r *mutationResolver) CreatePaymentIntent(ctx context.Context, input model.
 		return "", gqlerror.ErrToGraphQLError(gqlerror.MerchantAuthorisationFailed, err.Error(), ctx)
 	}
 
-	productId := parseUUID(input.ProductID)
+	// productId := parseUUID(input.ProductID)
+	productId := uuid.MustParse(input.ProductID)
 	product, err := r.Database.FetchProduct(productId)
 	if err != nil {
+		return "", gqlerror.ErrToGraphQLError(gqlerror.MerchantDataInvalid, "product not found", ctx)
+	}
+
+	if merchantId != product.MerchantID {
 		return "", gqlerror.ErrToGraphQLError(gqlerror.MerchantDataInvalid, "product not found", ctx)
 	}
 
@@ -91,6 +97,7 @@ func (r *mutationResolver) CreatePaymentIntent(ctx context.Context, input model.
 			Amount:         input.Amount,
 			Interval:       input.Interval,
 			ProductID:      productId,
+			ProductName:    product.Name,
 			OwnerAddress:   input.OwnerAddress,
 			WalletAddress:  input.WalletAddress,
 			DepositAddress: product.DepositAddress,
@@ -160,7 +167,17 @@ func (r *mutationResolver) ValidatePaymentIntent(ctx context.Context, input mode
 func (r *mutationResolver) ModifySubscriptionState(ctx context.Context, input model.SubscriptionMod) (string, error) {
 	var err error
 	var result string
-	walletService := wallet.NewWalletService(r.Database, 0)
+
+	subId, err := uuid.Parse(input.SubscriptionID)
+	if err != nil {
+		return "", gqlerror.ErrToGraphQLError(gqlerror.NilError, "Invalid subscription Id", ctx)
+	}
+
+	subscription, err := r.Database.FindSubscriptionById(subId)
+	if err != nil {
+		return "", gqlerror.ErrToGraphQLError(gqlerror.NilError, "Invalid Subscription", ctx)
+	}
+	walletService := wallet.NewWalletService(r.Database, subscription.Chain)
 
 	switch input.Toggle {
 	case model.StatusToggleCancel:
@@ -276,6 +293,24 @@ func (r *mutationResolver) ValidateTransferRequest(ctx context.Context, input mo
 	}
 
 	return td, nil
+}
+
+// FetchSubscriptionsByMerchant is the resolver for the fetchSubscriptionsByMerchant field.
+func (r *queryResolver) FetchSubscriptionsByMerchant(ctx context.Context, account string, merchantID string) ([]*model.SubscriptionData, error) {
+	ws := wallet.NewWalletService(r.Database, 0)
+	subs, err := ws.FetchSubscriptions(account)
+	if err != nil {
+		log.Err(err).Send()
+		return nil, gqlerror.ErrToGraphQLError(gqlerror.InternalError, "failed to fetch subscriptions", ctx)
+	}
+
+	var merchantSubs []*model.SubscriptionData
+	for _, sub := range subs {
+		if sub.MerchantID == merchantID {
+			merchantSubs = append(merchantSubs, sub)
+		}
+	}
+	return merchantSubs, nil
 }
 
 // FetchSubscriptions is the resolver for the fetchSubscriptions field.

@@ -21,7 +21,6 @@ import (
 	"github.com/lucidconnect/silver-arrow/repository"
 	"github.com/lucidconnect/silver-arrow/repository/models"
 	"github.com/lucidconnect/silver-arrow/service/erc4337"
-	"github.com/lucidconnect/silver-arrow/service/merchant"
 	"github.com/lucidconnect/silver-arrow/service/turnkey"
 	"github.com/pkg/errors"
 	"github.com/rmanzoku/ethutils/ecrecover"
@@ -139,7 +138,7 @@ func (ws *WalletService) ValidateSubscription(userop map[string]any, chain int64
 		return nil, err
 	}
 
-	productId, err := merchant.Base64EncodeUUID(result.ProductID)
+	productId := result.ProductID.String()
 	if err != nil {
 		log.Err(err).Msg("encoding product id failed")
 		return nil, err
@@ -246,6 +245,13 @@ func (ws *WalletService) AddSubscription(merchantId uuid.UUID, input model.NewSu
 	var initCode []byte
 	var nonce, amount *big.Int
 
+	// check if a subscription already exists for this product
+	pid := input.ProductID
+	existingSub, _ := ws.database.FindSubscriptionByProductId(pid)
+	if existingSub != nil {
+		return nil, nil, errors.New("an active subscription exists for this product")
+	}
+
 	tagId, orgId, walletID, err := ws.database.GetWalletMetadata(input.WalletAddress)
 	if err != nil {
 		log.Err(err).Msgf("failed to fetch private key tag for wallet - %v", input.WalletAddress)
@@ -332,6 +338,7 @@ func (ws *WalletService) AddSubscription(merchantId uuid.UUID, input model.NewSu
 		UserOpHash:             opHash.Hex(),
 		MerchantId:             merchantId.String(),
 		ProductID:              input.ProductID,
+		ProductName:            input.ProductName,
 		MerchantDepositAddress: input.DepositAddress,
 		NextChargeAt:           nextChargeAt,
 		ExpiresAt:              nextChargeAt,
@@ -356,7 +363,6 @@ func (ws *WalletService) AddSubscription(merchantId uuid.UUID, input model.NewSu
 
 func (w *WalletService) FetchSubscriptions(walletAddress string) ([]*model.SubscriptionData, error) {
 	var subData []*model.SubscriptionData
-
 	subs, err := w.database.FetchWalletSubscriptions(walletAddress)
 	if err != nil {
 		log.Err(err).Msgf("error while fetching subscriotions for %v", walletAddress)
@@ -364,9 +370,15 @@ func (w *WalletService) FetchSubscriptions(walletAddress string) ([]*model.Subsc
 	}
 
 	for _, v := range subs {
-		product, err := w.database.FetchProduct(v.ProductID)
-		if err != nil {
-			log.Err(err).Msgf("failed to fetch product with Id [%v]", v.ProductID)
+		var payments []*model.Payment
+		for _, p := range v.Payments {
+			payments = append(payments, &model.Payment{
+				Chain:     int(p.Chain),
+				Token:     p.Token,
+				Status:    model.PaymentStatus(p.Status),
+				Amount:    parseTransferAmountFloat(p.Token, p.Amount),
+				Reference: p.Reference.String(),
+			})
 		}
 		interval := nanoSecondsToDay(v.Interval)
 		createdAt := v.CreatedAt.Format("dd:mm:yyyy")
@@ -375,10 +387,13 @@ func (w *WalletService) FetchSubscriptions(walletAddress string) ([]*model.Subsc
 			Token:          v.Token,
 			Amount:         int(v.Amount),
 			Interval:       int(interval),
+			MerchantID:     v.MerchantId,
 			ProductID:      v.ProductID.String(),
-			ProductName:    product.Name,
+			ProductName:    v.ProductName,
 			CreatedAt:      createdAt,
 			NextChargeDate: v.NextChargeAt,
+			Payments:       payments,
+			WalletAddress:  walletAddress,
 		}
 		subData = append(subData, sd)
 	}
