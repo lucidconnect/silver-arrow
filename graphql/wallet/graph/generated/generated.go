@@ -78,6 +78,7 @@ type ComplexityRoot struct {
 		Interval            func(childComplexity int) int
 		MerchantID          func(childComplexity int) int
 		NextChargeDate      func(childComplexity int) int
+		Payments            func(childComplexity int) int
 		ProductID           func(childComplexity int) int
 		ProductName         func(childComplexity int) int
 		SubscriptionKey     func(childComplexity int) int
@@ -348,6 +349,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.SubscriptionData.NextChargeDate(childComplexity), true
+
+	case "SubscriptionData.payments":
+		if e.complexity.SubscriptionData.Payments == nil {
+			break
+		}
+
+		return e.complexity.SubscriptionData.Payments(childComplexity), true
 
 	case "SubscriptionData.productId":
 		if e.complexity.SubscriptionData.ProductID == nil {
@@ -684,6 +692,7 @@ type SubscriptionData {
   nextChargeDate: Time!
   transactionHash: String!
   transactionExplorer: String!
+  payments: [Payment!]
 }
 
 type TransactionData {
@@ -1766,6 +1775,8 @@ func (ec *executionContext) fieldContext_Query_fetchSubscriptionsByMerchant(ctx 
 				return ec.fieldContext_SubscriptionData_transactionHash(ctx, field)
 			case "transactionExplorer":
 				return ec.fieldContext_SubscriptionData_transactionExplorer(ctx, field)
+			case "payments":
+				return ec.fieldContext_SubscriptionData_payments(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type SubscriptionData", field.Name)
 		},
@@ -1849,6 +1860,8 @@ func (ec *executionContext) fieldContext_Query_fetchSubscriptions(ctx context.Co
 				return ec.fieldContext_SubscriptionData_transactionHash(ctx, field)
 			case "transactionExplorer":
 				return ec.fieldContext_SubscriptionData_transactionExplorer(ctx, field)
+			case "payments":
+				return ec.fieldContext_SubscriptionData_payments(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type SubscriptionData", field.Name)
 		},
@@ -2634,6 +2647,63 @@ func (ec *executionContext) fieldContext_SubscriptionData_transactionExplorer(ct
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SubscriptionData_payments(ctx context.Context, field graphql.CollectedField, obj *model.SubscriptionData) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SubscriptionData_payments(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Payments, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Payment)
+	fc.Result = res
+	return ec.marshalOPayment2ᚕᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐPaymentᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SubscriptionData_payments(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SubscriptionData",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "chain":
+				return ec.fieldContext_Payment_chain(ctx, field)
+			case "token":
+				return ec.fieldContext_Payment_token(ctx, field)
+			case "status":
+				return ec.fieldContext_Payment_status(ctx, field)
+			case "amount":
+				return ec.fieldContext_Payment_amount(ctx, field)
+			case "source":
+				return ec.fieldContext_Payment_source(ctx, field)
+			case "productId":
+				return ec.fieldContext_Payment_productId(ctx, field)
+			case "reference":
+				return ec.fieldContext_Payment_reference(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Payment", field.Name)
 		},
 	}
 	return fc, nil
@@ -5692,6 +5762,8 @@ func (ec *executionContext) _SubscriptionData(ctx context.Context, sel ast.Selec
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "payments":
+			out.Values[i] = ec._SubscriptionData_payments(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -6696,6 +6768,53 @@ func (ec *executionContext) marshalOID2ᚖstring(ctx context.Context, sel ast.Se
 	}
 	res := graphql.MarshalID(*v)
 	return res
+}
+
+func (ec *executionContext) marshalOPayment2ᚕᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐPaymentᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Payment) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNPayment2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐPayment(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) unmarshalOString2ᚖstring(ctx context.Context, v interface{}) (*string, error) {

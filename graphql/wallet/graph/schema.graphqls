@@ -76,6 +76,7 @@ type SubscriptionData {
   nextChargeDate: Time!
   transactionHash: String!
   transactionExplorer: String!
+  payments: [Payment!]
 }
 
 type TransactionData {

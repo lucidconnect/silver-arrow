@@ -11,6 +11,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 func SetupDatabase(dbconn *sql.DB) (*gorm.DB, error) {
@@ -82,7 +83,7 @@ func (p *PostgresDB) AddSubscription(subscriptionData *models.Subscription, key 
 
 func (p *PostgresDB) FetchWalletSubscriptions(address string) ([]models.Subscription, error) {
 	var subscriptions []models.Subscription
-	err := p.Db.Where("wallet_address = ?", address).Preload("Key").Find(&subscriptions).Error
+	err := p.Db.Where("wallet_address = ?", address).Preload(clause.Associations).Find(&subscriptions).Error
 	if err != nil {
 		return nil, err
 	}
