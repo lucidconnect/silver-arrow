@@ -64,6 +64,10 @@ func (r *mutationResolver) CreatePaymentIntent(ctx context.Context, input model.
 		return "", gqlerror.ErrToGraphQLError(gqlerror.MerchantDataInvalid, "product not found", ctx)
 	}
 
+	if merchantId != product.MerchantID {
+		return "", gqlerror.ErrToGraphQLError(gqlerror.MerchantDataInvalid, "product not found", ctx)
+	}
+
 	walletService := wallet.NewWalletService(r.Database, int64(input.Chain))
 	var usePaymaster bool
 	switch os.Getenv("USE_PAYMASTER") {
