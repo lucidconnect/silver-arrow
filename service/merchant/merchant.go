@@ -135,14 +135,14 @@ func (m *MerchantService) UpdateMerchantWebhook(merchant models.Merchant, webHoo
 	}, nil
 }
 
-func (m *MerchantService) CreateAccessKeys(owner, mode string) (*model.AccessKey, error) {
+func (m *MerchantService) CreateAccessKeys(owner, mode string) (*model.MerchantAccessKey, error) {
 	pk, sk, err := auth.CreateAccessKey()
 	if err != nil {
 		log.Err(err).Send()
 		return nil, err
 	}
 
-	accessKey := &model.AccessKey{
+	accessKey := &model.MerchantAccessKey{
 		Mode:       model.Mode(mode),
 		PublicKey:  pk,
 		PrivateKey: sk,

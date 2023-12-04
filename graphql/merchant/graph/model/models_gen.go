@@ -8,19 +8,19 @@ import (
 	"strconv"
 )
 
-type AccessKey struct {
+type Merchant struct {
+	ID         string             `json:"id"`
+	Name       string             `json:"name"`
+	Email      string             `json:"email"`
+	PublicKey  string             `json:"publicKey"`
+	WebHookURL string             `json:"webHookUrl"`
+	AccessKey  *MerchantAccessKey `json:"accessKey"`
+}
+
+type MerchantAccessKey struct {
 	Mode       Mode   `json:"mode"`
 	PublicKey  string `json:"publicKey"`
 	PrivateKey string `json:"privateKey"`
-}
-
-type Merchant struct {
-	ID         string     `json:"id"`
-	Name       string     `json:"name"`
-	Email      string     `json:"email"`
-	PublicKey  string     `json:"publicKey"`
-	WebHookURL string     `json:"webHookUrl"`
-	AccessKey  *AccessKey `json:"accessKey"`
 }
 
 type MerchantAccessKeyQuery struct {
