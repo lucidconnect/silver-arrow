@@ -77,8 +77,8 @@ type ComplexityRoot struct {
 	Product struct {
 		Chain            func(childComplexity int) int
 		CreatedAt        func(childComplexity int) int
-		Mode             func(childComplexity int) int
 		MerchantID       func(childComplexity int) int
+		Mode             func(childComplexity int) int
 		Name             func(childComplexity int) int
 		Owner            func(childComplexity int) int
 		ProductID        func(childComplexity int) int
@@ -304,19 +304,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Product.CreatedAt(childComplexity), true
 
-	case "Product.mode":
-		if e.complexity.Product.Mode == nil {
-			break
-		}
-
-		return e.complexity.Product.Mode(childComplexity), true
-
 	case "Product.merchantId":
 		if e.complexity.Product.MerchantID == nil {
 			break
 		}
 
 		return e.complexity.Product.MerchantID(childComplexity), true
+
+	case "Product.mode":
+		if e.complexity.Product.Mode == nil {
+			break
+		}
+
+		return e.complexity.Product.Mode(childComplexity), true
 
 	case "Product.name":
 		if e.complexity.Product.Name == nil {

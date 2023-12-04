@@ -131,12 +131,15 @@ func (m *MerchantService) FetchProduct(pid string) (*model.Product, error) {
 }
 
 func (m *MerchantService) UpdateProductMode(merchantId uuid.UUID, productId, mode string) error {
-	id := ParseUUID(productId)
+	id, err := uuid.Parse(productId)
+	if err != nil {
+		return err
+	}
 
 	update := map[string]interface{}{
 		"mode": mode,
 	}
-	err := m.repository.UpdateProduct(id, merchantId, update)
+	err = m.repository.UpdateProduct(id, merchantId, update)
 	if err != nil {
 		log.Err(err).Send()
 		return err
