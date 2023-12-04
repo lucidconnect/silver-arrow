@@ -12,7 +12,7 @@ type Query {
 type Mutation {
   addProduct(input: NewProduct!): Product!
   updateProduct(input: ProductUpdate!): Product!
-  createAccessKey(input: NewMerchantKey!): AccessKey!
+  createAccessKey(input: NewMerchantKey!): MerchantAccessKey!
   createMerchant(input: NewMerchant!): Merchant!
   updateMerchantwebHookUrl(webhookUrl: String!): Merchant!
   toggleProductMode(input: ProductModeUpdate!): Mode!

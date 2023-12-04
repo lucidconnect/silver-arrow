@@ -40,7 +40,7 @@ func (r *mutationResolver) UpdateProduct(ctx context.Context, input model.Produc
 }
 
 // CreateAccessKey is the resolver for the createAccessKey field.
-func (r *mutationResolver) CreateAccessKey(ctx context.Context, input model.NewMerchantKey) (*model.AccessKey, error) {
+func (r *mutationResolver) CreateAccessKey(ctx context.Context, input model.NewMerchantKey) (*model.MerchantAccessKey, error) {
 	merchantService := merchant.NewMerchantService(r.Database)
 
 	merchant, err := getAuthenticatedAndActiveMerchant(ctx)

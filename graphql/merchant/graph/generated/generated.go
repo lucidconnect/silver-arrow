@@ -44,12 +44,6 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
-	AccessKey struct {
-		Mode       func(childComplexity int) int
-		PrivateKey func(childComplexity int) int
-		PublicKey  func(childComplexity int) int
-	}
-
 	Merchant struct {
 		AccessKey  func(childComplexity int) int
 		Email      func(childComplexity int) int
@@ -57,6 +51,12 @@ type ComplexityRoot struct {
 		Name       func(childComplexity int) int
 		PublicKey  func(childComplexity int) int
 		WebHookURL func(childComplexity int) int
+	}
+
+	MerchantAccessKey struct {
+		Mode       func(childComplexity int) int
+		PrivateKey func(childComplexity int) int
+		PublicKey  func(childComplexity int) int
 	}
 
 	MerchantStats struct {
@@ -107,7 +107,7 @@ type ComplexityRoot struct {
 type MutationResolver interface {
 	AddProduct(ctx context.Context, input model.NewProduct) (*model.Product, error)
 	UpdateProduct(ctx context.Context, input model.ProductUpdate) (*model.Product, error)
-	CreateAccessKey(ctx context.Context, input model.NewMerchantKey) (*model.AccessKey, error)
+	CreateAccessKey(ctx context.Context, input model.NewMerchantKey) (*model.MerchantAccessKey, error)
 	CreateMerchant(ctx context.Context, input model.NewMerchant) (*model.Merchant, error)
 	UpdateMerchantwebHookURL(ctx context.Context, webhookURL string) (*model.Merchant, error)
 	ToggleProductMode(ctx context.Context, input model.ProductModeUpdate) (model.Mode, error)
@@ -133,27 +133,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	ec := executionContext{nil, e, 0, 0, nil}
 	_ = ec
 	switch typeName + "." + field {
-
-	case "AccessKey.mode":
-		if e.complexity.AccessKey.Mode == nil {
-			break
-		}
-
-		return e.complexity.AccessKey.Mode(childComplexity), true
-
-	case "AccessKey.privateKey":
-		if e.complexity.AccessKey.PrivateKey == nil {
-			break
-		}
-
-		return e.complexity.AccessKey.PrivateKey(childComplexity), true
-
-	case "AccessKey.publicKey":
-		if e.complexity.AccessKey.PublicKey == nil {
-			break
-		}
-
-		return e.complexity.AccessKey.PublicKey(childComplexity), true
 
 	case "Merchant.accessKey":
 		if e.complexity.Merchant.AccessKey == nil {
@@ -196,6 +175,27 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Merchant.WebHookURL(childComplexity), true
+
+	case "MerchantAccessKey.mode":
+		if e.complexity.MerchantAccessKey.Mode == nil {
+			break
+		}
+
+		return e.complexity.MerchantAccessKey.Mode(childComplexity), true
+
+	case "MerchantAccessKey.privateKey":
+		if e.complexity.MerchantAccessKey.PrivateKey == nil {
+			break
+		}
+
+		return e.complexity.MerchantAccessKey.PrivateKey(childComplexity), true
+
+	case "MerchantAccessKey.publicKey":
+		if e.complexity.MerchantAccessKey.PublicKey == nil {
+			break
+		}
+
+		return e.complexity.MerchantAccessKey.PublicKey(childComplexity), true
 
 	case "MerchantStats.products":
 		if e.complexity.MerchantStats.Products == nil {
@@ -576,7 +576,7 @@ type Query {
 type Mutation {
   addProduct(input: NewProduct!): Product!
   updateProduct(input: ProductUpdate!): Product!
-  createAccessKey(input: NewMerchantKey!): AccessKey!
+  createAccessKey(input: NewMerchantKey!): MerchantAccessKey!
   createMerchant(input: NewMerchant!): Merchant!
   updateMerchantwebHookUrl(webhookUrl: String!): Merchant!
   toggleProductMode(input: ProductModeUpdate!): Mode!
@@ -606,7 +606,7 @@ type Merchant {
   email: String!
   publicKey: String!
   webHookUrl: String!
-  accessKey: AccessKey!
+  accessKey: MerchantAccessKey!
 }
 
 input NewProduct {
@@ -657,7 +657,7 @@ type Product {
   createdAt: String
 }
 
-type AccessKey {
+type MerchantAccessKey {
   mode: Mode!
   publicKey: String!
   privateKey: String!
@@ -884,138 +884,6 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
-
-func (ec *executionContext) _AccessKey_mode(ctx context.Context, field graphql.CollectedField, obj *model.AccessKey) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_AccessKey_mode(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Mode, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(model.Mode)
-	fc.Result = res
-	return ec.marshalNMode2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐMode(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_AccessKey_mode(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "AccessKey",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Mode does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _AccessKey_publicKey(ctx context.Context, field graphql.CollectedField, obj *model.AccessKey) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_AccessKey_publicKey(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.PublicKey, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_AccessKey_publicKey(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "AccessKey",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _AccessKey_privateKey(ctx context.Context, field graphql.CollectedField, obj *model.AccessKey) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_AccessKey_privateKey(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.PrivateKey, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_AccessKey_privateKey(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "AccessKey",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
 
 func (ec *executionContext) _Merchant_id(ctx context.Context, field graphql.CollectedField, obj *model.Merchant) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Merchant_id(ctx, field)
@@ -1263,9 +1131,9 @@ func (ec *executionContext) _Merchant_accessKey(ctx context.Context, field graph
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.AccessKey)
+	res := resTmp.(*model.MerchantAccessKey)
 	fc.Result = res
-	return ec.marshalNAccessKey2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐAccessKey(ctx, field.Selections, res)
+	return ec.marshalNMerchantAccessKey2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐMerchantAccessKey(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Merchant_accessKey(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1277,13 +1145,145 @@ func (ec *executionContext) fieldContext_Merchant_accessKey(ctx context.Context,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "mode":
-				return ec.fieldContext_AccessKey_mode(ctx, field)
+				return ec.fieldContext_MerchantAccessKey_mode(ctx, field)
 			case "publicKey":
-				return ec.fieldContext_AccessKey_publicKey(ctx, field)
+				return ec.fieldContext_MerchantAccessKey_publicKey(ctx, field)
 			case "privateKey":
-				return ec.fieldContext_AccessKey_privateKey(ctx, field)
+				return ec.fieldContext_MerchantAccessKey_privateKey(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type AccessKey", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type MerchantAccessKey", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MerchantAccessKey_mode(ctx context.Context, field graphql.CollectedField, obj *model.MerchantAccessKey) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MerchantAccessKey_mode(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Mode, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.Mode)
+	fc.Result = res
+	return ec.marshalNMode2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐMode(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_MerchantAccessKey_mode(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MerchantAccessKey",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Mode does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MerchantAccessKey_publicKey(ctx context.Context, field graphql.CollectedField, obj *model.MerchantAccessKey) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MerchantAccessKey_publicKey(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PublicKey, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_MerchantAccessKey_publicKey(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MerchantAccessKey",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MerchantAccessKey_privateKey(ctx context.Context, field graphql.CollectedField, obj *model.MerchantAccessKey) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MerchantAccessKey_privateKey(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PrivateKey, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_MerchantAccessKey_privateKey(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MerchantAccessKey",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -1601,9 +1601,9 @@ func (ec *executionContext) _Mutation_createAccessKey(ctx context.Context, field
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.AccessKey)
+	res := resTmp.(*model.MerchantAccessKey)
 	fc.Result = res
-	return ec.marshalNAccessKey2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐAccessKey(ctx, field.Selections, res)
+	return ec.marshalNMerchantAccessKey2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐMerchantAccessKey(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createAccessKey(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1615,13 +1615,13 @@ func (ec *executionContext) fieldContext_Mutation_createAccessKey(ctx context.Co
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "mode":
-				return ec.fieldContext_AccessKey_mode(ctx, field)
+				return ec.fieldContext_MerchantAccessKey_mode(ctx, field)
 			case "publicKey":
-				return ec.fieldContext_AccessKey_publicKey(ctx, field)
+				return ec.fieldContext_MerchantAccessKey_publicKey(ctx, field)
 			case "privateKey":
-				return ec.fieldContext_AccessKey_privateKey(ctx, field)
+				return ec.fieldContext_MerchantAccessKey_privateKey(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type AccessKey", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type MerchantAccessKey", field.Name)
 		},
 	}
 	defer func() {
@@ -5063,55 +5063,6 @@ func (ec *executionContext) unmarshalInputProductUpdate(ctx context.Context, obj
 
 // region    **************************** object.gotpl ****************************
 
-var accessKeyImplementors = []string{"AccessKey"}
-
-func (ec *executionContext) _AccessKey(ctx context.Context, sel ast.SelectionSet, obj *model.AccessKey) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, accessKeyImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("AccessKey")
-		case "mode":
-			out.Values[i] = ec._AccessKey_mode(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "publicKey":
-			out.Values[i] = ec._AccessKey_publicKey(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "privateKey":
-			out.Values[i] = ec._AccessKey_privateKey(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
 var merchantImplementors = []string{"Merchant"}
 
 func (ec *executionContext) _Merchant(ctx context.Context, sel ast.SelectionSet, obj *model.Merchant) graphql.Marshaler {
@@ -5150,6 +5101,55 @@ func (ec *executionContext) _Merchant(ctx context.Context, sel ast.SelectionSet,
 			}
 		case "accessKey":
 			out.Values[i] = ec._Merchant_accessKey(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var merchantAccessKeyImplementors = []string{"MerchantAccessKey"}
+
+func (ec *executionContext) _MerchantAccessKey(ctx context.Context, sel ast.SelectionSet, obj *model.MerchantAccessKey) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, merchantAccessKeyImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("MerchantAccessKey")
+		case "mode":
+			out.Values[i] = ec._MerchantAccessKey_mode(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "publicKey":
+			out.Values[i] = ec._MerchantAccessKey_publicKey(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "privateKey":
+			out.Values[i] = ec._MerchantAccessKey_privateKey(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -5915,20 +5915,6 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
-func (ec *executionContext) marshalNAccessKey2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐAccessKey(ctx context.Context, sel ast.SelectionSet, v model.AccessKey) graphql.Marshaler {
-	return ec._AccessKey(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNAccessKey2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐAccessKey(ctx context.Context, sel ast.SelectionSet, v *model.AccessKey) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._AccessKey(ctx, sel, v)
-}
-
 func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -5986,6 +5972,20 @@ func (ec *executionContext) marshalNMerchant2ᚖgithubᚗcomᚋlucidconnectᚋsi
 		return graphql.Null
 	}
 	return ec._Merchant(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNMerchantAccessKey2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐMerchantAccessKey(ctx context.Context, sel ast.SelectionSet, v model.MerchantAccessKey) graphql.Marshaler {
+	return ec._MerchantAccessKey(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNMerchantAccessKey2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐMerchantAccessKey(ctx context.Context, sel ast.SelectionSet, v *model.MerchantAccessKey) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._MerchantAccessKey(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNMerchantAccessKeyQuery2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐMerchantAccessKeyQuery(ctx context.Context, v interface{}) (model.MerchantAccessKeyQuery, error) {
