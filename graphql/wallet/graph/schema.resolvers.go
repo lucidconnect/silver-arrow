@@ -296,9 +296,9 @@ func (r *mutationResolver) ValidateTransferRequest(ctx context.Context, input mo
 }
 
 // FetchSubscriptionsByMerchant is the resolver for the fetchSubscriptionsByMerchant field.
-func (r *queryResolver) FetchSubscriptionsByMerchant(ctx context.Context, account string, merchantID string) ([]*model.SubscriptionData, error) {
+func (r *queryResolver) FetchSubscriptionsByMerchant(ctx context.Context, account string, merchantID string, status *string) ([]*model.SubscriptionData, error) {
 	ws := wallet.NewWalletService(r.Database, 0)
-	subs, err := ws.FetchSubscriptions(account)
+	subs, err := ws.FetchSubscriptions(account, status)
 	if err != nil {
 		log.Err(err).Send()
 		return nil, gqlerror.ErrToGraphQLError(gqlerror.InternalError, "failed to fetch subscriptions", ctx)
@@ -314,9 +314,9 @@ func (r *queryResolver) FetchSubscriptionsByMerchant(ctx context.Context, accoun
 }
 
 // FetchSubscriptions is the resolver for the fetchSubscriptions field.
-func (r *queryResolver) FetchSubscriptions(ctx context.Context, account string) ([]*model.SubscriptionData, error) {
+func (r *queryResolver) FetchSubscriptions(ctx context.Context, account string, status *string) ([]*model.SubscriptionData, error) {
 	ws := wallet.NewWalletService(r.Database, 0)
-	subs, err := ws.FetchSubscriptions(account)
+	subs, err := ws.FetchSubscriptions(account, status)
 	if err != nil {
 		log.Err(err).Send()
 		return nil, gqlerror.ErrToGraphQLError(gqlerror.InternalError, "failed to fetch subscriptions", ctx)

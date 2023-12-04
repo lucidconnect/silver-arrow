@@ -15,7 +15,7 @@ type Database interface {
 	// Subscriptions
 	AddSubscription(*models.Subscription, *models.Key) error
 	AddSubscriptionKey(*models.Key) error
-	FetchWalletSubscriptions(address string) ([]models.Subscription, error)
+	FetchWalletSubscriptions(address string, status *string) ([]models.Subscription, error)
 	FetchDueSubscriptions(days int) ([]models.Subscription, error)
 	FindSubscriptionByHash(hash string) (*models.Subscription, error)
 	FindSubscriptionById(id uuid.UUID) (*models.Subscription, error)

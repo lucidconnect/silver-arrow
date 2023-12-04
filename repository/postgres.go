@@ -81,9 +81,14 @@ func (p *PostgresDB) AddSubscription(subscriptionData *models.Subscription, key 
 	return nil
 }
 
-func (p *PostgresDB) FetchWalletSubscriptions(address string) ([]models.Subscription, error) {
+func (p *PostgresDB) FetchWalletSubscriptions(address string, status *string) ([]models.Subscription, error) {
 	var subscriptions []models.Subscription
-	err := p.Db.Where("wallet_address = ?", address).Preload(clause.Associations).Find(&subscriptions).Error
+	var err error
+	if status != nil {
+		err = p.Db.Where("wallet_address = ? AND status =  ?", address, *status).Preload(clause.Associations).Find(&subscriptions).Error
+	} else {
+		err = p.Db.Where("wallet_address = ? AND status = ?", address, "active").Preload(clause.Associations).Find(&subscriptions).Error
+	}
 	if err != nil {
 		return nil, err
 	}

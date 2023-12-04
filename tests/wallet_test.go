@@ -11,28 +11,26 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/google/uuid"
-	merchant_model "github.com/lucidconnect/silver-arrow/graphql/merchant/graph/model"
 	"github.com/lucidconnect/silver-arrow/graphql/wallet/graph/model"
 	"github.com/lucidconnect/silver-arrow/repository"
 	"github.com/lucidconnect/silver-arrow/service/erc4337"
-	"github.com/lucidconnect/silver-arrow/service/merchant"
 	"github.com/lucidconnect/silver-arrow/service/wallet"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestAddSubscription(t *testing.T) {
 	r := repository.NewPostgresDB(db)
-	ms := merchant.NewMerchantService(r)
+	// ms := merchant.NewMerchantService(r)
 	ws := wallet.NewWalletService(r, defaultChain)
 	// mId := randKey()
-	newProduct := merchant_model.NewProduct{
-		Name:             "test xyz",
-		Owner:            "0x85fc2E4425d0DAba7426F50091a384ee05D37Cd2",
-		Chain:            int(defaultChain),
-		Token:            "USDC",
-		ReceivingAddress: "0x85fc2E4425d0DAba7426F50091a384ee05D37Cd2",
-	}
-	product, _ := ms.CreateProduct(newProduct)
+	// newProduct := merchant_model.NewProduct{
+	// 	Name:             "test xyz",
+	// 	Owner:            "0x85fc2E4425d0DAba7426F50091a384ee05D37Cd2",
+	// 	Chain:            int(defaultChain),
+	// 	Token:            "USDC",
+	// 	ReceivingAddress: "0x85fc2E4425d0DAba7426F50091a384ee05D37Cd2",
+	// }
+	// product, _ := ms.CreateProduct(newProduct)
 
 	key := "0xe81f9f7146470e1e728cc44d22089098de6be6ebe3ca39f21b7b092f09b10cf5"
 	p, _ := crypto.HexToECDSA(key[2:])
@@ -43,7 +41,7 @@ func TestAddSubscription(t *testing.T) {
 		Token:     "USDC",
 		Amount:    1,
 		Interval:  30,
-		ProductID: uuid.MustParse(product.ProductID),
+		ProductID: uuid.MustParse("aad69be2-8513-4fe1-b5df-63720630ae6b"),
 		// WalletAddress: "0x14De44b6100dE479655D752ECD2230D10F8fA061",
 		WalletAddress: "0xb96442F14ac82E21c333A8bB9b03274Ae26eb79D",
 		OwnerAddress:  "0x85fc2E4425d0DAba7426F50091a384ee05D37Cd2",
@@ -159,4 +157,20 @@ func TestSignature(t *testing.T) {
 
 	fmt.Println(address)
 	t.Fail()
+}
+
+func TestCancelSubscription(t *testing.T) {
+	r := repository.NewPostgresDB(db)
+	ws := wallet.NewWalletService(r, defaultChain)
+
+	_, op, err := ws.CancelSubscription("325b2832-2f33-40b2-ab64-19581720de07")
+	assert.NoError(t, err)
+	key := "0xe81f9f7146470e1e728cc44d22089098de6be6ebe3ca39f21b7b092f09b10cf5"
+
+	sig, _, err := erc4337.SignUserOp(op, key, erc4337.SUDO_MODE, nil, 80001)
+	assert.Nil(t, err)
+	op["signature"] = hexutil.Encode(sig)
+
+	_, err = ws.ExecuteUserop(op, defaultChain)
+	assert.Nil(t, err)
 }
