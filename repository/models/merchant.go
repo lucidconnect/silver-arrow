@@ -17,6 +17,10 @@ type Product struct {
 	CreatedAt      time.Time
 	Subscriptions  []Subscription
 	Payments       []Payment
+	Amount         int64
+	Interval       int64
+	
+	// amount, interval, productid
 }
 
 type Merchant struct {
@@ -29,4 +33,5 @@ type Merchant struct {
 	OwnerAddress     string `gorm:"unique"` // web3 wallet that owns this account
 	Products         []Product
 	ConvoyEndpointID string
+	PaymentLinks     []PaymentLink
 }

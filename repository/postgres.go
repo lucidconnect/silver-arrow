@@ -314,3 +314,31 @@ func (p *PostgresDB) CreateWebhookEvent(webhookEvent *models.WebhookEvent) error
 func (p *PostgresDB) UpdateWebhookEvent(webhookEvent *models.WebhookEvent) error {
 	return p.Db.Save(webhookEvent).Error
 }
+
+func (p *PostgresDB) CreatePaymentLink(paymentLink *models.PaymentLink) error {
+	return p.Db.Create(paymentLink).Error
+}
+
+func (p *PostgresDB) FetchPaymentLink(id uuid.UUID) (*models.PaymentLink, error) {
+	var paymentLink *models.PaymentLink
+	if err := p.Db.Where("id = ?", id).First(&paymentLink).Error; err != nil {
+		return nil, err
+	}
+	return paymentLink, nil
+}
+
+func (p *PostgresDB) FetchPaymentLinkByProduct(productId uuid.UUID) (*models.PaymentLink, error) {
+	var paymentLink *models.PaymentLink
+	if err := p.Db.Where("product_id = ?", productId).First(&paymentLink).Error; err != nil {
+		return nil, err
+	}
+	return paymentLink, nil
+}
+
+func (p *PostgresDB) FetchPaymentLinkByMerchant(merchantId uuid.UUID) ([]models.PaymentLink, error) {
+	var paymentLink []models.PaymentLink
+	if err := p.Db.Where("merchant_id = ?", merchantId).Find(&paymentLink).Error; err != nil {
+		return nil, err
+	}
+	return paymentLink, nil
+}

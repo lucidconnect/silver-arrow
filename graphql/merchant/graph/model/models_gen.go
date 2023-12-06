@@ -47,12 +47,17 @@ type NewProduct struct {
 	Chain            int    `json:"chain"`
 	Token            string `json:"token"`
 	ReceivingAddress string `json:"receivingAddress"`
+	FirstChargeNow   bool   `json:"firstChargeNow"`
 }
 
-type PaymentLink struct {
-	ID        string `json:"id"`
-	ProductID string `json:"productId"`
-	PublicKey string `json:"publicKey"`
+type PaymentLinkDetails struct {
+	ID         string `json:"id"`
+	Mode       string `json:"mode"`
+	ProductID  string `json:"productId"`
+	MerchantID string `json:"merchantId"`
+	Amount     int    `json:"amount"`
+	Token      string `json:"token"`
+	Chain      int    `json:"chain"`
 }
 
 type Product struct {
