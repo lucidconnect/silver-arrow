@@ -20,6 +20,10 @@ type Product struct {
 	Subscriptions  []Subscription
 	Payments       []Payment
 	Mode           model.Mode
+	Amount         int64
+	Interval       int64
+	
+	// amount, interval, productid
 }
 
 type Merchant struct {
@@ -45,4 +49,5 @@ type MerchantAccessKey struct {
 func (m *MerchantAccessKey) BeforeCreate(tx *gorm.DB) (err error) {
 	m.ID = uuid.New()
 	return
+	PaymentLinks     []PaymentLink
 }

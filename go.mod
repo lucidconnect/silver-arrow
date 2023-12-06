@@ -9,7 +9,6 @@ require (
 	github.com/ethereum/go-ethereum v1.13.5
 	github.com/frain-dev/convoy-go v1.0.2
 	github.com/golang-jwt/jwt v3.2.2+incompatible
-	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/pkg/errors v0.9.1
 	github.com/rs/cors v1.9.0
 	github.com/rs/zerolog v1.31.0

@@ -52,6 +52,12 @@ type Database interface {
 	// Webhook
 	CreateWebhookEvent(*models.WebhookEvent) error
 	UpdateWebhookEvent(*models.WebhookEvent) error
+
+	// PaymentLink
+	CreatePaymentLink(*models.PaymentLink) error
+	FetchPaymentLink(id uuid.UUID) (*models.PaymentLink, error)
+	FetchPaymentLinkByProduct(productId uuid.UUID) (*models.PaymentLink, error)
+	FetchPaymentLinkByMerchant(merchantId uuid.UUID) ([]models.PaymentLink, error)
 }
 
 type Queuer interface {

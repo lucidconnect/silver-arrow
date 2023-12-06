@@ -7,6 +7,7 @@ type Query {
   fetchProducts(owner: String!): [Product!]!
   fetchMerchantKey(input: MerchantAccessKeyQuery!): String!
   fetchMerchantStats(owner: String!): MerchantStats!
+  getPaymentLink(id: String!): PaymentLinkDetails!
 }
 
 type Mutation {
@@ -16,8 +17,9 @@ type Mutation {
   createMerchant(input: NewMerchant!): Merchant!
   updateMerchantwebHookUrl(webhookUrl: String!): Merchant!
   toggleProductMode(input: ProductModeUpdate!): Mode!
-  createPaymentLink(input: NewPaymentLink!): PaymentLink!
+  createPaymentLink(input: NewPaymentLink!): String!
 }
+# fetch amount, token, mode, product, interval, chain, signature, public key
 
 input NewMerchant {
   name: String!
@@ -52,6 +54,7 @@ input NewProduct {
   chain: Int!
   token: String!
   receivingAddress: String!
+  firstChargeNow: Boolean! # should be decided upon creating a product
 }
 
 input NewPaymentLink {
@@ -76,10 +79,14 @@ input MerchantUpdate {
   webHookUrl: String
 }
 
-type PaymentLink {
-  id: ID!
-  productId: String!
-  publicKey: String!
+type PaymentLinkDetails {
+    id: ID!
+    mode: String!
+    productId: ID!
+    merchantId: ID!
+    amount: Int!
+    token: String!
+    chain: Int!
 }
 
 type Sub {
