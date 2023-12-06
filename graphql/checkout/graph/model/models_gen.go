@@ -6,21 +6,12 @@ import (
 	"fmt"
 	"io"
 	"strconv"
-	"time"
 )
 
 type Account struct {
 	Email   *string `json:"email,omitempty"`
 	Address string  `json:"address"`
 	Signer  *string `json:"signer,omitempty"`
-}
-
-type NewTransferRequest struct {
-	Chain  int     `json:"chain"`
-	Token  string  `json:"token"`
-	Amount float64 `json:"amount"`
-	Sender string  `json:"sender"`
-	Target string  `json:"target"`
 }
 
 type Payment struct {
@@ -33,32 +24,23 @@ type Payment struct {
 	Reference string        `json:"reference"`
 }
 
+type PaymentIntent struct {
+	Type           PaymentType `json:"type"`
+	Email          *string     `json:"email,omitempty"`
+	Chain          int         `json:"chain"`
+	Token          string      `json:"token"`
+	Amount         float64     `json:"amount"`
+	Interval       int         `json:"interval"`
+	ProductID      string      `json:"productId"`
+	OwnerAddress   string      `json:"ownerAddress"`
+	WalletAddress  string      `json:"walletAddress"`
+	FirstChargeNow bool        `json:"firstChargeNow"`
+}
+
 type RequestValidation struct {
 	Chain         int    `json:"chain"`
 	UserOpHash    string `json:"userOpHash"`
 	SignedMessage string `json:"signedMessage"`
-}
-
-type SubscriptionData struct {
-	ID                  string     `json:"id"`
-	Token               string     `json:"token"`
-	Amount              int        `json:"amount"`
-	Interval            int        `json:"interval"`
-	ProductID           string     `json:"productId"`
-	MerchantID          string     `json:"merchantId"`
-	ProductName         string     `json:"productName"`
-	WalletAddress       string     `json:"walletAddress"`
-	SubscriptionKey     string     `json:"subscriptionKey"`
-	CreatedAt           string     `json:"createdAt"`
-	NextChargeDate      time.Time  `json:"nextChargeDate"`
-	TransactionHash     string     `json:"transactionHash"`
-	TransactionExplorer string     `json:"transactionExplorer"`
-	Payments            []*Payment `json:"payments,omitempty"`
-}
-
-type SubscriptionMod struct {
-	SubscriptionID string       `json:"subscriptionId"`
-	Toggle         StatusToggle `json:"toggle"`
 }
 
 type TransactionData struct {
@@ -75,10 +57,6 @@ type TransactionData struct {
 	CreatedAt           string      `json:"createdAt"`
 	TransactionHash     string      `json:"transactionHash"`
 	TransactionExplorer string      `json:"transactionExplorer"`
-}
-
-type ValidationData struct {
-	UserOpHash string `json:"userOpHash"`
 }
 
 type PaymentStatus string
@@ -162,91 +140,5 @@ func (e *PaymentType) UnmarshalGQL(v interface{}) error {
 }
 
 func (e PaymentType) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
-type StatusToggle string
-
-const (
-	StatusToggleCancel  StatusToggle = "cancel"
-	StatusToggleDisable StatusToggle = "disable"
-	StatusToggleEnable  StatusToggle = "enable"
-)
-
-var AllStatusToggle = []StatusToggle{
-	StatusToggleCancel,
-	StatusToggleDisable,
-	StatusToggleEnable,
-}
-
-func (e StatusToggle) IsValid() bool {
-	switch e {
-	case StatusToggleCancel, StatusToggleDisable, StatusToggleEnable:
-		return true
-	}
-	return false
-}
-
-func (e StatusToggle) String() string {
-	return string(e)
-}
-
-func (e *StatusToggle) UnmarshalGQL(v interface{}) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = StatusToggle(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid StatusToggle", str)
-	}
-	return nil
-}
-
-func (e StatusToggle) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
-type SubscriptionStatus string
-
-const (
-	SubscriptionStatusActive    SubscriptionStatus = "active"
-	SubscriptionStatusDisabled  SubscriptionStatus = "disabled"
-	SubscriptionStatusCancelled SubscriptionStatus = "cancelled"
-)
-
-var AllSubscriptionStatus = []SubscriptionStatus{
-	SubscriptionStatusActive,
-	SubscriptionStatusDisabled,
-	SubscriptionStatusCancelled,
-}
-
-func (e SubscriptionStatus) IsValid() bool {
-	switch e {
-	case SubscriptionStatusActive, SubscriptionStatusDisabled, SubscriptionStatusCancelled:
-		return true
-	}
-	return false
-}
-
-func (e SubscriptionStatus) String() string {
-	return string(e)
-}
-
-func (e *SubscriptionStatus) UnmarshalGQL(v interface{}) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = SubscriptionStatus(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid SubscriptionStatus", str)
-	}
-	return nil
-}
-
-func (e SubscriptionStatus) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }

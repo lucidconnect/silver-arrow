@@ -9,10 +9,10 @@ type Query {
 }
 
 type Mutation {
-  # frontend sdk
-  addAccount(input: Account!): String!
-  createPaymentIntent(input: PaymentIntent!): String!
-  validatePaymentIntent(input: RequestValidation!): TransactionData!
+  # # frontend sdk
+  # addAccount(input: Account!): String!
+  # createPaymentIntent(input: PaymentIntent!): String!
+  # validatePaymentIntent(input: RequestValidation!): TransactionData!
 
   # user's dashboard ops
   modifySubscriptionState(input: SubscriptionMod!): String!
@@ -28,19 +28,19 @@ input Account {
   signer: String
 }
 
-# payment data
-input PaymentIntent {
-  type: PaymentType!
-  email: String
-  chain: Int!
-  token: String!
-  amount: Float!
-  interval: Int!
-  productId: String!
-  ownerAddress: String!
-  walletAddress: String!
-  firstChargeNow: Boolean!
-}
+# # payment data
+# input PaymentIntent {
+#   type: PaymentType!
+#   email: String
+#   chain: Int!
+#   token: String!
+#   amount: Float!
+#   interval: Int!
+#   productId: String!
+#   ownerAddress: String!
+#   walletAddress: String!
+#   firstChargeNow: Boolean! # should be decided upon creating a product
+# }
 
 type Payment {
   chain: Int!
