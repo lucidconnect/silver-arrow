@@ -11,7 +11,6 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/google/uuid"
-	"github.com/lucidconnect/silver-arrow/graphql/wallet/graph/model"
 	"github.com/lucidconnect/silver-arrow/repository"
 	"github.com/lucidconnect/silver-arrow/service/erc4337"
 	"github.com/lucidconnect/silver-arrow/service/wallet"
@@ -36,7 +35,7 @@ func TestAddSubscription(t *testing.T) {
 	p, _ := crypto.HexToECDSA(key[2:])
 	owner := crypto.PubkeyToAddress(p.PublicKey).Hex()
 	fmt.Println("owner", owner)
-	newSub := model.NewSubscription{
+	newSub := wallet.NewSubscription{
 		Chain:     int(defaultChain),
 		Token:     "USDC",
 		Amount:    1,
@@ -85,7 +84,7 @@ func TestSubscriptionIsUnique(t *testing.T) {
 	r := repository.NewPostgresDB(db)
 	ws := wallet.NewWalletService(r, defaultChain)
 
-	newSub := model.NewSubscription{
+	newSub := wallet.NewSubscription{
 		Chain:     int(defaultChain),
 		Token:     "USDC",
 		Amount:    1,

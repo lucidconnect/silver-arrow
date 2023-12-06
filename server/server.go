@@ -12,8 +12,12 @@ import (
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
+	checkout_graph "github.com/lucidconnect/silver-arrow/graphql/checkout/graph"
+	checkout_generated "github.com/lucidconnect/silver-arrow/graphql/checkout/graph/generated"
 	merchant_graph "github.com/lucidconnect/silver-arrow/graphql/merchant/graph"
 	merchant_generated "github.com/lucidconnect/silver-arrow/graphql/merchant/graph/generated"
+	payment_link_graph "github.com/lucidconnect/silver-arrow/graphql/paymentLinks/graph"
+	payment_link_generated "github.com/lucidconnect/silver-arrow/graphql/paymentLinks/graph/generated"
 	wallet_graph "github.com/lucidconnect/silver-arrow/graphql/wallet/graph"
 	wallet_generated "github.com/lucidconnect/silver-arrow/graphql/wallet/graph/generated"
 	"github.com/lucidconnect/silver-arrow/repository"
@@ -92,19 +96,45 @@ func (s *Server) Routes() {
 	merchantRouter.Handle("/query", s.merchantGraphqlHandler())
 
 	// checkout
-	walletRouter := s.router.PathPrefix("/wallet").Subrouter()
-	walletRouter.Use(s.CheckoutMiddleware())
-	walletRouter.Handle("/query", s.walletGraphqlHandler())
-	walletRouter.Handle("/graphiql", playground.Handler("/api/Graphql playground", "/wallet/query"))
+	checkout := s.router.PathPrefix("/checkout").Subrouter()
+	checkout.Use(s.CheckoutMiddleware())
+	checkout.Handle("/query", s.checkoutGraphqlHandler())
+	checkout.Handle("/graphiql", playground.Handler("/api/Graphql playground", "/checkout/query"))
 	// s.router.Handle("/merchant/graphiql",  playground.Handler("api/GraphQL playground", "/merchant/query"))
 	// s.router.Handle("/", playground.Handler("api/GraphQL playground", "/query"))
+
+	// wallet
+	wallet := s.router.PathPrefix("/wallet").Subrouter()
+	wallet.Handle("/query", s.walletGraphqlHandler())
+	wallet.Handle("/graphiql", playground.Handler("/api/Graphql playground", "/wallet/query"))
+	
+	// payment page
+	paymentLink := s.router.PathPrefix("/pay").Subrouter()
+	paymentLink.Handle("/query", s.paymentLinksGraphqlHandler())
+	paymentLink.Handle("/graphiql", playground.Handler("/api/Graphql plaground", "/pay/query"))
+	// payPageRouter := s.router.PathPrefix("/pay").Subrouter()
+	// payPageRouter.Handle("/sign", s.SignPayload())
+}
+
+func (s *Server) checkoutGraphqlHandler() *handler.Server {
+	checkoutsrv := handler.NewDefaultServer(checkout_generated.NewExecutableSchema(checkout_generated.Config{Resolvers: &checkout_graph.Resolver{
+		Cache:    repository.NewMCache(),
+		Database: s.database,
+	}}))
+	return checkoutsrv
+}
+
+func (s *Server) paymentLinksGraphqlHandler() *handler.Server {
+	paymentLinkSrv := handler.NewDefaultServer(payment_link_generated.NewExecutableSchema(payment_link_generated.Config{Resolvers: &payment_link_graph.Resolver{
+		Database: s.database,
+	}}))
+	return paymentLinkSrv
 }
 
 func (s *Server) walletGraphqlHandler() *handler.Server {
 	walletSrv := handler.NewDefaultServer(wallet_generated.NewExecutableSchema(wallet_generated.Config{Resolvers: &wallet_graph.Resolver{
 		Cache:    repository.NewMCache(),
 		Database: s.database,
-		// TurnkeyService: tunkeyService,
 	}}))
 	return walletSrv
 }
