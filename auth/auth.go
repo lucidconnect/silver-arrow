@@ -12,6 +12,7 @@ import (
 )
 
 var (
+	ModeCtxKey          = &contextKey{"mode"}
 	MerchantCtxKey      = &contextKey{"merchant"}
 	AuthMerchantCtxKey  = &contextKey{"authMerchant"}
 	AuthSignatureCtxKey = &contextKey{"authSignature"}
@@ -20,7 +21,6 @@ var (
 type contextKey struct {
 	name string
 }
-
 
 func ForContext(ctx context.Context) (*models.Merchant, error) {
 	raw, _ := ctx.Value(MerchantCtxKey).(*models.Merchant)
@@ -42,6 +42,14 @@ func AuthMerchantContext(ctx context.Context) (*models.Merchant, error) {
 	raw, _ := ctx.Value(AuthMerchantCtxKey).(*models.Merchant)
 	if raw == nil {
 		return nil, errors.New("invalid merchant context")
+	}
+	return raw, nil
+}
+
+func KeyModeContext(ctx context.Context) (*models.MerchantAccessKey, error) {
+	raw, _ := ctx.Value(ModeCtxKey).(*models.MerchantAccessKey)
+	if raw == nil {
+		return nil, errors.New("invalid key context")
 	}
 	return raw, nil
 }
@@ -120,7 +128,7 @@ func simpleRecover(digest []byte, signature string) (string, error) {
 	publicKey := hexutil.Encode(crypto.CompressPubkey(pub))
 	fmt.Println("compressed public key - ", publicKey)
 
-	recoveredAddress := crypto.PubkeyToAddress(*pub)
+	// recoveredAddress := crypto.PubkeyToAddress(*pub)
 
-	return recoveredAddress.Hex(), nil
+	return publicKey, nil
 }
