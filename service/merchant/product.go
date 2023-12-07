@@ -136,9 +136,19 @@ func (m *MerchantService) UpdateProductMode(merchantId uuid.UUID, productId, mod
 		return err
 	}
 
+	var chainId int
+
+	switch mode {
+	case model.ModeLive.String():
+		chainId = 10
+	case model.ModeTest.String():
+		chainId = 80001
+	}
 	update := map[string]interface{}{
 		"mode": mode,
+		"chain": chainId,
 	}
+
 	err = m.repository.UpdateProduct(id, merchantId, update)
 	if err != nil {
 		log.Err(err).Send()
