@@ -77,7 +77,7 @@ type Product struct {
 }
 
 type ProductModeUpdate struct {
-	ProductID string `json:"ProductId"`
+	ProductID string `json:"productId"`
 	Mode      Mode   `json:"mode"`
 }
 

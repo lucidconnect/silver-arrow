@@ -59,7 +59,7 @@ input ProductUpdate {
 }
 
 input ProductModeUpdate {
-  ProductId: String!
+  productId: String!
   mode: Mode!
 }
 

@@ -623,7 +623,7 @@ input ProductUpdate {
 }
 
 input ProductModeUpdate {
-  ProductId: String!
+  productId: String!
   mode: Mode!
 }
 
@@ -4986,17 +4986,17 @@ func (ec *executionContext) unmarshalInputProductModeUpdate(ctx context.Context,
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"ProductId", "mode"}
+	fieldsInOrder := [...]string{"productId", "mode"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "ProductId":
+		case "productId":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ProductId"))
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("productId"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
