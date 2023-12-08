@@ -98,7 +98,7 @@ func (s *Server) initialisePayment(sub models.Subscription) {
 	reference := uuid.New()
 
 	payment := &models.Payment{
-		Type:                  wallet.PaymentTypeRecurring.String(),
+		Type:                  models.PaymentTypeRecurring,
 		Chain:                 sub.Chain,
 		Token:                 sub.Token,
 		Amount:                sub.Amount,

@@ -168,7 +168,12 @@ func (ws *WalletService) ValidateSubscription(userop map[string]any, chain int64
 	}
 	blockExplorerTx := fmt.Sprintf("%v/tx/%v", explorerUrl, transactionHash)
 
-	update := map[string]interface{}{"active": true, "updated_at": time.Now(), "transaction_hash": transactionHash}
+	update := map[string]interface{}{
+		"active":           true,
+		"updated_at":       time.Now(),
+		"transaction_hash": transactionHash,
+		"status":           model.SubscriptionStatusActive,
+	}
 	err = ws.database.UpdateSubscription(result.ID, update)
 	if err != nil {
 		log.Err(err).Caller().Send()
@@ -187,7 +192,7 @@ func (ws *WalletService) ValidateSubscription(userop map[string]any, chain int64
 		}
 		reference := uuid.New()
 		payment := &models.Payment{
-			Type:                  PaymentTypeRecurring.String(),
+			Type:                  models.PaymentTypeRecurring,
 			Chain:                 result.Chain,
 			Token:                 result.Token,
 			Amount:                result.Amount,
@@ -361,9 +366,9 @@ func (ws *WalletService) AddSubscription(merchantId uuid.UUID, input model.NewSu
 	}, op, nil
 }
 
-func (w *WalletService) FetchSubscriptions(walletAddress string) ([]*model.SubscriptionData, error) {
+func (w *WalletService) FetchSubscriptions(walletAddress string, status *string) ([]*model.SubscriptionData, error) {
 	var subData []*model.SubscriptionData
-	subs, err := w.database.FetchWalletSubscriptions(walletAddress)
+	subs, err := w.database.FetchWalletSubscriptions(walletAddress, status)
 	if err != nil {
 		log.Err(err).Msgf("error while fetching subscriotions for %v", walletAddress)
 		return nil, err
@@ -594,7 +599,7 @@ func (ws *WalletService) ExecutePaymentOperation(signedOp map[string]any, chain 
 	}
 	blockExplorerTx := fmt.Sprintf("%v/tx/%v", explorerUrl, transactionHash)
 	update := map[string]any{
-		"status":            PaymentStatusSuccess,
+		"status":            models.PaymentStatusSuccess,
 		"transaction_hash":  transactionHash,
 		"block_explorer_tx": blockExplorerTx,
 	}
@@ -934,8 +939,10 @@ func (ws *WalletService) CancelSubscription(subscriptionId string) (string, map[
 	hash := userop.GetUserOpHash(entryPoint, big.NewInt(sub.Chain))
 
 	update := map[string]any{
-		"active":     false,
-		"updated_at": time.Now(),
+		"active":       false,
+		"updated_at":   time.Now(),
+		"cancelled_at": time.Now(),
+		"status":       model.SubscriptionStatusCancelled,
 	}
 
 	err = ws.database.UpdateSubscription(id, update)
@@ -959,8 +966,10 @@ func (ws *WalletService) DisableSubscription(subscriptionId string) (string, err
 	}
 
 	update := map[string]any{
-		"active":     false,
-		"updated_at": time.Now(),
+		"active":      false,
+		"updated_at":  time.Now(),
+		"disabled_at": time.Now(),
+		"status":      model.SubscriptionStatusDisabled,
 	}
 
 	err = ws.database.UpdateSubscription(id, update)
@@ -985,6 +994,7 @@ func (ws *WalletService) EnableSubscription(subscriptionId string) (string, erro
 	update := map[string]any{
 		"active":     true,
 		"updated_at": time.Now(),
+		"status":     model.SubscriptionStatusActive,
 	}
 
 	err = ws.database.UpdateSubscription(id, update)

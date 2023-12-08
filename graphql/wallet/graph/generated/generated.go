@@ -67,8 +67,8 @@ type ComplexityRoot struct {
 
 	Query struct {
 		FetchPayment                 func(childComplexity int, reference string) int
-		FetchSubscriptions           func(childComplexity int, account string) int
-		FetchSubscriptionsByMerchant func(childComplexity int, account string, merchantID string) int
+		FetchSubscriptions           func(childComplexity int, account string, status *string) int
+		FetchSubscriptionsByMerchant func(childComplexity int, account string, merchantID string, status *string) int
 	}
 
 	SubscriptionData struct {
@@ -119,8 +119,8 @@ type MutationResolver interface {
 	ValidateTransferRequest(ctx context.Context, input model.RequestValidation) (*model.TransactionData, error)
 }
 type QueryResolver interface {
-	FetchSubscriptionsByMerchant(ctx context.Context, account string, merchantID string) ([]*model.SubscriptionData, error)
-	FetchSubscriptions(ctx context.Context, account string) ([]*model.SubscriptionData, error)
+	FetchSubscriptionsByMerchant(ctx context.Context, account string, merchantID string, status *string) ([]*model.SubscriptionData, error)
+	FetchSubscriptions(ctx context.Context, account string, status *string) ([]*model.SubscriptionData, error)
 	FetchPayment(ctx context.Context, reference string) (*model.Payment, error)
 }
 
@@ -294,7 +294,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.FetchSubscriptions(childComplexity, args["account"].(string)), true
+		return e.complexity.Query.FetchSubscriptions(childComplexity, args["account"].(string), args["status"].(*string)), true
 
 	case "Query.fetchSubscriptionsByMerchant":
 		if e.complexity.Query.FetchSubscriptionsByMerchant == nil {
@@ -306,7 +306,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.FetchSubscriptionsByMerchant(childComplexity, args["account"].(string), args["merchantId"].(string)), true
+		return e.complexity.Query.FetchSubscriptionsByMerchant(childComplexity, args["account"].(string), args["merchantId"].(string), args["status"].(*string)), true
 
 	case "SubscriptionData.amount":
 		if e.complexity.SubscriptionData.Amount == nil {
@@ -619,8 +619,8 @@ var sources = []*ast.Source{
 # https://gqlgen.com/getting-started/
 
 type Query {
-  fetchSubscriptionsByMerchant(account: String!, merchantId: ID!): [SubscriptionData!]!
-  fetchSubscriptions(account: String!): [SubscriptionData!]!
+  fetchSubscriptionsByMerchant(account: String!, merchantId: ID!, status: String): [SubscriptionData!]!
+  fetchSubscriptions(account: String!, status: String): [SubscriptionData!]!
   fetchPayment(reference: String!): Payment!
 }
 
@@ -739,7 +739,13 @@ enum PaymentStatus {
   failed
   pending
   success
-} 
+}
+
+enum SubscriptionStatus {
+  active
+  disabled
+  cancelled
+}
 
 scalar Time`, BuiltIn: false},
 }
@@ -905,6 +911,15 @@ func (ec *executionContext) field_Query_fetchSubscriptionsByMerchant_args(ctx co
 		}
 	}
 	args["merchantId"] = arg1
+	var arg2 *string
+	if tmp, ok := rawArgs["status"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+		arg2, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["status"] = arg2
 	return args, nil
 }
 
@@ -920,6 +935,15 @@ func (ec *executionContext) field_Query_fetchSubscriptions_args(ctx context.Cont
 		}
 	}
 	args["account"] = arg0
+	var arg1 *string
+	if tmp, ok := rawArgs["status"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+		arg1, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["status"] = arg1
 	return args, nil
 }
 
@@ -1724,7 +1748,7 @@ func (ec *executionContext) _Query_fetchSubscriptionsByMerchant(ctx context.Cont
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().FetchSubscriptionsByMerchant(rctx, fc.Args["account"].(string), fc.Args["merchantId"].(string))
+		return ec.resolvers.Query().FetchSubscriptionsByMerchant(rctx, fc.Args["account"].(string), fc.Args["merchantId"].(string), fc.Args["status"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1809,7 +1833,7 @@ func (ec *executionContext) _Query_fetchSubscriptions(ctx context.Context, field
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().FetchSubscriptions(rctx, fc.Args["account"].(string))
+		return ec.resolvers.Query().FetchSubscriptions(rctx, fc.Args["account"].(string), fc.Args["status"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)

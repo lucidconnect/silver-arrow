@@ -14,6 +14,10 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+func validateProductMode(product *models.Product, key *models.MerchantAccessKey) bool {
+	return product.Mode.String() == key.Mode
+}
+
 func getAuthenticatedAndActiveMerchant(ctx context.Context) (*models.Merchant, error) {
 	useAuthStr := os.Getenv("USE_AUTH")
 	useAuth, _ := strconv.ParseBool(useAuthStr)

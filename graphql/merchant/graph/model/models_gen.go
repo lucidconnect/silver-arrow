@@ -2,17 +2,30 @@
 
 package model
 
-type AccessKey struct {
+import (
+	"fmt"
+	"io"
+	"strconv"
+)
+
+type Merchant struct {
+	ID         string             `json:"id"`
+	Name       string             `json:"name"`
+	Email      string             `json:"email"`
+	PublicKey  string             `json:"publicKey"`
+	WebHookURL string             `json:"webHookUrl"`
+	AccessKey  *MerchantAccessKey `json:"accessKey"`
+}
+
+type MerchantAccessKey struct {
+	Mode       Mode   `json:"mode"`
 	PublicKey  string `json:"publicKey"`
 	PrivateKey string `json:"privateKey"`
 }
 
-type Merchant struct {
-	ID         string `json:"id"`
-	Name       string `json:"name"`
-	Email      string `json:"email"`
-	PublicKey  string `json:"publicKey"`
-	WebHookURL string `json:"webHookUrl"`
+type MerchantAccessKeyQuery struct {
+	Mode            Mode   `json:"mode"`
+	MerchantAddress string `json:"merchantAddress"`
 }
 
 type MerchantStats struct {
@@ -37,6 +50,11 @@ type NewMerchant struct {
 	WebHookURL *string `json:"webHookUrl,omitempty"`
 }
 
+type NewMerchantKey struct {
+	MerchantAddress string `json:"merchantAddress"`
+	Mode            Mode   `json:"mode"`
+}
+
 type NewProduct struct {
 	Name             string `json:"name"`
 	Owner            string `json:"owner"`
@@ -47,6 +65,7 @@ type NewProduct struct {
 
 type Product struct {
 	Name             string  `json:"name"`
+	Mode             Mode    `json:"mode"`
 	Owner            string  `json:"owner"`
 	Chain            int     `json:"chain"`
 	Token            string  `json:"token"`
@@ -55,6 +74,11 @@ type Product struct {
 	ReceivingAddress string  `json:"receivingAddress"`
 	Subscriptions    []*Sub  `json:"subscriptions,omitempty"`
 	CreatedAt        *string `json:"createdAt,omitempty"`
+}
+
+type ProductModeUpdate struct {
+	ProductID string `json:"productId"`
+	Mode      Mode   `json:"mode"`
 }
 
 type ProductUpdate struct {
@@ -69,4 +93,45 @@ type Sub struct {
 	Active        bool   `json:"active"`
 	Interval      string `json:"interval"`
 	WalletAddress string `json:"walletAddress"`
+}
+
+type Mode string
+
+const (
+	ModeTest Mode = "test"
+	ModeLive Mode = "live"
+)
+
+var AllMode = []Mode{
+	ModeTest,
+	ModeLive,
+}
+
+func (e Mode) IsValid() bool {
+	switch e {
+	case ModeTest, ModeLive:
+		return true
+	}
+	return false
+}
+
+func (e Mode) String() string {
+	return string(e)
+}
+
+func (e *Mode) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = Mode(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid Mode", str)
+	}
+	return nil
+}
+
+func (e Mode) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }

@@ -15,7 +15,7 @@ type Database interface {
 	// Subscriptions
 	AddSubscription(*models.Subscription, *models.Key) error
 	AddSubscriptionKey(*models.Key) error
-	FetchWalletSubscriptions(address string) ([]models.Subscription, error)
+	FetchWalletSubscriptions(address string, status *string) ([]models.Subscription, error)
 	FetchDueSubscriptions(days int) ([]models.Subscription, error)
 	FindSubscriptionByHash(hash string) (*models.Subscription, error)
 	FindSubscriptionById(id uuid.UUID) (*models.Subscription, error)
@@ -36,14 +36,18 @@ type Database interface {
 	FetchProduct(uuid.UUID) (*models.Product, error)
 	FetchProductsByOwner(string) ([]models.Product, error)
 	FetchAllPaymentsByProduct(productId uuid.UUID) ([]models.Payment, error)
+	UpdateProduct(productId uuid.UUID, merchantId uuid.UUID, update map[string]interface{}) error
 
 	// Merchant
 	AddMerchant(*models.Merchant) error
 	FetchMerchantById(uuid.UUID) (*models.Merchant, error)
 	FetchMerchantByAddress(string) (*models.Merchant, error)
 	FetchMerchantByPublicKey(string) (*models.Merchant, error)
-	UpdateMerchantKey(uuid.UUID, string) error
+	UpdateMerchantKey(id uuid.UUID, key, mode string) error
 	UpdateMerchantWebhookUrl(uuid.UUID, string) error
+	CreateMerchantAccessKeys(*models.MerchantAccessKey) error
+	FetchMerchantKey(string) (*models.MerchantAccessKey, error)
+	DeleteMerchantAccessKey(id uuid.UUID, key *models.MerchantAccessKey) error
 
 	// Webhook
 	CreateWebhookEvent(*models.WebhookEvent) error

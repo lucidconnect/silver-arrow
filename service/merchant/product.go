@@ -34,6 +34,7 @@ func (m *MerchantService) CreateProduct(input model.NewProduct) (*model.Product,
 		DepositAddress: input.ReceivingAddress,
 		MerchantID:     merchant.ID,
 		CreatedAt:      time.Now(),
+		Mode:           model.ModeTest,
 	}
 	if err := m.repository.CreateProduct(product); err != nil {
 		log.Err(err).Send()
@@ -116,6 +117,7 @@ func (m *MerchantService) FetchProduct(pid string) (*model.Product, error) {
 	createdAt := v.CreatedAt.Format(time.RFC3339)
 	product := &model.Product{
 		Name:             v.Name,
+		Mode:             v.Mode,
 		Owner:            v.Owner,
 		Chain:            int(v.Chain),
 		ProductID:        pid,
@@ -126,6 +128,33 @@ func (m *MerchantService) FetchProduct(pid string) (*model.Product, error) {
 	}
 
 	return product, nil
+}
+
+func (m *MerchantService) UpdateProductMode(merchantId uuid.UUID, productId, mode string) error {
+	id, err := uuid.Parse(productId)
+	if err != nil {
+		return err
+	}
+
+	var chainId int
+
+	switch mode {
+	case model.ModeLive.String():
+		chainId = 10
+	case model.ModeTest.String():
+		chainId = 80001
+	}
+	update := map[string]interface{}{
+		"mode": mode,
+		"chain": chainId,
+	}
+
+	err = m.repository.UpdateProduct(id, merchantId, update)
+	if err != nil {
+		log.Err(err).Send()
+		return err
+	}
+	return nil
 }
 
 func Base64EncodeUUID(id uuid.UUID) (string, error) {

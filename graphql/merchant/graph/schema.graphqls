@@ -5,16 +5,17 @@
 type Query {
   fetchOneProduct(id: String!): Product!
   fetchProducts(owner: String!): [Product!]!
-  fetchMerchantKey(owner: String!): String!
+  fetchMerchantKey(input: MerchantAccessKeyQuery!): String!
   fetchMerchantStats(owner: String!): MerchantStats!
 }
 
 type Mutation {
   addProduct(input: NewProduct!): Product!
   updateProduct(input: ProductUpdate!): Product!
-  createAccessKey(owner: String!): AccessKey!
+  createAccessKey(input: NewMerchantKey!): MerchantAccessKey!
   createMerchant(input: NewMerchant!): Merchant!
   updateMerchantwebHookUrl(webhookUrl: String!): Merchant!
+  toggleProductMode(input: ProductModeUpdate!): Mode!
 }
 
 input NewMerchant {
@@ -25,12 +26,23 @@ input NewMerchant {
   webHookUrl: String
 }
 
+input NewMerchantKey {
+  merchantAddress: String!
+  mode: Mode!
+}
+
+input MerchantAccessKeyQuery {
+  mode: Mode!
+  merchantAddress: String!
+}
+
 type Merchant {
   id: ID!
   name: String!
   email: String!
   publicKey: String!
   webHookUrl: String!
+  accessKey: MerchantAccessKey!
 }
 
 input NewProduct {
@@ -44,6 +56,11 @@ input NewProduct {
 input ProductUpdate {
   name: String
   receivingAddress: String
+}
+
+input ProductModeUpdate {
+  productId: String!
+  mode: Mode!
 }
 
 input MerchantUpdate {
@@ -65,6 +82,7 @@ type Sub {
 
 type Product {
   name: String!
+  mode: Mode!
   owner: String!
   chain: Int!
   token: String!
@@ -75,7 +93,8 @@ type Product {
   createdAt: String
 }
 
-type AccessKey {
+type MerchantAccessKey {
+  mode: Mode!
   publicKey: String!
   privateKey: String!
 }
@@ -85,4 +104,10 @@ type MerchantStats {
   products: Int!
   subscriptions: Int!
 }
+
+enum Mode {
+  test
+  live
+}
+
 scalar Time

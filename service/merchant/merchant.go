@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"os"
 	"strings"
+	"time"
 
 	convoy "github.com/frain-dev/convoy-go"
 	"github.com/google/uuid"
@@ -74,13 +75,19 @@ func (m *MerchantService) CreateMerchant(input model.NewMerchant) (*model.Mercha
 	// 	log.Err(err).Msgf("failed to create convoy subscription for merchant with convoy endpoint id %v.", endpoint.UID)
 	// }
 
+	key, err := m.CreateAccessKeys(input.Owner, model.ModeTest.String())
+	if err != nil {
+		log.Err(err).Msg("creating merchant test keys failed")
+		return nil, errors.New("creating merchant test keys failed")
+	}
 	merchant := &models.Merchant{
-		ID:               id,
-		Name:             input.Name,
-		Email:            input.Email,
-		OwnerAddress:     input.Owner,
-		WebhookToken:     token,
+		ID:           id,
+		Name:         input.Name,
+		Email:        input.Email,
+		OwnerAddress: input.Owner,
+		WebhookToken: token,
 		// ConvoyEndpointID: endpoint.UID,
+		// TestPublicKey: key.PublicKey,
 	}
 
 	if err := m.repository.AddMerchant(merchant); err != nil {
@@ -89,9 +96,10 @@ func (m *MerchantService) CreateMerchant(input model.NewMerchant) (*model.Mercha
 	}
 
 	merchantObj := &model.Merchant{
-		ID:    id.String(),
-		Name:  input.Name,
-		Email: input.Email,
+		ID:        id.String(),
+		Name:      input.Name,
+		Email:     input.Email,
+		AccessKey: key,
 	}
 	return merchantObj, nil
 }
@@ -123,19 +131,19 @@ func (m *MerchantService) UpdateMerchantWebhook(merchant models.Merchant, webHoo
 	return &model.Merchant{
 		ID:         merchant.ID.String(),
 		Name:       merchant.Name,
-		PublicKey:  merchant.PublicKey,
 		WebHookURL: webHookUrl,
 	}, nil
 }
 
-func (m *MerchantService) CreateAccessKeys(owner string) (*model.AccessKey, error) {
+func (m *MerchantService) CreateAccessKeys(owner, mode string) (*model.MerchantAccessKey, error) {
 	pk, sk, err := auth.CreateAccessKey()
 	if err != nil {
 		log.Err(err).Send()
 		return nil, err
 	}
 
-	accessKey := &model.AccessKey{
+	accessKey := &model.MerchantAccessKey{
+		Mode:       model.Mode(mode),
 		PublicKey:  pk,
 		PrivateKey: sk,
 	}
@@ -143,23 +151,33 @@ func (m *MerchantService) CreateAccessKeys(owner string) (*model.AccessKey, erro
 	merchant, err := m.repository.FetchMerchantByAddress(owner)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			// create a new entry
-			merchant = &models.Merchant{
-				ID:           uuid.New(),
-				PublicKey:    pk,
-				OwnerAddress: owner,
-			}
-			err := m.repository.AddMerchant(merchant)
-			if err != nil {
-				log.Err(err).Send()
-				return nil, err
-			}
+			return nil, errors.New("merchant not found")
 		} else {
 			log.Err(err).Send()
 			return nil, err
 		}
 	} else {
-		err = m.repository.UpdateMerchantKey(merchant.ID, pk)
+		// if an existing key exists for the mode, delete it and create a new one
+		keys := merchant.MerchantAccessKeys
+		var targetKey models.MerchantAccessKey
+		for _, key := range keys {
+			if key.Mode == mode {
+				targetKey = key
+			}
+		}
+
+		err = m.repository.DeleteMerchantAccessKey(targetKey.ID, &targetKey)
+		if err != nil {
+			log.Err(err).Send()
+			return nil, err
+		}
+		newKey := &models.MerchantAccessKey{
+			Mode:       mode,
+			PublicKey:  pk,
+			MerchantID: merchant.ID,
+			CreatedAt:  time.Now(),
+		}
+		err = m.repository.CreateMerchantAccessKeys(newKey)
 		if err != nil {
 			log.Err(err).Send()
 			return nil, err
@@ -168,14 +186,14 @@ func (m *MerchantService) CreateAccessKeys(owner string) (*model.AccessKey, erro
 	return accessKey, nil
 }
 
-func (m *MerchantService) FetchMerchantKey(owner string) (string, error) {
+func (m *MerchantService) FetchMerchantKey(owner, mode string) (string, error) {
 	merchant, err := m.repository.FetchMerchantByAddress(owner)
 	if err != nil {
 		log.Err(err).Send()
 		return "", err
 	}
-
-	return merchant.PublicKey, nil
+	key := merchant.MerchantAccessKeys[0].PublicKey
+	return key, nil
 }
 
 func (m *MerchantService) SummarizeMerchant(owner string) (*model.MerchantStats, error) {

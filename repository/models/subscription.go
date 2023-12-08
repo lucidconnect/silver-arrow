@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/lucidconnect/silver-arrow/graphql/wallet/graph/model"
 	"gorm.io/gorm"
 )
 
@@ -14,6 +15,7 @@ type Subscription struct {
 	Token                  string    `gorm:"not null"` // really the token contract
 	Amount                 int64     `gorm:"not null"` // amount in decimal precision
 	Active                 bool      `gorm:"not null"`
+	Status                 model.SubscriptionStatus
 	Interval               int64     `gorm:"not null"`
 	UserOpHash             string    `gorm:"index"`
 	MerchantId             string    `gorm:"index"`
@@ -29,6 +31,8 @@ type Subscription struct {
 	Chain                  int64 //
 	CreatedAt              time.Time
 	UpdatedAt              time.Time
+	DisabledAt             time.Time
+	CancelledAt            time.Time
 	Payments               []Payment
 	TransactionHash        string
 }
@@ -39,10 +43,10 @@ func (s *Subscription) BeforeCreate(tx *gorm.DB) (err error) {
 }
 
 type Payment struct {
-	ID                    uuid.UUID `gorm:"primaryKey"`
-	Type                  string    `gorm:"not null"`
-	Chain                 int64     `gorm:"not null"`
-	Token                 string    `gorm:"not null"`
+	ID                    uuid.UUID   `gorm:"primaryKey"`
+	Type                  PaymentType `gorm:"not null"`
+	Chain                 int64       `gorm:"not null"`
+	Token                 string      `gorm:"not null"`
 	TokenAddress          string
 	Status                PaymentStatus `gorm:"not null"`
 	Amount                int64         `gorm:"not null"`
@@ -68,9 +72,13 @@ func (p *Payment) BeforeCreate(tx *gorm.DB) (err error) {
 }
 
 type PaymentStatus string
+type PaymentType string
 
 const (
 	PaymentStatusFailed  PaymentStatus = "failed"
 	PaymentStatusPending PaymentStatus = "pending"
 	PaymentStatusSuccess PaymentStatus = "success"
+
+	PaymentTypeSingle    PaymentType = "single"
+	PaymentTypeRecurring PaymentType = "recurring"
 )

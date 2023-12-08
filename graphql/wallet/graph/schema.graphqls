@@ -3,8 +3,8 @@
 # https://gqlgen.com/getting-started/
 
 type Query {
-  fetchSubscriptionsByMerchant(account: String!, merchantId: ID!): [SubscriptionData!]!
-  fetchSubscriptions(account: String!): [SubscriptionData!]!
+  fetchSubscriptionsByMerchant(account: String!, merchantId: ID!, status: String): [SubscriptionData!]!
+  fetchSubscriptions(account: String!, status: String): [SubscriptionData!]!
   fetchPayment(reference: String!): Payment!
 }
 
@@ -123,6 +123,12 @@ enum PaymentStatus {
   failed
   pending
   success
-} 
+}
+
+enum SubscriptionStatus {
+  active
+  disabled
+  cancelled
+}
 
 scalar Time

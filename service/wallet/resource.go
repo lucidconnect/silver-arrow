@@ -35,31 +35,28 @@ type PaymentReceipt struct {
 type PaymentType string
 type PaymentStatus string
 
-const (
-	PaymentTypeSingle    PaymentType = "single"
-	PaymentTypeRecurring PaymentType = "recurring"
+// const (
+// 	PaymentTypeSingle    PaymentType = "single"
+// 	PaymentTypeRecurring PaymentType = "recurring"
 
-	PaymentStatusInitiated PaymentStatus = "initiated"
-	PaymentStatusPending   PaymentStatus = "pending"
-	PaymentStatusSuccess   PaymentStatus = "success"
-	PaymentStatusFailed    PaymentStatus = "failed"
-)
+// 	// PaymentStatusInitiated PaymentStatus = "initiated"
+// 	PaymentStatusPending   PaymentStatus = "pending"
+// 	PaymentStatusSuccess   PaymentStatus = "success"
+// 	PaymentStatusFailed    PaymentStatus = "failed"
+// )
 
-func (pt PaymentType) IsValid() bool {
-	switch pt {
-	case PaymentTypeSingle, PaymentTypeRecurring:
-		return true
-	}
-	return false
-}
+// func (pt PaymentType) IsValid() bool {
+// 	switch pt {
+// 	case PaymentTypeSingle, PaymentTypeRecurring:
+// 		return true
+// 	}
+// 	return false
+// }
 
 func (pt PaymentType) String() string {
 	return string(pt)
 }
 
-
 func (pt PaymentStatus) String() string {
 	return string(pt)
 }
-
-
