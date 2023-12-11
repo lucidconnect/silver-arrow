@@ -69,8 +69,8 @@ type ComplexityRoot struct {
 		AddProduct               func(childComplexity int, input model.NewProduct) int
 		CreateAccessKey          func(childComplexity int, input model.NewMerchantKey) int
 		CreateMerchant           func(childComplexity int, input model.NewMerchant) int
-		ToggleProductMode        func(childComplexity int, input model.ProductModeUpdate) int
 		CreatePaymentLink        func(childComplexity int, input model.NewPaymentLink) int
+		ToggleProductMode        func(childComplexity int, input model.ProductModeUpdate) int
 		UpdateMerchantwebHookURL func(childComplexity int, webhookURL string) int
 		UpdateProduct            func(childComplexity int, input model.ProductUpdate) int
 	}
@@ -268,18 +268,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.CreateMerchant(childComplexity, args["input"].(model.NewMerchant)), true
 
-	case "Mutation.toggleProductMode":
-		if e.complexity.Mutation.ToggleProductMode == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_toggleProductMode_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.ToggleProductMode(childComplexity, args["input"].(model.ProductModeUpdate)), true
-
 	case "Mutation.createPaymentLink":
 		if e.complexity.Mutation.CreatePaymentLink == nil {
 			break
@@ -291,6 +279,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.CreatePaymentLink(childComplexity, args["input"].(model.NewPaymentLink)), true
+
+	case "Mutation.toggleProductMode":
+		if e.complexity.Mutation.ToggleProductMode == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_toggleProductMode_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.ToggleProductMode(childComplexity, args["input"].(model.ProductModeUpdate)), true
 
 	case "Mutation.updateMerchantwebHookUrl":
 		if e.complexity.Mutation.UpdateMerchantwebHookURL == nil {
@@ -833,13 +833,13 @@ func (ec *executionContext) field_Mutation_createMerchant_args(ctx context.Conte
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_toggleProductMode_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_createPaymentLink_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 model.ProductModeUpdate
+	var arg0 model.NewPaymentLink
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNProductModeUpdate2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐProductModeUpdate(ctx, tmp)
+		arg0, err = ec.unmarshalNNewPaymentLink2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐNewPaymentLink(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -848,13 +848,13 @@ func (ec *executionContext) field_Mutation_toggleProductMode_args(ctx context.Co
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_createPaymentLink_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_toggleProductMode_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 model.NewPaymentLink
+	var arg0 model.ProductModeUpdate
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNNewPaymentLink2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐNewPaymentLink(ctx, tmp)
+		arg0, err = ec.unmarshalNProductModeUpdate2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐProductModeUpdate(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -5581,44 +5581,6 @@ func (ec *executionContext) unmarshalInputNewProduct(ctx context.Context, obj in
 				return it, err
 			}
 			it.FirstChargeNow = data
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputProductModeUpdate(ctx context.Context, obj interface{}) (model.ProductModeUpdate, error) {
-	var it model.ProductModeUpdate
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"productId", "mode"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "productId":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("productId"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ProductID = data
-		case "mode":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mode"))
-			data, err := ec.unmarshalNMode2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐMode(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Mode = data
 		}
 	}
 

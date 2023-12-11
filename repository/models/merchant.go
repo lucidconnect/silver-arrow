@@ -22,7 +22,7 @@ type Product struct {
 	Mode           model.Mode
 	Amount         int64
 	Interval       int64
-	
+
 	// amount, interval, productid
 }
 
@@ -36,7 +36,7 @@ type Merchant struct {
 	Products           []Product
 	ConvoyEndpointID   string
 	MerchantAccessKeys []MerchantAccessKey
-	PaymentLinks     []PaymentLink
+	PaymentLinks       []PaymentLink
 }
 
 type MerchantAccessKey struct {

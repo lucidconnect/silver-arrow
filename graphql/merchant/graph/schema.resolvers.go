@@ -10,12 +10,10 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/google/uuid"
 	"github.com/lucidconnect/silver-arrow/gqlerror"
 	"github.com/lucidconnect/silver-arrow/graphql/merchant/graph/generated"
 	"github.com/lucidconnect/silver-arrow/graphql/merchant/graph/model"
 	"github.com/lucidconnect/silver-arrow/service/merchant"
-	"github.com/rs/zerolog/log"
 	"github.com/rs/zerolog/log"
 )
 
@@ -183,7 +181,7 @@ func (r *queryResolver) GetPaymentLink(ctx context.Context, id string) (*model.P
 	paymentLinkQuery := merchant.PaymentLinkQueryParams{
 		PaymentLinkId: &id,
 	}
-	paymentLinkDetails, err :=  merchantService.FetchPaymentLink(paymentLinkQuery)
+	paymentLinkDetails, err := merchantService.FetchPaymentLink(paymentLinkQuery)
 	if err != nil {
 		return nil, gqlerror.ErrToGraphQLError(gqlerror.InternalError, err.Error(), ctx)
 	}

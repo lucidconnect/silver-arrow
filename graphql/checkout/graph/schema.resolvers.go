@@ -48,16 +48,26 @@ func (r *mutationResolver) CreatePaymentIntent(ctx context.Context, input model.
 	if err != nil {
 		return "", err
 	}
-	merchantId := merchant.ID
-	signature, err := auth.SignatureContext(ctx, merchant.PublicKey)
+
+
+	key, err := auth.KeyModeContext(ctx)
 	if err != nil {
-		return "", err
+		log.Err(err).Msg("no key found in context")
+		return "", gqlerror.ErrToGraphQLError(gqlerror.MerchantAuthorisationFailed, err.Error(), ctx)
 	}
+
+	merchantId := merchant.ID
+	signature, err := auth.SignatureContext(ctx, merchant.MerchantAccessKeys[0].PublicKey)
+	if err != nil {
+		log.Err(err).Msg("no signature in context")
+		return "", gqlerror.ErrToGraphQLError(gqlerror.MerchantAuthorisationFailed, err.Error(), ctx)
+	}
+
 	log.Info().Msgf("Authenticated Merchant: %v", merchantId)
 	// validate signature
 	// amount:token:interval:productId
 	signatureCheck := fmt.Sprintf("%v", input.Amount) + ":" + input.Token + ":" + fmt.Sprintf("%v", input.Interval) + ":" + input.ProductID
-	err = validateSignature(signatureCheck, signature, merchant.PublicKey)
+	err = validateSignature(signatureCheck, signature, key.PublicKey)
 	if err != nil {
 		log.Debug().Err(err).Ctx(ctx).Send()
 		return "", gqlerror.ErrToGraphQLError(gqlerror.MerchantAuthorisationFailed, err.Error(), ctx)
