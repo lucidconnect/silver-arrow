@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/golang-jwt/jwt"
+	"github.com/google/uuid"
 
 	"github.com/rs/zerolog/log"
 	"github.com/spruceid/siwe-go"
@@ -75,7 +77,7 @@ func (s *Server) VerifyMerchant() http.HandlerFunc {
 			writeJsonResponse(w, response)
 			return
 		}
-		log.Info().Msgf("siwe message %v",message)
+		log.Info().Msgf("siwe message %v", message)
 		siweObj, err := siwe.ParseMessage(message)
 		if err != nil {
 			log.Err(err).Msg("parsing siwe message failed")
@@ -153,4 +155,79 @@ func generateJwt(address string) (string, error) {
 	}
 
 	return tokenString, nil
+}
+
+func parseJwt(jwToken string) (jwt.MapClaims, error) {
+	var secretKey = os.Getenv("JWT_SECRET")
+	key, err := hex.DecodeString(secretKey)
+	if err != nil {
+		return nil, err
+	}
+
+	token, err := jwt.Parse(jwToken, func(token *jwt.Token) (interface{}, error) {
+		_, ok := token.Method.(*jwt.SigningMethodHMAC)
+		if !ok {
+			log.Error().Msg("invalid token method")
+			return nil, errors.New("token method invalid")
+		}
+		return key, nil
+	})
+	if err != nil {
+		log.Err(err).Msg("parsing/validating token failed")
+		return nil, err
+	}
+
+	if !token.Valid {
+		return nil, errors.New("invalid token")
+	}
+
+	log.Debug().Msgf("token claims %v", token.Claims)
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return nil, errors.New("parsing claims failed")
+	}
+
+	return claims, nil
+}
+
+func parsePaymentLinkClaims(claims jwt.MapClaims) (merchantId, productId uuid.UUID, err error) {
+	merchantIdString, ok := claims["merchant-id"].(string)
+	if !ok {
+		err = errors.New("invalid merchant id")
+		return
+	}
+	productIdString, ok := claims["product-id"].(string)
+	if !ok {
+		err = errors.New("invalid product id")
+		return
+	}
+
+	merchantId, err = uuid.Parse(merchantIdString)
+	if err != nil {
+		return
+	}
+
+	productId, err = uuid.Parse(productIdString)
+	if err != nil {
+		return
+	}
+
+	return
+}
+
+func parseSiweClaim(claim interface{}) (*siwe.Message, error) {
+	fmt.Println(claim)
+	claimStr, ok := claim.(string)
+	if !ok {
+		err := errors.New("parsing claim failed")
+		return nil, err
+	}
+
+	siweClaim, err := siwe.ParseMessage(claimStr)
+	if err != nil {
+		log.Err(err).Send()
+		return nil, err
+	}
+	return siweClaim, nil
 }
