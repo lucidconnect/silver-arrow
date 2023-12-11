@@ -8,7 +8,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"time"
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/google/uuid"

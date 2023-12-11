@@ -8,6 +8,7 @@ type Query {
   fetchMerchantKey(input: MerchantAccessKeyQuery!): String!
   fetchMerchantStats(owner: String!): MerchantStats!
   getPaymentLink(id: String!): PaymentLinkDetails!
+  getPaymentLink(id: String!): PaymentLinkDetails!
 }
 
 type Mutation {
