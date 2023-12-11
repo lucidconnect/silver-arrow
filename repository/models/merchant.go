@@ -36,6 +36,7 @@ type Merchant struct {
 	Products           []Product
 	ConvoyEndpointID   string
 	MerchantAccessKeys []MerchantAccessKey
+	PaymentLinks     []PaymentLink
 }
 
 type MerchantAccessKey struct {
@@ -49,5 +50,4 @@ type MerchantAccessKey struct {
 func (m *MerchantAccessKey) BeforeCreate(tx *gorm.DB) (err error) {
 	m.ID = uuid.New()
 	return
-	PaymentLinks     []PaymentLink
 }
