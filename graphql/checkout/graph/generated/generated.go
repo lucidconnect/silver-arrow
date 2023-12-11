@@ -457,12 +457,12 @@ type TransactionData {
   id: ID
   type: PaymentType!
   chain: Int!
-	token: String!
+  token: String!
   amount: Int!
-	interval: Int!
+  interval: Int!
   reference: String!
   productId: String!
-	walletAddress: String!
+  walletAddress: String!
   subscriptionKey: String!
   createdAt: String!
   transactionHash: String!

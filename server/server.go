@@ -126,6 +126,7 @@ func (s *Server) checkoutGraphqlHandler() *handler.Server {
 
 func (s *Server) paymentLinksGraphqlHandler() *handler.Server {
 	paymentLinkSrv := handler.NewDefaultServer(payment_link_generated.NewExecutableSchema(payment_link_generated.Config{Resolvers: &payment_link_graph.Resolver{
+		Cache:    repository.NewMCache(),
 		Database: s.database,
 	}}))
 	return paymentLinkSrv
