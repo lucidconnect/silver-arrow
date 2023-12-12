@@ -147,7 +147,6 @@ func (m *MerchantService) CreateAccessKeys(owner, mode string) (*model.MerchantA
 		PublicKey:  pk,
 		PrivateKey: sk,
 	}
-	// check if the merchant exists, if not create a new entry
 	merchant, err := m.repository.FetchMerchantByAddress(owner)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -192,7 +191,14 @@ func (m *MerchantService) FetchMerchantKey(owner, mode string) (string, error) {
 		log.Err(err).Send()
 		return "", err
 	}
-	key := merchant.MerchantAccessKeys[0].PublicKey
+	keys := merchant.MerchantAccessKeys
+	var targetKey models.MerchantAccessKey
+	for _, key := range keys {
+		if key.Mode == mode {
+			targetKey = key
+		}
+	}
+	key := targetKey.PublicKey
 	return key, nil
 }
 
