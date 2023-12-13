@@ -8,8 +8,9 @@ import (
 type Wallet struct {
 	ID                   uuid.UUID `gorm:"primaryKey"`
 	Email                string    `gorm:"index"`
-	SignerAddress        string    `gorm:"index"`
-	WalletAddress        string    `gorm:"index"`
+	UserID               uuid.UUID
+	SignerAddress        string `gorm:"index"`
+	WalletAddress        string `gorm:"index"`
 	TurnkeySubOrgID      string
 	TurnkeySubOrgName    string
 	TurnkeyPrivateKeyTag string
@@ -21,4 +22,25 @@ type Wallet struct {
 func (w *Wallet) BeforeCreate(tx *gorm.DB) (err error) {
 	w.ID = uuid.New()
 	return
+}
+
+type User struct {
+	ID             uuid.UUID `gorm:"primaryKey"`
+	MerchantID     uuid.UUID `gorm:"index"`
+	ClientUniqueID string
+	WalletParams   []Wallet
+}
+
+type CheckoutSession struct {
+	ID                uuid.UUID `gorm:"primaryKey"`
+	Token             string
+	Chain             int64
+	Amount            int64
+	Customer          string
+	Interval          int64
+	ProductID         uuid.UUID
+	MerchantID        uuid.UUID
+	PaymentType       string
+	ChargeLater       bool
+	Subscription      Subscription
 }

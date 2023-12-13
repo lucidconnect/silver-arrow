@@ -36,8 +36,32 @@ func (r *mutationResolver) AddAccount(ctx context.Context, input model.Account) 
 	return address.Hex(), nil
 }
 
-// CreatePaymentIntent is the resolver for the createPaymentIntent field.
-// ideally, a user should be able to pay on any chain.
+// FetchSession is the resolver for the fetchSession field.
+func (r *mutationResolver) FetchSession(ctx context.Context, sessionid string) (*model.CheckoutSession, error) {
+	sid, err := uuid.Parse(sessionid)
+	if err != nil {
+		return nil, err
+	}
+	session, err := r.Database.FetchCheckoutSession(sid)
+	if err != nil {
+		return nil, err
+	}
+
+	checkoutSession := &model.CheckoutSession{
+		ID:          sessionid,
+		Chain:       int(session.Chain),
+		Token:       session.Token,
+		Amount:      int(session.Amount),
+		Interval:    int(session.Interval),
+		ProductID:   session.ProductID.String(),
+		MerchantID:  session.MerchantID.String(),
+		PaymentType: model.PaymentType(session.PaymentType),
+		ChargeLater: session.ChargeLater,
+	}
+	return checkoutSession, nil
+}
+
+// CreatePaymentIntent is the resolver for the createPaymentIntent field. ideally, a user should be able to pay on any chain.
 func (r *mutationResolver) CreatePaymentIntent(ctx context.Context, input model.PaymentIntent) (string, error) {
 	merchant, err := getAuthenticatedAndActiveMerchant(ctx)
 	if err != nil {
@@ -238,7 +262,10 @@ func (r *mutationResolver) ConfirmCancelSubscription(ctx context.Context, input 
 		return "", gqlerror.ErrToGraphQLError(gqlerror.InternalError, "validating subscription cancellation failed", ctx)
 	}
 	partialSig, err := hexutil.Decode(input.SignedMessage)
-
+	if err != nil {
+		log.Err(err).Send()
+		return "", gqlerror.ErrToGraphQLError(gqlerror.InternalError, "validating subscription cancellation failed", ctx)
+	}
 	sig = append(sig, partialSig...)
 	op["signature"] = hexutil.Encode(sig)
 

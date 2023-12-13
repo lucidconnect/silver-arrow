@@ -52,6 +52,10 @@ type Database interface {
 	// Webhook
 	CreateWebhookEvent(*models.WebhookEvent) error
 	UpdateWebhookEvent(*models.WebhookEvent) error
+
+	// Checkout Sesison
+	CreateCheckoutSession(*models.CheckoutSession) error
+	FetchCheckoutSession(id uuid.UUID) (*models.CheckoutSession, error)
 }
 
 type Queuer interface {

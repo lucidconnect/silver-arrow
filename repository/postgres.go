@@ -225,7 +225,7 @@ func (p *PostgresDB) FetchMerchantByAddress(address string) (*models.Merchant, e
 func (p *PostgresDB) FetchMerchantByPublicKey(key string) (*models.Merchant, error) {
 	var merchant *models.Merchant
 
-	if err := p.Db.Joins("JOIN merchant_access_keys ON merchant_access_keys.merchant_id = merchants.id").Where("merchant_access_keys.public_key = ?", key).First(&merchant).Error; err != nil {
+	if err := p.Db.Preload("MerchantAccessKeys").Joins("JOIN merchant_access_keys ON merchant_access_keys.merchant_id = merchants.id").Where("merchant_access_keys.public_key = ?", key).Find(&merchant).Error; err != nil {
 		return nil, err
 	}
 
@@ -341,4 +341,17 @@ func (p *PostgresDB) CreateWebhookEvent(webhookEvent *models.WebhookEvent) error
 
 func (p *PostgresDB) UpdateWebhookEvent(webhookEvent *models.WebhookEvent) error {
 	return p.Db.Save(webhookEvent).Error
+}
+
+func (p *PostgresDB) CreateCheckoutSession(session *models.CheckoutSession) error {
+	return p.Db.Create(session).Error
+}
+
+func (p *PostgresDB) FetchCheckoutSession(id uuid.UUID) (*models.CheckoutSession, error) {
+	var session *models.CheckoutSession
+	if err := p.Db.Where("id = ?", id).First(&session).Error; err != nil {
+		return nil, err
+	}
+
+	return session, nil
 }

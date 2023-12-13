@@ -11,6 +11,7 @@ type Query {
 type Mutation {
   # frontend sdk
   addAccount(input: Account!): String!
+  fetchSession(sessionid: String!): CheckoutSession!
   createPaymentIntent(input: PaymentIntent!): String!
   validatePaymentIntent(input: RequestValidation!): TransactionData!
 
@@ -40,6 +41,18 @@ input PaymentIntent {
   ownerAddress: String!
   walletAddress: String!
   firstChargeNow: Boolean!
+}
+
+type CheckoutSession {
+  id: ID!
+  chain: Int!
+  token: String!
+  amount: Int!
+  interval: Int!
+  productId: String!
+  merchantId: String!
+  paymentType: PaymentType!
+  chargeLater: Boolean!
 }
 
 type Payment {

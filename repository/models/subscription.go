@@ -20,6 +20,7 @@ type Subscription struct {
 	UserOpHash             string    `gorm:"index"`
 	MerchantId             string    `gorm:"index"`
 	ProductID              uuid.UUID `gorm:"index"`
+	CheckoutSessionID      uuid.UUID
 	ProductName            string
 	MerchantDepositAddress string
 	ExpiresAt              time.Time `gorm:"index;type:timestamptz"`

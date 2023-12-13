@@ -9,17 +9,18 @@ import (
 )
 
 type Product struct {
-	ID             uuid.UUID `gorm:"primaryKey"`
-	Name           string    `gorm:"unique"`
-	Chain          int64     `gorm:"not null"`
-	Owner          string    `gorm:"index;not null"`
-	Token          string    `gorm:"not null"`
-	DepositAddress string    `gorm:"not null"`
-	MerchantID     uuid.UUID
-	CreatedAt      time.Time
-	Subscriptions  []Subscription
-	Payments       []Payment
-	Mode           model.Mode
+	ID               uuid.UUID `gorm:"primaryKey"`
+	Name             string    `gorm:"unique"`
+	Chain            int64     `gorm:"not null"`
+	Owner            string    `gorm:"index;not null"`
+	Token            string    `gorm:"not null"`
+	DepositAddress   string    `gorm:"not null"`
+	MerchantID       uuid.UUID
+	CreatedAt        time.Time
+	Subscriptions    []Subscription
+	CheckoutSessions []CheckoutSession
+	Payments         []Payment
+	Mode             model.Mode
 }
 
 type Merchant struct {
