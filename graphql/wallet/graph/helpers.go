@@ -44,11 +44,12 @@ func validateSignature(rawString, signature, pk string) error {
 	pub, _ := crypto.UnmarshalPubkey(pbk)
 
 	fmt.Println("pk -", pk)
+	publicKey := hexutil.Encode(crypto.CompressPubkey(pub))
+	fmt.Println("recovered public key", publicKey)
+	// recoveredAddress := crypto.PubkeyToAddress(*pub)
+	// fmt.Println(recoveredAddress)
 
-	recoveredAddress := crypto.PubkeyToAddress(*pub)
-	fmt.Println(recoveredAddress)
-
-	if recoveredAddress.Hex() != pk {
+	if publicKey != pk {
 		return errors.New("signature invalid")
 	}
 	return nil
