@@ -6,6 +6,7 @@ package graph
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"time"
@@ -37,7 +38,6 @@ func (r *mutationResolver) AddAccount(ctx context.Context, input model.Account) 
 }
 
 // CreatePaymentIntent is the resolver for the createPaymentIntent field.
-// ideally, a user should be able to pay on any chain.
 func (r *mutationResolver) CreatePaymentIntent(ctx context.Context, input model.PaymentIntent) (string, error) {
 	merchant, err := getAuthenticatedAndActiveMerchant(ctx)
 	if err != nil {
@@ -49,6 +49,11 @@ func (r *mutationResolver) CreatePaymentIntent(ctx context.Context, input model.
 	key, err := auth.KeyModeContext(ctx)
 	if err != nil {
 		log.Err(err).Msg("no key found in context")
+		return "", gqlerror.ErrToGraphQLError(gqlerror.MerchantAuthorisationFailed, err.Error(), ctx)
+	}
+
+	if key.Mode != input.Mode.String() {
+		err = errors.New("product mode does not match key mode")
 		return "", gqlerror.ErrToGraphQLError(gqlerror.MerchantAuthorisationFailed, err.Error(), ctx)
 	}
 

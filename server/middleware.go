@@ -166,7 +166,7 @@ func (s *Server) CheckoutMiddleware() func(http.Handler) http.Handler {
 			signatureCtx := context.WithValue(r.Context(), auth.AuthSignatureCtxKey, signature)
 			r = r.WithContext(signatureCtx)
 
-			modeCtx := context.WithValue(r.Context(), auth.ModeCtxKey, key)
+			modeCtx := context.WithValue(r.Context(), auth.ModeCtxKey, &key)
 			r = r.WithContext(modeCtx)
 			next.ServeHTTP(w, r)
 		})
