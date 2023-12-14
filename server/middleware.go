@@ -42,7 +42,6 @@ func (s *Server) JWTMiddleware() func(http.Handler) http.Handler {
 					next.ServeHTTP(w, r)
 					return
 				}
-
 				merchantCtx := context.WithValue(r.Context(), auth.AuthMerchantCtxKey, merchant)
 				r = r.WithContext(merchantCtx)
 
@@ -146,13 +145,13 @@ func (s *Server) CheckoutMiddleware() func(http.Handler) http.Handler {
 				next.ServeHTTP(w, r)
 				return
 			}
-			// use the public key to fetch the key, 
+			// use the public key to fetch the key,
 			// determine it's mode (test or live?)
 			// fetch the merchant with the merchantID,
 			// attach the mode to the context
 			// attach the merchant to the context
 			// attach the public key to the context
-			
+
 			merchant, err := s.database.FetchMerchantByPublicKey(authorizationValue)
 			if err != nil {
 				log.Err(err).Send()
@@ -160,8 +159,7 @@ func (s *Server) CheckoutMiddleware() func(http.Handler) http.Handler {
 				return
 			}
 
-			key := merchant.MerchantAccessKeys[0].PublicKey
-
+			key := merchant.MerchantAccessKeys[0]
 			merchantCtx := context.WithValue(r.Context(), auth.MerchantCtxKey, merchant)
 			r = r.WithContext(merchantCtx)
 

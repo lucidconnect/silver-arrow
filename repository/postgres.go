@@ -225,7 +225,7 @@ func (p *PostgresDB) FetchMerchantByAddress(address string) (*models.Merchant, e
 func (p *PostgresDB) FetchMerchantByPublicKey(key string) (*models.Merchant, error) {
 	var merchant *models.Merchant
 
-	if err := p.Db.Joins("JOIN merchant_access_keys ON merchant_access_keys.merchant_id = merchants.id").Where("merchant_access_keys.public_key = ?", key).First(&merchant).Error; err != nil {
+	if err := p.Db.Preload("MerchantAccessKeys", "public_key = ?", key).Joins("JOIN merchant_access_keys ON merchant_access_keys.merchant_id = merchants.id").Where("merchant_access_keys.public_key = ?", key).Find(&merchant).Error; err != nil {
 		return nil, err
 	}
 
