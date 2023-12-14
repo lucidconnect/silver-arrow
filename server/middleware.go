@@ -42,7 +42,6 @@ func (s *Server) JWTMiddleware() func(http.Handler) http.Handler {
 					next.ServeHTTP(w, r)
 					return
 				}
-
 				merchantCtx := context.WithValue(r.Context(), auth.AuthMerchantCtxKey, merchant)
 				r = r.WithContext(merchantCtx)
 
@@ -160,8 +159,7 @@ func (s *Server) CheckoutMiddleware() func(http.Handler) http.Handler {
 				return
 			}
 
-			key := merchant.MerchantAccessKeys[0].PublicKey
-			log.Debug().Msgf("%v", key)
+			key := merchant.MerchantAccessKeys[0]
 			merchantCtx := context.WithValue(r.Context(), auth.MerchantCtxKey, merchant)
 			r = r.WithContext(merchantCtx)
 
