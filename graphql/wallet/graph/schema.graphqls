@@ -30,6 +30,7 @@ input Account {
 
 # payment data
 input PaymentIntent {
+  mode: Mode!
   type: PaymentType!
   email: String
   chain: Int!
@@ -129,6 +130,11 @@ enum SubscriptionStatus {
   active
   disabled
   cancelled
+}
+
+enum Mode {
+  test
+  live
 }
 
 scalar Time

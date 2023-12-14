@@ -646,6 +646,7 @@ input Account {
 
 # payment data
 input PaymentIntent {
+  mode: Mode!
   type: PaymentType!
   email: String
   chain: Int!
@@ -745,6 +746,11 @@ enum SubscriptionStatus {
   active
   disabled
   cancelled
+}
+
+enum Mode {
+  test
+  live
 }
 
 scalar Time`, BuiltIn: false},
@@ -5238,13 +5244,22 @@ func (ec *executionContext) unmarshalInputPaymentIntent(ctx context.Context, obj
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"type", "email", "chain", "token", "amount", "interval", "productId", "ownerAddress", "walletAddress", "firstChargeNow"}
+	fieldsInOrder := [...]string{"mode", "type", "email", "chain", "token", "amount", "interval", "productId", "ownerAddress", "walletAddress", "firstChargeNow"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
+		case "mode":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mode"))
+			data, err := ec.unmarshalNMode2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐMode(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Mode = data
 		case "type":
 			var err error
 
@@ -6335,6 +6350,16 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) unmarshalNMode2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐMode(ctx context.Context, v interface{}) (model.Mode, error) {
+	var res model.Mode
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNMode2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐMode(ctx context.Context, sel ast.SelectionSet, v model.Mode) graphql.Marshaler {
+	return v
 }
 
 func (ec *executionContext) unmarshalNNewTransferRequest2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐNewTransferRequest(ctx context.Context, v interface{}) (model.NewTransferRequest, error) {
