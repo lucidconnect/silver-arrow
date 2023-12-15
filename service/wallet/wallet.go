@@ -54,7 +54,7 @@ func NewWalletService(r repository.Database, chain int64) *WalletService {
 
 	network, err := erc4337.GetNetwork(chain)
 	if err != nil {
-		log.Err(err).Send()
+		log.Err(err).Msgf("chain %v not supported", chain)
 		return nil
 	}
 
