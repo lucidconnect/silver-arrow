@@ -263,19 +263,20 @@ func (ws *WalletService) AddSubscription(merchantId uuid.UUID, input model.NewSu
 
 	// check if a subscription already exists for this product
 	pid := input.ProductID
-	existingSub, err := ws.database.FindSubscriptionByProductId(pid)
+	existingSub, err := ws.database.FindSubscriptionByProductId(pid, input.WalletAddress)
 	if err != nil {
 		log.Err(err).Msgf("product %v not found", pid)
 		return nil, nil, errors.New("product  not found")
 	}
 	if existingSub != nil {
+		log.Info().Msg("an active subscription exists for this product")
 		return nil, nil, errors.New("an active subscription exists for this product")
 	}
 
 	tagId, orgId, walletID, err := ws.database.GetWalletMetadata(input.WalletAddress)
 	if err != nil {
 		log.Err(err).Msgf("failed to fetch private key tag for wallet - %v", input.WalletAddress)
-		return nil, nil, err
+		return nil, nil, errors.New("failed to fetch wallet metadata")
 	}
 
 	randomSalt := randKey(4)

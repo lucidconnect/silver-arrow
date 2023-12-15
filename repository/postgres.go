@@ -152,9 +152,9 @@ func (p *PostgresDB) FindSubscriptionById(id uuid.UUID) (*models.Subscription, e
 	return subscription, nil
 }
 
-func (p *PostgresDB) FindSubscriptionByProductId(id uuid.UUID) (*models.Subscription, error) {
+func (p *PostgresDB) FindSubscriptionByProductId(id uuid.UUID, wallet string) (*models.Subscription, error) {
 	var subscription *models.Subscription
-	if err := p.Db.Where("product_id = ? AND active = ?", id, true).First(&subscription).Error; err != nil {
+	if err := p.Db.Where("product_id = ? AND active = ? AND wallet_address", id, true, wallet).First(&subscription).Error; err != nil {
 		return nil, err
 	}
 	return subscription, nil
