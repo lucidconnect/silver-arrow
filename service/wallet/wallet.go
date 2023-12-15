@@ -263,7 +263,11 @@ func (ws *WalletService) AddSubscription(merchantId uuid.UUID, input model.NewSu
 
 	// check if a subscription already exists for this product
 	pid := input.ProductID
-	existingSub, _ := ws.database.FindSubscriptionByProductId(pid)
+	existingSub, err := ws.database.FindSubscriptionByProductId(pid)
+	if err != nil {
+		log.Err(err).Msgf("product %v not found", pid)
+		return nil, nil, errors.New("product  not found")
+	}
 	if existingSub != nil {
 		return nil, nil, errors.New("an active subscription exists for this product")
 	}
