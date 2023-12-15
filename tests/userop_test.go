@@ -126,6 +126,7 @@ func TestValidator(t *testing.T) {
 	// sessionKey := "0x6574f281AAaA788cf89e5269E9c842E50c5713fe"
 	// privKey := "0xc1fce60cfb4b32bf4584e577904d806f8c5af28104d34e9923466eb8ca6faeff"
 	validatorAddress := "0xc621C75900dbF0234dD7c9be8f8A3bCA7433E3E8"
+	executorAddress := "0x701d90246bbd60ED47134CD16Fdd14c570C1Ca51"
 	sessionKey, privKey, _ := auth.CreateAccessKey()
 	mode := erc4337.ENABLE_MODE
 	chainId := 80001
@@ -137,7 +138,7 @@ func TestValidator(t *testing.T) {
 		t.FailNow()
 	}
 
-	validator, err := erc4337.InitialiseValidator(validatorAddress, sessionKey, mode, int64(chainId))
+	validator, err := erc4337.InitialiseValidator(validatorAddress, executorAddress, sessionKey, mode, int64(chainId))
 	if !assert.NoError(t, err) {
 		t.FailNow()
 	}

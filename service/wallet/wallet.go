@@ -32,10 +32,11 @@ type WalletService struct {
 	database         repository.Database
 	bundlerService   *erc4337.AlchemyService
 	validatorAddress string
+	executorAddress  string
 }
 
 func NewWalletService(r repository.Database, chain int64) *WalletService {
-	validatorAddress := os.Getenv("VALIDATOR_ADDRESS")
+	// validatorAddress := os.Getenv("VALIDATOR_ADDRESS")
 	var bundler *erc4337.AlchemyService
 	var err error
 
@@ -51,11 +52,21 @@ func NewWalletService(r repository.Database, chain int64) *WalletService {
 		log.Panic().Err(err).Send()
 	}
 
+	network, err := erc4337.GetNetwork(chain)
+	if err != nil {
+		log.Err(err).Send()
+		return nil
+	}
+
+	validatorAddress := os.Getenv(fmt.Sprintf("%s_VALIDATOR_ADDRESS", network))
+	executorAddress := os.Getenv(fmt.Sprintf("%s_EXECUTOR_ADDRESS", network))
+
 	return &WalletService{
 		turnkey:          tunkeyService,
 		database:         r,
 		bundlerService:   bundler,
 		validatorAddress: validatorAddress,
+		executorAddress:  executorAddress,
 	}
 }
 
@@ -308,7 +319,7 @@ func (ws *WalletService) AddSubscription(merchantId uuid.UUID, input model.NewSu
 		}
 	}
 
-	callData, err := setValidatorExecutor(sessionKey, ws.validatorAddress, input.WalletAddress, int64(input.Chain))
+	callData, err := setValidatorExecutor(sessionKey, ws.validatorAddress, ws.executorAddress, input.WalletAddress, int64(input.Chain))
 	if err != nil {
 		log.Err(err).Msg("failed to set a validator")
 		return nil, nil, err
@@ -812,9 +823,9 @@ func nanoSecondsToDay(ns int64) int64 {
 }
 
 // creats the calldata that scopes a kernel executor to a validator
-func setValidatorExecutor(sessionKey, validatorAddress, ownerAddress string, chain int64) ([]byte, error) {
+func setValidatorExecutor(sessionKey, validatorAddress, executorAddress, ownerAddress string, chain int64) ([]byte, error) {
 	mode := erc4337.ENABLE_MODE
-	validator, err := erc4337.InitialiseValidator(validatorAddress, sessionKey, mode, chain)
+	validator, err := erc4337.InitialiseValidator(validatorAddress, executorAddress, sessionKey, mode, chain)
 	if err != nil {
 		return nil, err
 	}
