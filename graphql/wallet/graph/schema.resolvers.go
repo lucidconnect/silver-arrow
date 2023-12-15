@@ -128,6 +128,7 @@ func (r *mutationResolver) CreatePaymentIntent(ctx context.Context, input model.
 
 		validationData, userOp, err := walletService.AddSubscription(merchantId, newSubscription, usePaymaster, common.Big0, int64(input.Chain))
 		if err != nil {
+			log.Err(err).Send()
 			return "", gqlerror.ErrToGraphQLError(gqlerror.InternalError, "Couldn't add subscription to user's wallet", ctx)
 		}
 		fmt.Println("Userop hash", validationData.UserOpHash)
