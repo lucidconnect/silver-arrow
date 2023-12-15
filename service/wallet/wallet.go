@@ -39,8 +39,17 @@ func NewWalletService(r repository.Database, chain int64) *WalletService {
 	// validatorAddress := os.Getenv("VALIDATOR_ADDRESS")
 	var bundler *erc4337.AlchemyService
 	var err error
+	var validatorAddress, executorAddress string
 
 	if chain != 0 {
+		network, err := erc4337.GetNetwork(chain)
+		if err != nil {
+			log.Err(err).Msgf("chain %v not supported", chain)
+			return nil
+		}
+
+		validatorAddress = os.Getenv(fmt.Sprintf("%s_VALIDATOR_ADDRESS", network))
+		executorAddress = os.Getenv(fmt.Sprintf("%s_EXECUTOR_ADDRESS", network))
 		bundler, err = initialiseBundler(chain)
 		if err != nil {
 			return nil
@@ -51,15 +60,6 @@ func NewWalletService(r repository.Database, chain int64) *WalletService {
 	if err != nil {
 		log.Panic().Err(err).Send()
 	}
-
-	network, err := erc4337.GetNetwork(chain)
-	if err != nil {
-		log.Err(err).Msgf("chain %v not supported", chain)
-		return nil
-	}
-
-	validatorAddress := os.Getenv(fmt.Sprintf("%s_VALIDATOR_ADDRESS", network))
-	executorAddress := os.Getenv(fmt.Sprintf("%s_EXECUTOR_ADDRESS", network))
 
 	return &WalletService{
 		turnkey:          tunkeyService,
