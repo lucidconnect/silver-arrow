@@ -8,13 +8,13 @@ type Query {
 }
 
 type PaymentLinkDetails {
-    id: ID!
-    mode: String!
-    productId: ID!
-    merchantId: ID!
-    amount: Int!
-    token: String!
-    chain: Int!
+  id: ID!
+  mode: String!
+  productId: ID!
+  merchantId: ID!
+  amount: Int!
+  token: String!
+  chain: Int!
 }
 
 # payment data
