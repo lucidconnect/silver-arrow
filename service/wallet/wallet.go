@@ -79,7 +79,7 @@ func initialiseBundler(chain int64) (*erc4337.AlchemyService, error) {
 	return bundler, nil
 }
 
-func (ws *WalletService) AddAccount(input model.Account) error {
+func (ws *WalletService) AddAccount(input Account) error {
 	walletAddress := input.Address
 	// Check if account exists
 	_, err := ws.database.FetchAccountByAddress(walletAddress)
@@ -256,7 +256,7 @@ func (ws *WalletService) ValidateSubscription(userop map[string]any, chain int64
 	return subData, nil
 }
 
-func (ws *WalletService) AddSubscription(merchantId uuid.UUID, input model.NewSubscription, usePaymaster bool, index *big.Int, chain int64) (*model.ValidationData, map[string]any, error) {
+func (ws *WalletService) AddSubscription(merchantId uuid.UUID, input NewSubscription, usePaymaster bool, index *big.Int, chain int64) (*model.ValidationData, map[string]any, error) {
 	var nextChargeAt time.Time
 	var initCode []byte
 	var nonce, amount *big.Int

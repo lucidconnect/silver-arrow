@@ -1,5 +1,11 @@
 package wallet
 
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
+
 /*** PaymentIntent is the entry point resource to initiate a payment on a user's erc4337 wallet
  * PaymentIntent is created by merchant and sent to Lucid
  * if payment type is recurring, a subscription is first created before a payment can be made
@@ -16,6 +22,26 @@ type PaymentIntent struct {
 	ProductId     string
 	OwnerAddress  string
 	WalletAddress string
+}
+
+type Account struct {
+	Email   *string `json:"email,omitempty"`
+	Address string  `json:"address"`
+	Signer  *string `json:"signer,omitempty"`
+}
+
+type NewSubscription struct {
+	Chain          int
+	Email          string
+	Token          string
+	Amount         float64
+	Interval       int
+	ProductID      uuid.UUID
+	ProductName    string
+	OwnerAddress   string
+	WalletAddress  string
+	DepositAddress string
+	NextChargeDate *time.Time
 }
 
 type PaymentRequestValidation struct {

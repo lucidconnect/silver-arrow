@@ -10,9 +10,9 @@ type Query {
 
 type Mutation {
   # frontend sdk
-  addAccount(input: Account!): String!
-  createPaymentIntent(input: PaymentIntent!): String!
-  validatePaymentIntent(input: RequestValidation!): TransactionData!
+  # addAccount(input: Account!): String!
+  # createPaymentIntent(input: PaymentIntent!): String!
+  # validatePaymentIntent(input: RequestValidation!): TransactionData!
 
   # user's dashboard ops
   modifySubscriptionState(input: SubscriptionMod!): String!
