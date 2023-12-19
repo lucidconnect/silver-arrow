@@ -20,6 +20,9 @@ type Product struct {
 	Subscriptions  []Subscription
 	Payments       []Payment
 	Mode           model.Mode
+	Amount         int64
+	Interval       int64
+	InstantCharge  bool
 }
 
 type Merchant struct {
@@ -32,6 +35,7 @@ type Merchant struct {
 	Products           []Product
 	ConvoyEndpointID   string
 	MerchantAccessKeys []MerchantAccessKey
+	PaymentLinks       []PaymentLink
 }
 
 type MerchantAccessKey struct {
