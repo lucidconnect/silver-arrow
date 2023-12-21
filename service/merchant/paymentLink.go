@@ -29,8 +29,8 @@ func (m *MerchantService) CreatePaymentLink(input model.NewPaymentLink) (string,
 
 	newPaymentLink := &models.PaymentLink{
 		ID:        id,
-		MerhantId: product.MerchantID,
-		ProductId: productId,
+		MerchantID: product.MerchantID,
+		ProductID: productId,
 		Product:   *product,
 		CreatedAt: time.Now(),
 	}
@@ -73,8 +73,8 @@ func (m *MerchantService) FetchPaymentLink(queryParam PaymentLinkQueryParams) (*
 	paymentLinkDetalais := &model.PaymentLinkDetails{
 		ID: paymentLink.ID.String(),
 		// Mode: paymentLink.Product.Mode,
-		ProductID:  paymentLink.ProductId.String(),
-		MerchantID: paymentLink.MerhantId.String(),
+		ProductID:  paymentLink.ProductID.String(),
+		MerchantID: paymentLink.MerchantID.String(),
 		Amount:     int(paymentLink.Product.Amount),
 		Token:      paymentLink.Product.Token,
 		Chain:      int(paymentLink.Product.Chain),

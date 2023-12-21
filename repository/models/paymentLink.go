@@ -8,8 +8,8 @@ import (
 
 type PaymentLink struct {
 	ID        uuid.UUID `gorm:"primaryKey"`
-	MerhantId uuid.UUID
-	ProductId uuid.UUID
+	MerchantID uuid.UUID
+	ProductID uuid.UUID
 	Product   Product
 	CreatedAt time.Time
 	DeletedAt time.Time
