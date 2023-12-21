@@ -103,7 +103,7 @@ func (m *MerchantService) FetchProduct(pid string) (*model.Product, error) {
 	if err != nil {
 		id, err = parseUUID(pid)
 		if err != nil {
-			log.Err(err).Send()
+			log.Err(err).Msg("invalid product id")
 			return nil, errors.New("invalid product id")
 		}
 	}

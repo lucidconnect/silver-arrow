@@ -16,6 +16,7 @@ import (
 	"github.com/lucidconnect/silver-arrow/graphql/paymentLink/graph/generated"
 	"github.com/lucidconnect/silver-arrow/graphql/paymentLink/graph/model"
 	"github.com/lucidconnect/silver-arrow/service/erc4337"
+	"github.com/lucidconnect/silver-arrow/service/merchant"
 	"github.com/lucidconnect/silver-arrow/service/wallet"
 	"github.com/rs/zerolog/log"
 )
@@ -143,9 +144,25 @@ func (r *mutationResolver) ValidatePaymentIntent(ctx context.Context, input mode
 
 // GetPaymentLink is the resolver for the getPaymentLink field.
 func (r *queryResolver) GetPaymentLink(ctx context.Context, id string) (*model.PaymentLinkDetails, error) {
-	_ = r.Database
+	merchantService := merchant.NewMerchantService(r.Database)
 
-	panic(fmt.Errorf("not implemented: GetPaymentLink - getPaymentLink"))
+	paymentLinkQuery := merchant.PaymentLinkQueryParams{
+		PaymentLinkId: &id,
+	}
+	pd, err := merchantService.FetchPaymentLink(paymentLinkQuery)
+	if err != nil {
+		return nil, gqlerror.ErrToGraphQLError(gqlerror.InternalError, err.Error(), ctx)
+	}
+	paymentLinkDetails := &model.PaymentLinkDetails{
+		ID: pd.ID,
+		// Mode: pd.Mode,
+		ProductID:  pd.ProductID,
+		MerchantID: pd.MerchantID,
+		Amount:     pd.Amount,
+		Token:      pd.Token,
+		Chain:      pd.Chain,
+	}
+	return paymentLinkDetails, nil
 }
 
 // Mutation returns generated.MutationResolver implementation.
