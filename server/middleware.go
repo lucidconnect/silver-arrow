@@ -181,6 +181,7 @@ func (s *Server) PaymentLinkMiddleware() func(http.Handler) http.Handler {
 			headerToken := r.Header.Get("Token")
 			claims, err := parseJwt(headerToken)
 			if err != nil {
+				log.Info().Msgf("token: %v", headerToken)
 				log.Err(err).Msg("error parsing jwt")
 				response := &httpResponse{Status: http.StatusUnauthorized, Error: "invalid jwt"}
 				writeJsonResponse(w, response)
