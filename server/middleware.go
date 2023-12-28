@@ -2,12 +2,14 @@ package server
 
 import (
 	"context"
+	"crypto/subtle"
 	"encoding/hex"
 	"net/http"
 	"os"
 	"strings"
 
 	"github.com/golang-jwt/jwt"
+	"github.com/gorilla/mux"
 	"github.com/lucidconnect/silver-arrow/auth"
 	"github.com/rs/zerolog/log"
 )
@@ -218,6 +220,52 @@ func (s *Server) PaymentLinkMiddleware() func(http.Handler) http.Handler {
 			r = r.WithContext(productCtx)
 
 			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+func (s *Server) BasicAuthMiddleware() func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			username, password, ok := r.BasicAuth()
+			if !ok {
+				response := &httpResponse{Status: http.StatusUnauthorized, Error: "basic auth failed"}
+				writeJsonResponse(w, response)
+				return
+			}
+			log.Info().Msg(username)
+			if !(secureCompare(username, os.Getenv("HOSTED_PAGE_USERNAME")) &&
+				secureCompare(password, os.Getenv("HOSTED_PAGE_PASSWORD"))) {
+				response := &httpResponse{Status: http.StatusUnauthorized, Error: "basic auth failed"}
+				writeJsonResponse(w, response)
+				return
+			}
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+func secureCompare(given string, actual string) bool {
+	if subtle.ConstantTimeEq(int32(len(given)), int32(len(actual))) == 1 {
+		return subtle.ConstantTimeCompare([]byte(given), []byte(actual)) == 1
+	} else {
+		return subtle.ConstantTimeCompare([]byte(actual), []byte(actual)) == 1 && false
+	}
+}
+
+// MiddlewareExcept returns a new middleware that calls the provided middleware except on the provided routes
+func MiddlewareExcept(middleware mux.MiddlewareFunc, routes ...*mux.Route) mux.MiddlewareFunc {
+	routeMatch := mux.RouteMatch{}
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+			for _, route := range routes {
+				if route.Match(r, &routeMatch) {
+					if next != nil {
+						next.ServeHTTP(rw, r)
+					}
+				}
+			}
+			middleware(next).ServeHTTP(rw, r)
 		})
 	}
 }

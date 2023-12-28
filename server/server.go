@@ -87,9 +87,10 @@ func (s *Server) Routes() {
 	})
 	// merchant authentication
 	authRouter := s.router.PathPrefix("/auth").Subrouter()
-	authRouter.HandleFunc("/nonce", s.GetNonce()).Methods(http.MethodGet)
-	authRouter.HandleFunc("/verify", s.VerifyMerchant())
-	authRouter.HandleFunc("/jwt",s.GenerateJwt())
+	nonceRoute := authRouter.HandleFunc("/nonce", s.GetNonce()).Methods(http.MethodGet)
+	siweVerifyRoute := authRouter.HandleFunc("/verify", s.VerifyMerchant())
+	authRouter.HandleFunc("/jwt", s.GenerateJwt()).Methods(http.MethodPost)
+	authRouter.Use(MiddlewareExcept(s.BasicAuthMiddleware(), nonceRoute, siweVerifyRoute))
 
 	merchantRouter := s.router.PathPrefix("/merchant").Subrouter()
 	merchantRouter.Use(s.JWTMiddleware())
