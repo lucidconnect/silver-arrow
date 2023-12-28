@@ -108,6 +108,7 @@ func (s *Server) Routes() {
 
 	// payment page
 	paymentLink := s.router.PathPrefix("/pay").Subrouter()
+	paymentLink.Use(s.PaymentLinkMiddleware())
 	paymentLink.Handle("/query", s.paymentLinksGraphqlHandler())
 	paymentLink.Handle("/graphiql", playground.Handler("/api/Graphql plaground", "/pay/query"))
 }
