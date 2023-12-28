@@ -157,6 +157,31 @@ func generateJwt(address string) (string, error) {
 	return tokenString, nil
 }
 
+func generatePaymentLinkJwt(productId, merchantId string) (string, error) {
+	var secretKey = os.Getenv("JWT_SECRET")
+	key, err := hex.DecodeString(secretKey)
+	if err != nil {
+		log.Err(err).Msg("decoding secret key failed")
+		return "", err
+	}
+	log.Info().Msg(string(key))
+
+	claims := jwt.MapClaims{}
+	
+	claims["merchant-id"] = merchantId
+	claims["product-id"] = productId
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	fmt.Println("claims", token.Claims)
+
+	tokenString, err := token.SignedString(key)
+	if err != nil {
+		return "", err
+	}
+
+	return tokenString, nil
+}
+
 func parseJwt(jwToken string) (jwt.MapClaims, error) {
 	var secretKey = os.Getenv("JWT_SECRET")
 	key, err := hex.DecodeString(secretKey)
@@ -165,6 +190,7 @@ func parseJwt(jwToken string) (jwt.MapClaims, error) {
 	}
 
 	token, err := jwt.Parse(jwToken, func(token *jwt.Token) (interface{}, error) {
+		log.Info().Msgf("token method %v", token.Method)
 		_, ok := token.Method.(*jwt.SigningMethodHMAC)
 		if !ok {
 			log.Error().Msg("invalid token method")
