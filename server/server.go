@@ -89,6 +89,7 @@ func (s *Server) Routes() {
 	authRouter := s.router.PathPrefix("/auth").Subrouter()
 	authRouter.HandleFunc("/nonce", s.GetNonce()).Methods(http.MethodGet)
 	authRouter.HandleFunc("/verify", s.VerifyMerchant())
+	authRouter.HandleFunc("/jwt",s.GenerateJwt())
 
 	merchantRouter := s.router.PathPrefix("/merchant").Subrouter()
 	merchantRouter.Use(s.JWTMiddleware())
