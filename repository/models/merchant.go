@@ -23,6 +23,7 @@ type Product struct {
 	Amount         int64
 	Interval       int64
 	InstantCharge  bool
+	PaymentType    string
 }
 
 type Merchant struct {

@@ -3,6 +3,7 @@ package merchant
 import (
 	"encoding/base64"
 	"fmt"
+	"math"
 	"strings"
 
 	"time"
@@ -25,6 +26,9 @@ func (m *MerchantService) CreateProduct(input model.NewProduct) (*model.Product,
 		return nil, err
 	}
 	chainId := int64(input.Chain)
+	amount := parseFloatAmountToInt(input.Token, input.Amount)
+	interval := daysToNanoSeconds(int64(input.Interval))
+
 	product := &models.Product{
 		ID:             productID,
 		Name:           input.Name,
@@ -35,6 +39,10 @@ func (m *MerchantService) CreateProduct(input model.NewProduct) (*model.Product,
 		MerchantID:     merchant.ID,
 		CreatedAt:      time.Now(),
 		Mode:           model.ModeTest,
+		Amount:         amount,
+		Interval:       int64(interval),
+		InstantCharge:  input.InstantCharge,
+		PaymentType:    input.PaymentType.String(),
 	}
 	if err := m.repository.CreateProduct(product); err != nil {
 		log.Err(err).Send()
@@ -145,7 +153,7 @@ func (m *MerchantService) UpdateProductMode(merchantId uuid.UUID, productId, mod
 		chainId = 80001
 	}
 	update := map[string]interface{}{
-		"mode": mode,
+		"mode":  mode,
 		"chain": chainId,
 	}
 
@@ -181,4 +189,22 @@ func parseUUID(mid string) (uuid.UUID, error) {
 func removeUnderscore(s string) string {
 	strArr := strings.Split(s, "_")
 	return strings.ToTitle(strings.Join(strArr, ""))
+}
+
+func parseFloatAmountToInt(token string, amount float64) int64 {
+	var divisor int
+	if token == "USDC" || token == "USDT" {
+		divisor = 6
+	} else {
+		divisor = 18
+	}
+	minorFactor := math.Pow10(divisor)
+	parsedAmount := int64(amount * minorFactor)
+
+	return parsedAmount
+}
+
+func daysToNanoSeconds(days int64) time.Duration {
+	nanoSsecondsInt := days * 24 * 60 * 60 * 1e9
+	return time.Duration(nanoSsecondsInt)
 }

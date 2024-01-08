@@ -269,6 +269,14 @@ func (ws *WalletService) AddSubscription(merchantId uuid.UUID, input NewSubscrip
 		return nil, nil, errors.New("an active subscription exists for this product cancel subscription before creating a new one")
 	}
 
+	// NB: figure out a way to check if the subscription exist without having to do the above operation
+	// fetch the product by id, use the details in the product to create a subscription
+	product, err := ws.database.FetchProduct(pid)
+	if err != nil {
+		log.Err(err).Msgf("failed to fetch product with id [%v]", pid)
+		return nil, nil, errors.New("product not found")
+	}
+
 	tagId, orgId, walletID, err := ws.database.GetWalletMetadata(input.WalletAddress)
 	if err != nil {
 		log.Err(err).Msgf("failed to fetch private key tag for wallet - %v", input.WalletAddress)
@@ -355,8 +363,8 @@ func (ws *WalletService) AddSubscription(merchantId uuid.UUID, input NewSubscrip
 		UserOpHash:             opHash.Hex(),
 		MerchantId:             merchantId.String(),
 		ProductID:              input.ProductID,
-		ProductName:            input.ProductName,
-		MerchantDepositAddress: input.DepositAddress,
+		ProductName:            product.Name,
+		MerchantDepositAddress: product.DepositAddress,
 		NextChargeAt:           nextChargeAt,
 		ExpiresAt:              nextChargeAt,
 		WalletID:               walletID,

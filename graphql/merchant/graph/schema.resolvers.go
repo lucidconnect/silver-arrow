@@ -181,12 +181,13 @@ func (r *queryResolver) GetPaymentLink(ctx context.Context, id string) (*model.P
 	paymentLinkQuery := merchant.PaymentLinkQueryParams{
 		PaymentLinkId: &id,
 	}
-	paymentLinkDetails, err :=  merchantService.FetchPaymentLink(paymentLinkQuery)
+	paymentLinkDetails, err := merchantService.FetchPaymentLink(paymentLinkQuery)
 	if err != nil {
 		return nil, gqlerror.ErrToGraphQLError(gqlerror.InternalError, err.Error(), ctx)
 	}
 
-	return paymentLinkDetails, nil}
+	return paymentLinkDetails, nil
+}
 
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }

@@ -52,6 +52,10 @@ input NewProduct {
   owner: String!
   chain: Int!
   token: String!
+  amount: Float!
+  interval: Int!
+  paymentType: PaymentType!
+  instantCharge: Boolean!
   receivingAddress: String!
   firstChargeNow: Boolean!
 }
@@ -125,6 +129,12 @@ type MerchantStats {
 enum Mode {
   test
   live
+}
+
+
+enum PaymentType {
+  single
+  recurring
 }
 
 scalar Time

@@ -704,6 +704,10 @@ input NewProduct {
   owner: String!
   chain: Int!
   token: String!
+  amount: Float!
+  interval: Int!
+  paymentType: PaymentType!
+  instantCharge: Boolean!
   receivingAddress: String!
   firstChargeNow: Boolean!
 }
@@ -777,6 +781,12 @@ type MerchantStats {
 enum Mode {
   test
   live
+}
+
+
+enum PaymentType {
+  single
+  recurring
 }
 
 scalar Time`, BuiltIn: false},
@@ -5519,7 +5529,7 @@ func (ec *executionContext) unmarshalInputNewProduct(ctx context.Context, obj in
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "owner", "chain", "token", "receivingAddress", "firstChargeNow"}
+	fieldsInOrder := [...]string{"name", "owner", "chain", "token", "amount", "interval", "paymentType", "instantCharge", "receivingAddress", "firstChargeNow"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -5562,6 +5572,42 @@ func (ec *executionContext) unmarshalInputNewProduct(ctx context.Context, obj in
 				return it, err
 			}
 			it.Token = data
+		case "amount":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("amount"))
+			data, err := ec.unmarshalNFloat2float64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Amount = data
+		case "interval":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("interval"))
+			data, err := ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Interval = data
+		case "paymentType":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("paymentType"))
+			data, err := ec.unmarshalNPaymentType2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐPaymentType(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PaymentType = data
+		case "instantCharge":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("instantCharge"))
+			data, err := ec.unmarshalNBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.InstantCharge = data
 		case "receivingAddress":
 			var err error
 
@@ -6635,6 +6681,21 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
+func (ec *executionContext) unmarshalNFloat2float64(ctx context.Context, v interface{}) (float64, error) {
+	res, err := graphql.UnmarshalFloatContext(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNFloat2float64(ctx context.Context, sel ast.SelectionSet, v float64) graphql.Marshaler {
+	res := graphql.MarshalFloatContext(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return graphql.WrapContextMarshaler(ctx, res)
+}
+
 func (ec *executionContext) unmarshalNID2string(ctx context.Context, v interface{}) (string, error) {
 	res, err := graphql.UnmarshalID(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -6754,6 +6815,16 @@ func (ec *executionContext) marshalNPaymentLinkDetails2ᚖgithubᚗcomᚋlucidco
 		return graphql.Null
 	}
 	return ec._PaymentLinkDetails(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNPaymentType2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐPaymentType(ctx context.Context, v interface{}) (model.PaymentType, error) {
+	var res model.PaymentType
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNPaymentType2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐPaymentType(ctx context.Context, sel ast.SelectionSet, v model.PaymentType) graphql.Marshaler {
+	return v
 }
 
 func (ec *executionContext) marshalNProduct2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐProduct(ctx context.Context, sel ast.SelectionSet, v model.Product) graphql.Marshaler {
