@@ -6,7 +6,14 @@ import (
 	"fmt"
 	"io"
 	"strconv"
+	"time"
 )
+
+type BillingHistory struct {
+	Date        time.Time `json:"date"`
+	Amount      float64   `json:"amount"`
+	ExplorerURL string    `json:"explorerUrl"`
+}
 
 type PaymentIntent struct {
 	Type           PaymentType `json:"type"`

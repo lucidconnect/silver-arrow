@@ -169,6 +169,44 @@ func (r *queryResolver) GetPaymentLink(ctx context.Context, id string) (*model.P
 	return paymentLinkDetails, nil
 }
 
+// GetBillingHistory is the resolver for the getBillingHistory field.
+func (r *queryResolver) GetBillingHistory(ctx context.Context, walletAddress string, productID string) ([]*model.BillingHistory, error) {
+	var billingHistory []*model.BillingHistory
+	//
+	// merchantService := merchant.NewMerchantService(r.Database)
+
+	// paymentLinkQuery := merchant.PaymentLinkQueryParams{
+	// 	PaymentLinkId: &paymentLinkID,
+	// }
+
+	// pd, err := merchantService.FetchPaymentLink(paymentLinkQuery)
+	// if err != nil {
+	// 	return nil, gqlerror.ErrToGraphQLError(gqlerror.InternalError, err.Error(), ctx)
+	// }
+
+	walletService := wallet.NewWalletService(r.Database, 0)
+	bh, err := walletService.FetchUserBillingHistory(walletAddress, productID)
+	if err != nil {
+		return nil, gqlerror.ErrToGraphQLError(gqlerror.InternalError, err.Error(), ctx)
+	}
+
+	// productId := pd.ProductID
+	// payments, _ := r.Database.FindAllPaymentsByWallet(walletAddress)
+
+	for _, b := range bh {
+
+		billing := &model.BillingHistory{
+			Date:        b.Date,
+			Amount:      b.Amount,
+			ExplorerURL: b.ExplorerURL,
+		}
+
+		billingHistory = append(billingHistory, billing)
+
+	}
+	return billingHistory, nil
+}
+
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
 

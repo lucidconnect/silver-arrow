@@ -58,6 +58,12 @@ type PaymentReceipt struct {
 	BlockExplorerTx string
 }
 
+type BillingHistory struct {
+	Date        time.Time
+	Amount      float64
+	ExplorerURL string
+}
+
 type PaymentType string
 type PaymentStatus string
 

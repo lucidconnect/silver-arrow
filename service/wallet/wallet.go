@@ -1039,6 +1039,36 @@ func (ws *WalletService) getTransactionHash(useropHash string) (string, error) {
 	return transactionHash, nil
 }
 
+func (ws *WalletService) FetchUserBillingHistory(walletAddress, productID string) ([]BillingHistory, error) {
+	var billingHistory []BillingHistory
+
+	pid, err := uuid.Parse(productID)
+	if err != nil {
+		log.Err(err).Msg("parsing uuid failed")
+		return nil, err
+	}
+
+	payments, err := ws.database.FindAllPaymentsByWallet(walletAddress)
+	if err != nil {
+		log.Err(err).Msgf("failed to fetch payments from wallet %v", walletAddress)
+		return nil, err
+	}
+
+	for _, payment := range payments {
+		if payment.ProductID == pid {
+			amount := parseTransferAmountFloat(payment.Token, payment.Amount)
+			bh := BillingHistory{
+				Date:        payment.CreatedAt,
+				Amount:      amount,
+				ExplorerURL: payment.BlockExplorerTx,
+			}
+			billingHistory = append(billingHistory, bh)
+		}
+	}
+
+	return billingHistory, nil
+}
+
 func randKey(length int) string {
 	key := make([]byte, length)
 
