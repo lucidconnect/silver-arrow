@@ -1,6 +1,7 @@
 package merchant
 
 import (
+	"math"
 	"time"
 
 	"github.com/google/uuid"
@@ -28,11 +29,12 @@ func (m *MerchantService) CreatePaymentLink(input model.NewPaymentLink) (string,
 	}
 
 	newPaymentLink := &models.PaymentLink{
-		ID:        id,
-		MerchantID: product.MerchantID,
-		ProductID: productId,
-		Product:   *product,
-		CreatedAt: time.Now(),
+		ID:          id,
+		MerchantID:  product.MerchantID,
+		CallbackURL: input.CallbackURL,
+		ProductID:   productId,
+		Product:     *product,
+		CreatedAt:   time.Now(),
 	}
 
 	err = m.repository.CreatePaymentLink(newPaymentLink)
@@ -70,15 +72,43 @@ func (m *MerchantService) FetchPaymentLink(queryParam PaymentLinkQueryParams) (*
 		}
 	}
 
+	interval := nanoSecondsToDay(paymentLink.Product.Interval)
+	amount := parseTransferAmountFloat(paymentLink.Product.Token, paymentLink.Product.Amount)
+
 	paymentLinkDetalais := &model.PaymentLinkDetails{
 		ID: paymentLink.ID.String(),
 		// Mode: paymentLink.Product.Mode,
-		ProductID:  paymentLink.ProductID.String(),
-		MerchantID: paymentLink.MerchantID.String(),
-		Amount:     int(paymentLink.Product.Amount),
-		Token:      paymentLink.Product.Token,
-		Chain:      int(paymentLink.Product.Chain),
+		ProductID:    paymentLink.ProductID.String(),
+		MerchantID:   paymentLink.MerchantID.String(),
+		MerchantName: paymentLink.MerchantName,
+		ProductName:  paymentLink.Product.Name,
+		Interval:     int(interval),
+		CallbackURL:  paymentLink.CallbackURL,
+		Amount:       amount,
+		Token:        paymentLink.Product.Token,
+		Chain:        int(paymentLink.Product.Chain),
 	}
 
 	return paymentLinkDetalais, nil
+}
+
+func nanoSecondsToDay(ns int64) int64 {
+	interval := time.Duration(ns)
+	hours := interval.Hours()
+
+	days := hours / 24
+	return int64(days)
+}
+
+func parseTransferAmountFloat(token string, amount int64) float64 {
+	var divisor int
+	if token == "USDC" || token == "USDT" {
+		divisor = 6
+	} else {
+		divisor = 18
+	}
+	minorFactor := math.Pow10(divisor)
+	parsedAmount := float64(amount) / minorFactor
+
+	return parsedAmount
 }

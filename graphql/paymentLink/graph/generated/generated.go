@@ -50,13 +50,17 @@ type ComplexityRoot struct {
 	}
 
 	PaymentLinkDetails struct {
-		Amount     func(childComplexity int) int
-		Chain      func(childComplexity int) int
-		ID         func(childComplexity int) int
-		MerchantID func(childComplexity int) int
-		Mode       func(childComplexity int) int
-		ProductID  func(childComplexity int) int
-		Token      func(childComplexity int) int
+		Amount       func(childComplexity int) int
+		CallbackURL  func(childComplexity int) int
+		Chain        func(childComplexity int) int
+		ID           func(childComplexity int) int
+		Interval     func(childComplexity int) int
+		MerchantID   func(childComplexity int) int
+		MerchantName func(childComplexity int) int
+		Mode         func(childComplexity int) int
+		ProductID    func(childComplexity int) int
+		ProductName  func(childComplexity int) int
+		Token        func(childComplexity int) int
 	}
 
 	Query struct {
@@ -134,6 +138,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.PaymentLinkDetails.Amount(childComplexity), true
 
+	case "PaymentLinkDetails.callbackUrl":
+		if e.complexity.PaymentLinkDetails.CallbackURL == nil {
+			break
+		}
+
+		return e.complexity.PaymentLinkDetails.CallbackURL(childComplexity), true
+
 	case "PaymentLinkDetails.chain":
 		if e.complexity.PaymentLinkDetails.Chain == nil {
 			break
@@ -148,12 +159,26 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.PaymentLinkDetails.ID(childComplexity), true
 
+	case "PaymentLinkDetails.interval":
+		if e.complexity.PaymentLinkDetails.Interval == nil {
+			break
+		}
+
+		return e.complexity.PaymentLinkDetails.Interval(childComplexity), true
+
 	case "PaymentLinkDetails.merchantId":
 		if e.complexity.PaymentLinkDetails.MerchantID == nil {
 			break
 		}
 
 		return e.complexity.PaymentLinkDetails.MerchantID(childComplexity), true
+
+	case "PaymentLinkDetails.merchantName":
+		if e.complexity.PaymentLinkDetails.MerchantName == nil {
+			break
+		}
+
+		return e.complexity.PaymentLinkDetails.MerchantName(childComplexity), true
 
 	case "PaymentLinkDetails.mode":
 		if e.complexity.PaymentLinkDetails.Mode == nil {
@@ -168,6 +193,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.PaymentLinkDetails.ProductID(childComplexity), true
+
+	case "PaymentLinkDetails.productName":
+		if e.complexity.PaymentLinkDetails.ProductName == nil {
+			break
+		}
+
+		return e.complexity.PaymentLinkDetails.ProductName(childComplexity), true
 
 	case "PaymentLinkDetails.token":
 		if e.complexity.PaymentLinkDetails.Token == nil {
@@ -396,13 +428,17 @@ type Query {
 }
 
 type PaymentLinkDetails {
-    id: ID!
-    mode: String!
-    productId: ID!
-    merchantId: ID!
-    amount: Int!
-    token: String!
-    chain: Int!
+  id: ID!
+  mode: String!
+  productId: ID!
+  productName: String!
+  interval: Int!
+  merchantId: ID!
+  merchantName: String!
+  callbackUrl: String!
+  amount: Float!
+  token: String!
+  chain: Int!
 }
 
 # payment data
@@ -820,6 +856,94 @@ func (ec *executionContext) fieldContext_PaymentLinkDetails_productId(ctx contex
 	return fc, nil
 }
 
+func (ec *executionContext) _PaymentLinkDetails_productName(ctx context.Context, field graphql.CollectedField, obj *model.PaymentLinkDetails) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PaymentLinkDetails_productName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ProductName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PaymentLinkDetails_productName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PaymentLinkDetails",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PaymentLinkDetails_interval(ctx context.Context, field graphql.CollectedField, obj *model.PaymentLinkDetails) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PaymentLinkDetails_interval(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Interval, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PaymentLinkDetails_interval(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PaymentLinkDetails",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _PaymentLinkDetails_merchantId(ctx context.Context, field graphql.CollectedField, obj *model.PaymentLinkDetails) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_PaymentLinkDetails_merchantId(ctx, field)
 	if err != nil {
@@ -864,6 +988,94 @@ func (ec *executionContext) fieldContext_PaymentLinkDetails_merchantId(ctx conte
 	return fc, nil
 }
 
+func (ec *executionContext) _PaymentLinkDetails_merchantName(ctx context.Context, field graphql.CollectedField, obj *model.PaymentLinkDetails) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PaymentLinkDetails_merchantName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MerchantName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PaymentLinkDetails_merchantName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PaymentLinkDetails",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PaymentLinkDetails_callbackUrl(ctx context.Context, field graphql.CollectedField, obj *model.PaymentLinkDetails) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PaymentLinkDetails_callbackUrl(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CallbackURL, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PaymentLinkDetails_callbackUrl(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PaymentLinkDetails",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _PaymentLinkDetails_amount(ctx context.Context, field graphql.CollectedField, obj *model.PaymentLinkDetails) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_PaymentLinkDetails_amount(ctx, field)
 	if err != nil {
@@ -890,9 +1102,9 @@ func (ec *executionContext) _PaymentLinkDetails_amount(ctx context.Context, fiel
 		}
 		return graphql.Null
 	}
-	res := resTmp.(int)
+	res := resTmp.(float64)
 	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_PaymentLinkDetails_amount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -902,7 +1114,7 @@ func (ec *executionContext) fieldContext_PaymentLinkDetails_amount(ctx context.C
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
+			return nil, errors.New("field of type Float does not have child fields")
 		},
 	}
 	return fc, nil
@@ -1041,8 +1253,16 @@ func (ec *executionContext) fieldContext_Query_getPaymentLink(ctx context.Contex
 				return ec.fieldContext_PaymentLinkDetails_mode(ctx, field)
 			case "productId":
 				return ec.fieldContext_PaymentLinkDetails_productId(ctx, field)
+			case "productName":
+				return ec.fieldContext_PaymentLinkDetails_productName(ctx, field)
+			case "interval":
+				return ec.fieldContext_PaymentLinkDetails_interval(ctx, field)
 			case "merchantId":
 				return ec.fieldContext_PaymentLinkDetails_merchantId(ctx, field)
+			case "merchantName":
+				return ec.fieldContext_PaymentLinkDetails_merchantName(ctx, field)
+			case "callbackUrl":
+				return ec.fieldContext_PaymentLinkDetails_callbackUrl(ctx, field)
 			case "amount":
 				return ec.fieldContext_PaymentLinkDetails_amount(ctx, field)
 			case "token":
@@ -3785,8 +4005,28 @@ func (ec *executionContext) _PaymentLinkDetails(ctx context.Context, sel ast.Sel
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "productName":
+			out.Values[i] = ec._PaymentLinkDetails_productName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "interval":
+			out.Values[i] = ec._PaymentLinkDetails_interval(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "merchantId":
 			out.Values[i] = ec._PaymentLinkDetails_merchantId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "merchantName":
+			out.Values[i] = ec._PaymentLinkDetails_merchantName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "callbackUrl":
+			out.Values[i] = ec._PaymentLinkDetails_callbackUrl(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

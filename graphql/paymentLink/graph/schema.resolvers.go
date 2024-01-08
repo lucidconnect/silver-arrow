@@ -156,11 +156,15 @@ func (r *queryResolver) GetPaymentLink(ctx context.Context, id string) (*model.P
 	paymentLinkDetails := &model.PaymentLinkDetails{
 		ID: pd.ID,
 		// Mode: pd.Mode,
-		ProductID:  pd.ProductID,
-		MerchantID: pd.MerchantID,
-		Amount:     pd.Amount,
-		Token:      pd.Token,
-		Chain:      pd.Chain,
+		ProductID:    pd.ProductID,
+		MerchantID:   pd.MerchantID,
+		Amount:       pd.Amount,
+		Token:        pd.Token,
+		Chain:        pd.Chain,
+		ProductName:  pd.ProductName,
+		MerchantName: pd.MerchantName,
+		Interval:     pd.Interval,
+		CallbackURL:  pd.CallbackURL,
 	}
 	return paymentLinkDetails, nil
 }

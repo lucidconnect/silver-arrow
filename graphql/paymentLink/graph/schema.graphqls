@@ -11,8 +11,12 @@ type PaymentLinkDetails {
   id: ID!
   mode: String!
   productId: ID!
+  productName: String!
+  interval: Int!
   merchantId: ID!
-  amount: Int!
+  merchantName: String!
+  callbackUrl: String!
+  amount: Float!
   token: String!
   chain: Int!
 }
