@@ -239,8 +239,8 @@ func (r *queryResolver) GetMerchantPaymentLinks(ctx context.Context, merchantID 
 		amount := conversions.ParseTransferAmountFloat(paymentLink.Product.Token, paymentLink.Product.Amount)
 
 		paymentLinkDetail := &model.PaymentLinkDetails{
-			ID: paymentLink.ID.String(),
-			// Mode: paymentLink.Product.Mode,
+			ID:           paymentLink.ID.String(),
+			Mode:         paymentLink.Product.Mode,
 			ProductID:    paymentLink.ProductID.String(),
 			MerchantID:   paymentLink.MerchantID.String(),
 			MerchantName: paymentLink.MerchantName,

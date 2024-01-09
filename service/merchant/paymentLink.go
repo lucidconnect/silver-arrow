@@ -77,7 +77,7 @@ func (m *MerchantService) FetchPaymentLink(queryParam PaymentLinkQueryParams) (*
 
 	paymentLinkDetalais := &model.PaymentLinkDetails{
 		ID: paymentLink.ID.String(),
-		// Mode: paymentLink.Product.Mode,
+		Mode: paymentLink.Product.Mode,
 		ProductID:    paymentLink.ProductID.String(),
 		MerchantID:   paymentLink.MerchantID.String(),
 		MerchantName: paymentLink.MerchantName,
