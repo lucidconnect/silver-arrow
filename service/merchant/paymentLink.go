@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/lucidconnect/silver-arrow/graphql/merchant/graph/model"
+	"github.com/lucidconnect/silver-arrow/server/graphql/merchant/graph/model"
 	"github.com/lucidconnect/silver-arrow/repository/models"
 	"github.com/rs/zerolog/log"
 )

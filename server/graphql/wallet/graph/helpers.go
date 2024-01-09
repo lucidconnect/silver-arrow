@@ -15,7 +15,7 @@ import (
 )
 
 func validateProductMode(product *models.Product, key *models.MerchantAccessKey) bool {
-	return product.Mode.String() == key.Mode
+	return product.Mode == key.Mode
 }
 
 func getAuthenticatedAndActiveMerchant(ctx context.Context) (*models.Merchant, error) {

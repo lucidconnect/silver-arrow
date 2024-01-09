@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/lucidconnect/silver-arrow/graphql/merchant/graph/model"
 	"gorm.io/gorm"
 )
 
@@ -19,7 +18,7 @@ type Product struct {
 	CreatedAt      time.Time
 	Subscriptions  []Subscription
 	Payments       []Payment
-	Mode           model.Mode
+	Mode           string
 	Amount         int64
 	Interval       int64
 	InstantCharge  bool

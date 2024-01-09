@@ -12,33 +12,73 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/google/uuid"
+	"github.com/lucidconnect/silver-arrow/auth"
 	"github.com/lucidconnect/silver-arrow/gqlerror"
-	"github.com/lucidconnect/silver-arrow/graphql/paymentLink/graph/generated"
-	"github.com/lucidconnect/silver-arrow/graphql/paymentLink/graph/model"
+	"github.com/lucidconnect/silver-arrow/server/graphql/checkout/graph/generated"
+	"github.com/lucidconnect/silver-arrow/server/graphql/checkout/graph/model"
 	"github.com/lucidconnect/silver-arrow/service/erc4337"
-	"github.com/lucidconnect/silver-arrow/service/merchant"
 	"github.com/lucidconnect/silver-arrow/service/wallet"
 	"github.com/rs/zerolog/log"
 )
 
-// CreatePaymentIntent is the resolver for the createPaymentIntent field.
-func (r *mutationResolver) CreatePaymentIntent(ctx context.Context, input model.PaymentIntent) (string, error) {
-	merchant, err := getActiveMerchant(ctx)
+// AddAccount is the resolver for the addAccount field.
+func (r *mutationResolver) AddAccount(ctx context.Context, input model.Account) (string, error) {
+	address := common.HexToAddress(input.Address)
+
+	walletService := wallet.NewWalletService(r.Database, 0)
+	// should check if the account is deployed
+	// deploy if not deployed
+	newAccount := wallet.Account{
+		Email:   input.Email,
+		Address: input.Address,
+		Signer:  input.Signer,
+	}
+
+	err := walletService.AddAccount(newAccount)
 	if err != nil {
 		return "", err
 	}
-	product, err := getActiveProduct(ctx)
+	return address.Hex(), nil
+}
+
+// CreatePaymentIntent is the resolver for the createPaymentIntent field.
+func (r *mutationResolver) CreatePaymentIntent(ctx context.Context, input model.PaymentIntent) (string, error) {
+	merchant, err := getAuthenticatedAndActiveMerchant(ctx)
 	if err != nil {
 		return "", err
+	}
+
+	key, err := auth.KeyModeContext(ctx)
+	if err != nil {
+		log.Err(err).Msg("no key found in context")
+		return "", gqlerror.ErrToGraphQLError(gqlerror.MerchantAuthorisationFailed, err.Error(), ctx)
 	}
 
 	merchantId := merchant.ID
+	signature, err := auth.SignatureContext(ctx, merchant.MerchantAccessKeys[0].PublicKey)
+	if err != nil {
+		log.Err(err).Msg("no signature in context")
+		return "", gqlerror.ErrToGraphQLError(gqlerror.MerchantAuthorisationFailed, err.Error(), ctx)
+	}
 
 	log.Info().Msgf("Authenticated Merchant: %v", merchantId)
-
-	if input.ProductID != product.ID.String() {
-		return "", gqlerror.ErrToGraphQLError(gqlerror.MerchantDataInvalid, "invalid product id supplied", ctx)
+	// validate signature
+	// amount:token:interval:productId
+	signatureCheck := fmt.Sprintf("%v", input.Amount) + ":" + input.Token + ":" + fmt.Sprintf("%v", input.Interval) + ":" + input.ProductID
+	err = validateSignature(signatureCheck, signature, key.PublicKey)
+	if err != nil {
+		log.Debug().Err(err).Ctx(ctx).Send()
+		return "", gqlerror.ErrToGraphQLError(gqlerror.MerchantAuthorisationFailed, err.Error(), ctx)
 	}
+
+	// productId := parseUUID(input.ProductID)
+	productId := uuid.MustParse(input.ProductID)
+	product, err := r.Database.FetchProduct(productId)
+	if err != nil {
+		return "", gqlerror.ErrToGraphQLError(gqlerror.MerchantDataInvalid, "product not found", ctx)
+	}
+
 	if merchantId != product.MerchantID {
 		return "", gqlerror.ErrToGraphQLError(gqlerror.MerchantDataInvalid, "product not found", ctx)
 	}
@@ -71,7 +111,7 @@ func (r *mutationResolver) CreatePaymentIntent(ctx context.Context, input model.
 			Email:          email,
 			Amount:         input.Amount,
 			Interval:       input.Interval,
-			ProductID:      product.ID,
+			ProductID:      productId,
 			ProductName:    product.Name,
 			OwnerAddress:   input.OwnerAddress,
 			WalletAddress:  input.WalletAddress,
@@ -99,6 +139,12 @@ func (r *mutationResolver) CreatePaymentIntent(ctx context.Context, input model.
 
 // ValidatePaymentIntent is the resolver for the validatePaymentIntent field.
 func (r *mutationResolver) ValidatePaymentIntent(ctx context.Context, input model.RequestValidation) (*model.TransactionData, error) {
+	merch, err := getAuthenticatedAndActiveMerchant(ctx)
+	if err != nil {
+		return nil, err
+	}
+	_ = merch.ID
+
 	walletService := wallet.NewWalletService(r.Database, int64(input.Chain))
 	// merchantService := merchant.NewMerchantService(r.Database)
 
@@ -142,69 +188,9 @@ func (r *mutationResolver) ValidatePaymentIntent(ctx context.Context, input mode
 	return result, nil
 }
 
-// GetPaymentLink is the resolver for the getPaymentLink field.
-func (r *queryResolver) GetPaymentLink(ctx context.Context, id string) (*model.PaymentLinkDetails, error) {
-	merchantService := merchant.NewMerchantService(r.Database)
-
-	paymentLinkQuery := merchant.PaymentLinkQueryParams{
-		PaymentLinkId: &id,
-	}
-	pd, err := merchantService.FetchPaymentLink(paymentLinkQuery)
-	if err != nil {
-		return nil, gqlerror.ErrToGraphQLError(gqlerror.InternalError, err.Error(), ctx)
-	}
-	paymentLinkDetails := &model.PaymentLinkDetails{
-		ID: pd.ID,
-		// Mode: pd.Mode,
-		ProductID:    pd.ProductID,
-		MerchantID:   pd.MerchantID,
-		Amount:       pd.Amount,
-		Token:        pd.Token,
-		Chain:        pd.Chain,
-		ProductName:  pd.ProductName,
-		MerchantName: pd.MerchantName,
-		Interval:     pd.Interval,
-		CallbackURL:  pd.CallbackURL,
-	}
-	return paymentLinkDetails, nil
-}
-
-// GetBillingHistory is the resolver for the getBillingHistory field.
-func (r *queryResolver) GetBillingHistory(ctx context.Context, walletAddress string, productID string) ([]*model.BillingHistory, error) {
-	var billingHistory []*model.BillingHistory
-	//
-	// merchantService := merchant.NewMerchantService(r.Database)
-
-	// paymentLinkQuery := merchant.PaymentLinkQueryParams{
-	// 	PaymentLinkId: &paymentLinkID,
-	// }
-
-	// pd, err := merchantService.FetchPaymentLink(paymentLinkQuery)
-	// if err != nil {
-	// 	return nil, gqlerror.ErrToGraphQLError(gqlerror.InternalError, err.Error(), ctx)
-	// }
-
-	walletService := wallet.NewWalletService(r.Database, 0)
-	bh, err := walletService.FetchUserBillingHistory(walletAddress, productID)
-	if err != nil {
-		return nil, gqlerror.ErrToGraphQLError(gqlerror.InternalError, err.Error(), ctx)
-	}
-
-	// productId := pd.ProductID
-	// payments, _ := r.Database.FindAllPaymentsByWallet(walletAddress)
-
-	for _, b := range bh {
-
-		billing := &model.BillingHistory{
-			Date:        b.Date,
-			Amount:      b.Amount,
-			ExplorerURL: b.ExplorerURL,
-		}
-
-		billingHistory = append(billingHistory, billing)
-
-	}
-	return billingHistory, nil
+// FetchPayment is the resolver for the fetchPayment field.
+func (r *queryResolver) FetchPayment(ctx context.Context, reference string) (*model.Payment, error) {
+	panic(fmt.Errorf("not implemented: FetchPayment - fetchPayment"))
 }
 
 // Mutation returns generated.MutationResolver implementation.

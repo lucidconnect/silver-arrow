@@ -12,7 +12,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/google/uuid"
-	"github.com/lucidconnect/silver-arrow/graphql/merchant/graph/model"
+	"github.com/lucidconnect/silver-arrow/server/graphql/merchant/graph/model"
 	"github.com/lucidconnect/silver-arrow/repository/models"
 )
 
@@ -38,7 +38,7 @@ func (m *MerchantService) CreateProduct(input model.NewProduct) (*model.Product,
 		DepositAddress: input.ReceivingAddress,
 		MerchantID:     merchant.ID,
 		CreatedAt:      time.Now(),
-		Mode:           model.ModeTest,
+		Mode:           model.ModeTest.String(),
 		Amount:         amount,
 		Interval:       int64(interval),
 		InstantCharge:  input.InstantCharge,
@@ -125,7 +125,7 @@ func (m *MerchantService) FetchProduct(pid string) (*model.Product, error) {
 	createdAt := v.CreatedAt.Format(time.RFC3339)
 	product := &model.Product{
 		Name:             v.Name,
-		Mode:             v.Mode,
+		Mode:             model.Mode(v.Mode),
 		Owner:            v.Owner,
 		Chain:            int(v.Chain),
 		ProductID:        pid,
