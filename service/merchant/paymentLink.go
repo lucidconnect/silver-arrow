@@ -65,7 +65,7 @@ func (m *MerchantService) FetchPaymentLink(queryParam PaymentLinkQueryParams) (*
 			log.Err(err).Msg("parsing uuid failed")
 			return nil, err
 		}
-		paymentLink, err = m.repository.FetchPaymentLink(id)
+		paymentLink, err = m.repository.FetchPaymentLinkByProduct(id)
 		if err != nil {
 			log.Err(err).Msgf("failed to fetch payment link with id %v", id)
 			return nil, err
