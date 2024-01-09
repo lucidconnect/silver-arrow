@@ -68,7 +68,6 @@ type NewProduct struct {
 	Amount           float64     `json:"amount"`
 	Interval         int         `json:"interval"`
 	PaymentType      PaymentType `json:"paymentType"`
-	InstantCharge    bool        `json:"instantCharge"`
 	ReceivingAddress string      `json:"receivingAddress"`
 	FirstChargeNow   bool        `json:"firstChargeNow"`
 }

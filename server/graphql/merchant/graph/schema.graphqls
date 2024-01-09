@@ -58,7 +58,6 @@ input NewProduct {
   amount: Float!
   interval: Int!
   paymentType: PaymentType!
-  instantCharge: Boolean!
   receivingAddress: String!
   firstChargeNow: Boolean!
 }

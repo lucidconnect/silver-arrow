@@ -784,7 +784,6 @@ input NewProduct {
   amount: Float!
   interval: Int!
   paymentType: PaymentType!
-  instantCharge: Boolean!
   receivingAddress: String!
   firstChargeNow: Boolean!
 }
@@ -6052,7 +6051,7 @@ func (ec *executionContext) unmarshalInputNewProduct(ctx context.Context, obj in
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "owner", "chain", "token", "amount", "interval", "paymentType", "instantCharge", "receivingAddress", "firstChargeNow"}
+	fieldsInOrder := [...]string{"name", "owner", "chain", "token", "amount", "interval", "paymentType", "receivingAddress", "firstChargeNow"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -6122,15 +6121,6 @@ func (ec *executionContext) unmarshalInputNewProduct(ctx context.Context, obj in
 				return it, err
 			}
 			it.PaymentType = data
-		case "instantCharge":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("instantCharge"))
-			data, err := ec.unmarshalNBoolean2bool(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.InstantCharge = data
 		case "receivingAddress":
 			var err error
 

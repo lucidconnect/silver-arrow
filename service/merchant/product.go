@@ -42,7 +42,7 @@ func (m *MerchantService) CreateProduct(input model.NewProduct) (*model.Product,
 		Mode:           model.ModeTest.String(),
 		Amount:         amount,
 		Interval:       int64(interval),
-		InstantCharge:  input.InstantCharge,
+		InstantCharge:  input.FirstChargeNow,
 		PaymentType:    input.PaymentType.String(),
 	}
 	if err := m.repository.CreateProduct(product); err != nil {
@@ -77,6 +77,7 @@ func (m *MerchantService) FetchProductsByOwner(owner string) ([]*model.Product, 
 		}
 		product := &model.Product{
 			Name:             v.Name,
+			Mode:             model.Mode(v.Mode),
 			Owner:            v.Owner,
 			Chain:            int(v.Chain),
 			ProductID:        v.ID.String(),
