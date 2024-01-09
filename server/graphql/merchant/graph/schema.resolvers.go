@@ -190,6 +190,22 @@ func (r *queryResolver) FetchMerchantStats(ctx context.Context, owner string) (*
 	return stats, nil
 }
 
+// FetchMerchantInfo is the resolver for the fetchMerchantInfo field.
+func (r *queryResolver) FetchMerchantInfo(ctx context.Context, owner string) (*model.Merchant, error) {
+	merchant, err := r.Database.FetchMerchantByAddress(owner)
+	if err != nil {
+		log.Err(err).Caller().Send()
+		return nil, err
+	}
+	merchantInfo := &model.Merchant{
+		ID:         merchant.ID.String(),
+		Name:       merchant.Name,
+		Email:      merchant.Email,
+		WebHookURL: merchant.WebhookUrl,
+	}
+	return merchantInfo, nil
+}
+
 // GetPaymentLink is the resolver for the getPaymentLink field.
 func (r *queryResolver) GetPaymentLink(ctx context.Context, id string) (*model.PaymentLinkDetails, error) {
 	merchantService := merchant.NewMerchantService(r.Database)

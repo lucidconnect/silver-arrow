@@ -7,6 +7,7 @@ type Query {
   fetchProducts(owner: String!): [Product!]!
   fetchMerchantKey(input: MerchantAccessKeyQuery!): String!
   fetchMerchantStats(owner: String!): MerchantStats!
+  fetchMerchantInfo(owner: String!): Merchant!
   getPaymentLink(id: String!): PaymentLinkDetails!
   getMerchantPaymentLinks(merchantId: String!): [PaymentLinkDetails!]!
 }
