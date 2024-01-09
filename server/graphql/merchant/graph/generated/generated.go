@@ -138,7 +138,7 @@ type QueryResolver interface {
 	FetchMerchantKey(ctx context.Context, input model.MerchantAccessKeyQuery) (string, error)
 	FetchMerchantStats(ctx context.Context, owner string) (*model.MerchantStats, error)
 	GetPaymentLink(ctx context.Context, id string) (*model.PaymentLinkDetails, error)
-	GetMerchantPaymentLinks(ctx context.Context, merchantID string) ([]string, error)
+	GetMerchantPaymentLinks(ctx context.Context, merchantID string) ([]*model.PaymentLinkDetails, error)
 }
 
 type executableSchema struct {
@@ -720,7 +720,7 @@ type Query {
   fetchMerchantKey(input: MerchantAccessKeyQuery!): String!
   fetchMerchantStats(owner: String!): MerchantStats!
   getPaymentLink(id: String!): PaymentLinkDetails!
-  getMerchantPaymentLinks(merchantId: String!): [String!]!
+  getMerchantPaymentLinks(merchantId: String!): [PaymentLinkDetails!]!
 }
 
 type Mutation {
@@ -870,7 +870,7 @@ func (ec *executionContext) field_Mutation_addProduct_args(ctx context.Context, 
 	var arg0 model.NewProduct
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNNewProduct2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐNewProduct(ctx, tmp)
+		arg0, err = ec.unmarshalNNewProduct2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐNewProduct(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -885,7 +885,7 @@ func (ec *executionContext) field_Mutation_createAccessKey_args(ctx context.Cont
 	var arg0 model.NewMerchantKey
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNNewMerchantKey2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐNewMerchantKey(ctx, tmp)
+		arg0, err = ec.unmarshalNNewMerchantKey2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐNewMerchantKey(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -900,7 +900,7 @@ func (ec *executionContext) field_Mutation_createMerchant_args(ctx context.Conte
 	var arg0 model.NewMerchant
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNNewMerchant2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐNewMerchant(ctx, tmp)
+		arg0, err = ec.unmarshalNNewMerchant2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐNewMerchant(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -915,7 +915,7 @@ func (ec *executionContext) field_Mutation_createPaymentLink_args(ctx context.Co
 	var arg0 model.NewPaymentLink
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNNewPaymentLink2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐNewPaymentLink(ctx, tmp)
+		arg0, err = ec.unmarshalNNewPaymentLink2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐNewPaymentLink(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -945,7 +945,7 @@ func (ec *executionContext) field_Mutation_toggleProductMode_args(ctx context.Co
 	var arg0 model.ProductModeUpdate
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNProductModeUpdate2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐProductModeUpdate(ctx, tmp)
+		arg0, err = ec.unmarshalNProductModeUpdate2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐProductModeUpdate(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -975,7 +975,7 @@ func (ec *executionContext) field_Mutation_updateProduct_args(ctx context.Contex
 	var arg0 model.ProductUpdate
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNProductUpdate2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐProductUpdate(ctx, tmp)
+		arg0, err = ec.unmarshalNProductUpdate2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐProductUpdate(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1005,7 +1005,7 @@ func (ec *executionContext) field_Query_fetchMerchantKey_args(ctx context.Contex
 	var arg0 model.MerchantAccessKeyQuery
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNMerchantAccessKeyQuery2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐMerchantAccessKeyQuery(ctx, tmp)
+		arg0, err = ec.unmarshalNMerchantAccessKeyQuery2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐMerchantAccessKeyQuery(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1375,7 +1375,7 @@ func (ec *executionContext) _Merchant_accessKey(ctx context.Context, field graph
 	}
 	res := resTmp.(*model.MerchantAccessKey)
 	fc.Result = res
-	return ec.marshalNMerchantAccessKey2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐMerchantAccessKey(ctx, field.Selections, res)
+	return ec.marshalNMerchantAccessKey2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐMerchantAccessKey(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Merchant_accessKey(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1427,7 +1427,7 @@ func (ec *executionContext) _MerchantAccessKey_mode(ctx context.Context, field g
 	}
 	res := resTmp.(model.Mode)
 	fc.Result = res
-	return ec.marshalNMode2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐMode(ctx, field.Selections, res)
+	return ec.marshalNMode2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐMode(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_MerchantAccessKey_mode(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1691,7 +1691,7 @@ func (ec *executionContext) _Mutation_addProduct(ctx context.Context, field grap
 	}
 	res := resTmp.(*model.Product)
 	fc.Result = res
-	return ec.marshalNProduct2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐProduct(ctx, field.Selections, res)
+	return ec.marshalNProduct2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐProduct(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_addProduct(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1768,7 +1768,7 @@ func (ec *executionContext) _Mutation_updateProduct(ctx context.Context, field g
 	}
 	res := resTmp.(*model.Product)
 	fc.Result = res
-	return ec.marshalNProduct2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐProduct(ctx, field.Selections, res)
+	return ec.marshalNProduct2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐProduct(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateProduct(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1845,7 +1845,7 @@ func (ec *executionContext) _Mutation_createAccessKey(ctx context.Context, field
 	}
 	res := resTmp.(*model.MerchantAccessKey)
 	fc.Result = res
-	return ec.marshalNMerchantAccessKey2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐMerchantAccessKey(ctx, field.Selections, res)
+	return ec.marshalNMerchantAccessKey2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐMerchantAccessKey(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createAccessKey(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1908,7 +1908,7 @@ func (ec *executionContext) _Mutation_createMerchant(ctx context.Context, field 
 	}
 	res := resTmp.(*model.Merchant)
 	fc.Result = res
-	return ec.marshalNMerchant2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐMerchant(ctx, field.Selections, res)
+	return ec.marshalNMerchant2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐMerchant(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createMerchant(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1977,7 +1977,7 @@ func (ec *executionContext) _Mutation_updateMerchantwebHookUrl(ctx context.Conte
 	}
 	res := resTmp.(*model.Merchant)
 	fc.Result = res
-	return ec.marshalNMerchant2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐMerchant(ctx, field.Selections, res)
+	return ec.marshalNMerchant2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐMerchant(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateMerchantwebHookUrl(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2046,7 +2046,7 @@ func (ec *executionContext) _Mutation_toggleProductMode(ctx context.Context, fie
 	}
 	res := resTmp.(model.Mode)
 	fc.Result = res
-	return ec.marshalNMode2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐMode(ctx, field.Selections, res)
+	return ec.marshalNMode2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐMode(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_toggleProductMode(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2739,7 +2739,7 @@ func (ec *executionContext) _Product_mode(ctx context.Context, field graphql.Col
 	}
 	res := resTmp.(model.Mode)
 	fc.Result = res
-	return ec.marshalNMode2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐMode(ctx, field.Selections, res)
+	return ec.marshalNMode2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐMode(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Product_mode(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3044,7 +3044,7 @@ func (ec *executionContext) _Product_subscriptions(ctx context.Context, field gr
 	}
 	res := resTmp.([]*model.Sub)
 	fc.Result = res
-	return ec.marshalOSub2ᚕᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐSubᚄ(ctx, field.Selections, res)
+	return ec.marshalOSub2ᚕᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐSubᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Product_subscriptions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3143,7 +3143,7 @@ func (ec *executionContext) _Query_fetchOneProduct(ctx context.Context, field gr
 	}
 	res := resTmp.(*model.Product)
 	fc.Result = res
-	return ec.marshalNProduct2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐProduct(ctx, field.Selections, res)
+	return ec.marshalNProduct2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐProduct(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_fetchOneProduct(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3220,7 +3220,7 @@ func (ec *executionContext) _Query_fetchProducts(ctx context.Context, field grap
 	}
 	res := resTmp.([]*model.Product)
 	fc.Result = res
-	return ec.marshalNProduct2ᚕᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐProductᚄ(ctx, field.Selections, res)
+	return ec.marshalNProduct2ᚕᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐProductᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_fetchProducts(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3352,7 +3352,7 @@ func (ec *executionContext) _Query_fetchMerchantStats(ctx context.Context, field
 	}
 	res := resTmp.(*model.MerchantStats)
 	fc.Result = res
-	return ec.marshalNMerchantStats2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐMerchantStats(ctx, field.Selections, res)
+	return ec.marshalNMerchantStats2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐMerchantStats(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_fetchMerchantStats(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3415,7 +3415,7 @@ func (ec *executionContext) _Query_getPaymentLink(ctx context.Context, field gra
 	}
 	res := resTmp.(*model.PaymentLinkDetails)
 	fc.Result = res
-	return ec.marshalNPaymentLinkDetails2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐPaymentLinkDetails(ctx, field.Selections, res)
+	return ec.marshalNPaymentLinkDetails2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐPaymentLinkDetails(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_getPaymentLink(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3492,9 +3492,9 @@ func (ec *executionContext) _Query_getMerchantPaymentLinks(ctx context.Context, 
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]string)
+	res := resTmp.([]*model.PaymentLinkDetails)
 	fc.Result = res
-	return ec.marshalNString2ᚕstringᚄ(ctx, field.Selections, res)
+	return ec.marshalNPaymentLinkDetails2ᚕᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐPaymentLinkDetailsᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_getMerchantPaymentLinks(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3504,7 +3504,31 @@ func (ec *executionContext) fieldContext_Query_getMerchantPaymentLinks(ctx conte
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_PaymentLinkDetails_id(ctx, field)
+			case "mode":
+				return ec.fieldContext_PaymentLinkDetails_mode(ctx, field)
+			case "productId":
+				return ec.fieldContext_PaymentLinkDetails_productId(ctx, field)
+			case "productName":
+				return ec.fieldContext_PaymentLinkDetails_productName(ctx, field)
+			case "interval":
+				return ec.fieldContext_PaymentLinkDetails_interval(ctx, field)
+			case "merchantId":
+				return ec.fieldContext_PaymentLinkDetails_merchantId(ctx, field)
+			case "merchantName":
+				return ec.fieldContext_PaymentLinkDetails_merchantName(ctx, field)
+			case "callbackUrl":
+				return ec.fieldContext_PaymentLinkDetails_callbackUrl(ctx, field)
+			case "amount":
+				return ec.fieldContext_PaymentLinkDetails_amount(ctx, field)
+			case "token":
+				return ec.fieldContext_PaymentLinkDetails_token(ctx, field)
+			case "chain":
+				return ec.fieldContext_PaymentLinkDetails_chain(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PaymentLinkDetails", field.Name)
 		},
 	}
 	defer func() {
@@ -5705,7 +5729,7 @@ func (ec *executionContext) unmarshalInputMerchantAccessKeyQuery(ctx context.Con
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mode"))
-			data, err := ec.unmarshalNMode2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐMode(ctx, v)
+			data, err := ec.unmarshalNMode2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐMode(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -5873,7 +5897,7 @@ func (ec *executionContext) unmarshalInputNewMerchantKey(ctx context.Context, ob
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mode"))
-			data, err := ec.unmarshalNMode2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐMode(ctx, v)
+			data, err := ec.unmarshalNMode2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐMode(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -5994,7 +6018,7 @@ func (ec *executionContext) unmarshalInputNewProduct(ctx context.Context, obj in
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("paymentType"))
-			data, err := ec.unmarshalNPaymentType2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐPaymentType(ctx, v)
+			data, err := ec.unmarshalNPaymentType2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐPaymentType(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -6059,7 +6083,7 @@ func (ec *executionContext) unmarshalInputProductModeUpdate(ctx context.Context,
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mode"))
-			data, err := ec.unmarshalNMode2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐMode(ctx, v)
+			data, err := ec.unmarshalNMode2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐMode(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -7175,11 +7199,11 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 	return res
 }
 
-func (ec *executionContext) marshalNMerchant2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐMerchant(ctx context.Context, sel ast.SelectionSet, v model.Merchant) graphql.Marshaler {
+func (ec *executionContext) marshalNMerchant2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐMerchant(ctx context.Context, sel ast.SelectionSet, v model.Merchant) graphql.Marshaler {
 	return ec._Merchant(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNMerchant2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐMerchant(ctx context.Context, sel ast.SelectionSet, v *model.Merchant) graphql.Marshaler {
+func (ec *executionContext) marshalNMerchant2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐMerchant(ctx context.Context, sel ast.SelectionSet, v *model.Merchant) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -7189,11 +7213,11 @@ func (ec *executionContext) marshalNMerchant2ᚖgithubᚗcomᚋlucidconnectᚋsi
 	return ec._Merchant(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNMerchantAccessKey2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐMerchantAccessKey(ctx context.Context, sel ast.SelectionSet, v model.MerchantAccessKey) graphql.Marshaler {
+func (ec *executionContext) marshalNMerchantAccessKey2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐMerchantAccessKey(ctx context.Context, sel ast.SelectionSet, v model.MerchantAccessKey) graphql.Marshaler {
 	return ec._MerchantAccessKey(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNMerchantAccessKey2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐMerchantAccessKey(ctx context.Context, sel ast.SelectionSet, v *model.MerchantAccessKey) graphql.Marshaler {
+func (ec *executionContext) marshalNMerchantAccessKey2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐMerchantAccessKey(ctx context.Context, sel ast.SelectionSet, v *model.MerchantAccessKey) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -7203,16 +7227,16 @@ func (ec *executionContext) marshalNMerchantAccessKey2ᚖgithubᚗcomᚋlucidcon
 	return ec._MerchantAccessKey(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNMerchantAccessKeyQuery2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐMerchantAccessKeyQuery(ctx context.Context, v interface{}) (model.MerchantAccessKeyQuery, error) {
+func (ec *executionContext) unmarshalNMerchantAccessKeyQuery2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐMerchantAccessKeyQuery(ctx context.Context, v interface{}) (model.MerchantAccessKeyQuery, error) {
 	res, err := ec.unmarshalInputMerchantAccessKeyQuery(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNMerchantStats2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐMerchantStats(ctx context.Context, sel ast.SelectionSet, v model.MerchantStats) graphql.Marshaler {
+func (ec *executionContext) marshalNMerchantStats2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐMerchantStats(ctx context.Context, sel ast.SelectionSet, v model.MerchantStats) graphql.Marshaler {
 	return ec._MerchantStats(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNMerchantStats2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐMerchantStats(ctx context.Context, sel ast.SelectionSet, v *model.MerchantStats) graphql.Marshaler {
+func (ec *executionContext) marshalNMerchantStats2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐMerchantStats(ctx context.Context, sel ast.SelectionSet, v *model.MerchantStats) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -7222,65 +7246,41 @@ func (ec *executionContext) marshalNMerchantStats2ᚖgithubᚗcomᚋlucidconnect
 	return ec._MerchantStats(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNMode2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐMode(ctx context.Context, v interface{}) (model.Mode, error) {
+func (ec *executionContext) unmarshalNMode2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐMode(ctx context.Context, v interface{}) (model.Mode, error) {
 	var res model.Mode
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNMode2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐMode(ctx context.Context, sel ast.SelectionSet, v model.Mode) graphql.Marshaler {
+func (ec *executionContext) marshalNMode2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐMode(ctx context.Context, sel ast.SelectionSet, v model.Mode) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) unmarshalNNewMerchant2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐNewMerchant(ctx context.Context, v interface{}) (model.NewMerchant, error) {
+func (ec *executionContext) unmarshalNNewMerchant2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐNewMerchant(ctx context.Context, v interface{}) (model.NewMerchant, error) {
 	res, err := ec.unmarshalInputNewMerchant(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNNewMerchantKey2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐNewMerchantKey(ctx context.Context, v interface{}) (model.NewMerchantKey, error) {
+func (ec *executionContext) unmarshalNNewMerchantKey2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐNewMerchantKey(ctx context.Context, v interface{}) (model.NewMerchantKey, error) {
 	res, err := ec.unmarshalInputNewMerchantKey(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNNewPaymentLink2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐNewPaymentLink(ctx context.Context, v interface{}) (model.NewPaymentLink, error) {
+func (ec *executionContext) unmarshalNNewPaymentLink2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐNewPaymentLink(ctx context.Context, v interface{}) (model.NewPaymentLink, error) {
 	res, err := ec.unmarshalInputNewPaymentLink(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNNewProduct2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐNewProduct(ctx context.Context, v interface{}) (model.NewProduct, error) {
+func (ec *executionContext) unmarshalNNewProduct2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐNewProduct(ctx context.Context, v interface{}) (model.NewProduct, error) {
 	res, err := ec.unmarshalInputNewProduct(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNPaymentLinkDetails2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐPaymentLinkDetails(ctx context.Context, sel ast.SelectionSet, v model.PaymentLinkDetails) graphql.Marshaler {
+func (ec *executionContext) marshalNPaymentLinkDetails2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐPaymentLinkDetails(ctx context.Context, sel ast.SelectionSet, v model.PaymentLinkDetails) graphql.Marshaler {
 	return ec._PaymentLinkDetails(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNPaymentLinkDetails2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐPaymentLinkDetails(ctx context.Context, sel ast.SelectionSet, v *model.PaymentLinkDetails) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._PaymentLinkDetails(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalNPaymentType2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐPaymentType(ctx context.Context, v interface{}) (model.PaymentType, error) {
-	var res model.PaymentType
-	err := res.UnmarshalGQL(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNPaymentType2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐPaymentType(ctx context.Context, sel ast.SelectionSet, v model.PaymentType) graphql.Marshaler {
-	return v
-}
-
-func (ec *executionContext) marshalNProduct2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐProduct(ctx context.Context, sel ast.SelectionSet, v model.Product) graphql.Marshaler {
-	return ec._Product(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNProduct2ᚕᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐProductᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Product) graphql.Marshaler {
+func (ec *executionContext) marshalNPaymentLinkDetails2ᚕᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐPaymentLinkDetailsᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.PaymentLinkDetails) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -7304,7 +7304,7 @@ func (ec *executionContext) marshalNProduct2ᚕᚖgithubᚗcomᚋlucidconnectᚋ
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNProduct2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐProduct(ctx, sel, v[i])
+			ret[i] = ec.marshalNPaymentLinkDetails2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐPaymentLinkDetails(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -7324,7 +7324,75 @@ func (ec *executionContext) marshalNProduct2ᚕᚖgithubᚗcomᚋlucidconnectᚋ
 	return ret
 }
 
-func (ec *executionContext) marshalNProduct2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐProduct(ctx context.Context, sel ast.SelectionSet, v *model.Product) graphql.Marshaler {
+func (ec *executionContext) marshalNPaymentLinkDetails2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐPaymentLinkDetails(ctx context.Context, sel ast.SelectionSet, v *model.PaymentLinkDetails) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._PaymentLinkDetails(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNPaymentType2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐPaymentType(ctx context.Context, v interface{}) (model.PaymentType, error) {
+	var res model.PaymentType
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNPaymentType2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐPaymentType(ctx context.Context, sel ast.SelectionSet, v model.PaymentType) graphql.Marshaler {
+	return v
+}
+
+func (ec *executionContext) marshalNProduct2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐProduct(ctx context.Context, sel ast.SelectionSet, v model.Product) graphql.Marshaler {
+	return ec._Product(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNProduct2ᚕᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐProductᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Product) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNProduct2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐProduct(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNProduct2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐProduct(ctx context.Context, sel ast.SelectionSet, v *model.Product) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -7334,12 +7402,12 @@ func (ec *executionContext) marshalNProduct2ᚖgithubᚗcomᚋlucidconnectᚋsil
 	return ec._Product(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNProductModeUpdate2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐProductModeUpdate(ctx context.Context, v interface{}) (model.ProductModeUpdate, error) {
+func (ec *executionContext) unmarshalNProductModeUpdate2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐProductModeUpdate(ctx context.Context, v interface{}) (model.ProductModeUpdate, error) {
 	res, err := ec.unmarshalInputProductModeUpdate(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNProductUpdate2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐProductUpdate(ctx context.Context, v interface{}) (model.ProductUpdate, error) {
+func (ec *executionContext) unmarshalNProductUpdate2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐProductUpdate(ctx context.Context, v interface{}) (model.ProductUpdate, error) {
 	res, err := ec.unmarshalInputProductUpdate(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -7359,39 +7427,7 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	return res
 }
 
-func (ec *executionContext) unmarshalNString2ᚕstringᚄ(ctx context.Context, v interface{}) ([]string, error) {
-	var vSlice []interface{}
-	if v != nil {
-		vSlice = graphql.CoerceList(v)
-	}
-	var err error
-	res := make([]string, len(vSlice))
-	for i := range vSlice {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNString2string(ctx, vSlice[i])
-		if err != nil {
-			return nil, err
-		}
-	}
-	return res, nil
-}
-
-func (ec *executionContext) marshalNString2ᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v []string) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	for i := range v {
-		ret[i] = ec.marshalNString2string(ctx, sel, v[i])
-	}
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
-func (ec *executionContext) marshalNSub2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐSub(ctx context.Context, sel ast.SelectionSet, v *model.Sub) graphql.Marshaler {
+func (ec *executionContext) marshalNSub2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐSub(ctx context.Context, sel ast.SelectionSet, v *model.Sub) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -7696,7 +7732,7 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	return res
 }
 
-func (ec *executionContext) marshalOSub2ᚕᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐSubᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Sub) graphql.Marshaler {
+func (ec *executionContext) marshalOSub2ᚕᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐSubᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Sub) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -7723,7 +7759,7 @@ func (ec *executionContext) marshalOSub2ᚕᚖgithubᚗcomᚋlucidconnectᚋsilv
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNSub2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐSub(ctx, sel, v[i])
+			ret[i] = ec.marshalNSub2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐSub(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)

@@ -10,6 +10,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/lucidconnect/silver-arrow/conversions"
 	"github.com/lucidconnect/silver-arrow/gqlerror"
 	"github.com/lucidconnect/silver-arrow/server/graphql/merchant/graph/generated"
 	"github.com/lucidconnect/silver-arrow/server/graphql/merchant/graph/model"
@@ -205,8 +206,8 @@ func (r *queryResolver) GetPaymentLink(ctx context.Context, id string) (*model.P
 }
 
 // GetMerchantPaymentLinks is the resolver for the getMerchantPaymentLinks field.
-func (r *queryResolver) GetMerchantPaymentLinks(ctx context.Context, merchantID string) ([]string, error) {
-	var paymentLinkDetails []string
+func (r *queryResolver) GetMerchantPaymentLinks(ctx context.Context, merchantID string) ([]*model.PaymentLinkDetails, error) {
+	var paymentLinkDetails []*model.PaymentLinkDetails
 	mid, err := uuid.Parse(merchantID)
 	if err != nil {
 		log.Err(err).Caller().Msg("parsing uuid failed")
@@ -218,7 +219,23 @@ func (r *queryResolver) GetMerchantPaymentLinks(ctx context.Context, merchantID 
 	}
 
 	for _, paymentLink := range paymentLinks {
-		paymentLinkDetails = append(paymentLinkDetails, paymentLink.ID.String())
+		interval := conversions.ParseNanoSecondsToDay(paymentLink.Product.Interval)
+		amount := conversions.ParseTransferAmountFloat(paymentLink.Product.Token, paymentLink.Product.Amount)
+
+		paymentLinkDetail := &model.PaymentLinkDetails{
+			ID: paymentLink.ID.String(),
+			// Mode: paymentLink.Product.Mode,
+			ProductID:    paymentLink.ProductID.String(),
+			MerchantID:   paymentLink.MerchantID.String(),
+			MerchantName: paymentLink.MerchantName,
+			ProductName:  paymentLink.Product.Name,
+			Interval:     int(interval),
+			CallbackURL:  paymentLink.CallbackURL,
+			Amount:       amount,
+			Token:        paymentLink.Product.Token,
+			Chain:        int(paymentLink.Product.Chain),
+		}
+		paymentLinkDetails = append(paymentLinkDetails, paymentLinkDetail)
 	}
 	return paymentLinkDetails, nil
 }
