@@ -133,6 +133,21 @@ func (r *mutationResolver) CreatePaymentLink(ctx context.Context, input model.Ne
 	return id, nil
 }
 
+// DeletePaymentLink is the resolver for the deletePaymentLink field.
+func (r *mutationResolver) DeletePaymentLink(ctx context.Context, id string) (string, error) {
+	pid, err := uuid.Parse(id)
+	if err != nil {
+		log.Err(err).Caller().Msg("parsing uuid failed")
+		return "", gqlerror.ErrToGraphQLError(gqlerror.InternalError, err.Error(), ctx)
+	}
+	err = r.Database.DeletePaymentLink(pid)
+	if err != nil {
+		log.Err(err).Caller().Msgf("deleting payment link [%v] failed", id)
+		return "", gqlerror.ErrToGraphQLError(gqlerror.InternalError, err.Error(), ctx)
+	}
+	return id, nil
+}
+
 // FetchOneProduct is the resolver for the fetchOneProduct field.
 func (r *queryResolver) FetchOneProduct(ctx context.Context, id string) (*model.Product, error) {
 	merchantService := merchant.NewMerchantService(r.Database)
@@ -186,6 +201,25 @@ func (r *queryResolver) GetPaymentLink(ctx context.Context, id string) (*model.P
 		return nil, gqlerror.ErrToGraphQLError(gqlerror.InternalError, err.Error(), ctx)
 	}
 
+	return paymentLinkDetails, nil
+}
+
+// GetMerchantPaymentLinks is the resolver for the getMerchantPaymentLinks field.
+func (r *queryResolver) GetMerchantPaymentLinks(ctx context.Context, merchantID string) ([]string, error) {
+	var paymentLinkDetails []string
+	mid, err := uuid.Parse(merchantID)
+	if err != nil {
+		log.Err(err).Caller().Msg("parsing uuid failed")
+		return nil, gqlerror.ErrToGraphQLError(gqlerror.InternalError, err.Error(), ctx)
+	}
+	paymentLinks, err := r.Database.FetchPaymentLinkByMerchant(mid)
+	if err != nil {
+		log.Err(err).Caller().Msg("parsing uuid failed")
+	}
+
+	for _, paymentLink := range paymentLinks {
+		paymentLinkDetails = append(paymentLinkDetails, paymentLink.ID.String())
+	}
 	return paymentLinkDetails, nil
 }
 

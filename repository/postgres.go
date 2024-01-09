@@ -370,3 +370,11 @@ func (p *PostgresDB) FetchPaymentLinkByMerchant(merchantId uuid.UUID) ([]models.
 	}
 	return paymentLink, nil
 }
+
+func (p *PostgresDB) DeletePaymentLink(paymentLinkId uuid.UUID) error {
+	var paymentLink *models.PaymentLink
+	if err := p.Db.Where("id = ?", paymentLinkId).Delete(&paymentLink).Error; err != nil {
+		return err
+	}
+	return nil
+}

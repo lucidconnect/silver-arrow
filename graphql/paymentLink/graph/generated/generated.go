@@ -467,9 +467,6 @@ var sources = []*ast.Source{
 
 type Query {
   getPaymentLink(id: String!): PaymentLinkDetails!
-  # billingHistory(walletAddress, paymentLinkId){
-  #  amount, date, explorer url 
-  # }
   getBillingHistory(walletAddress: String!, productId: String!): [BillingHistory!]
 }
 

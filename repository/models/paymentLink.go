@@ -15,4 +15,5 @@ type PaymentLink struct {
 	Product      Product
 	CreatedAt    time.Time
 	DeletedAt    time.Time
+	// gorm.DeletedAt
 }

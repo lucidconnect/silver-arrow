@@ -58,6 +58,7 @@ type Database interface {
 	FetchPaymentLink(id uuid.UUID) (*models.PaymentLink, error)
 	FetchPaymentLinkByProduct(productId uuid.UUID) (*models.PaymentLink, error)
 	FetchPaymentLinkByMerchant(merchantId uuid.UUID) ([]models.PaymentLink, error)
+	DeletePaymentLink(id uuid.UUID) error
 }
 
 type Queuer interface {
