@@ -12,8 +12,9 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/google/uuid"
-	"github.com/lucidconnect/silver-arrow/server/graphql/merchant/graph/model"
+	"github.com/lucidconnect/silver-arrow/conversions"
 	"github.com/lucidconnect/silver-arrow/repository/models"
+	"github.com/lucidconnect/silver-arrow/server/graphql/merchant/graph/model"
 )
 
 // ProductId is base64 encoded
@@ -26,8 +27,8 @@ func (m *MerchantService) CreateProduct(input model.NewProduct) (*model.Product,
 		return nil, err
 	}
 	chainId := int64(input.Chain)
-	amount := parseFloatAmountToInt(input.Token, input.Amount)
-	interval := daysToNanoSeconds(int64(input.Interval))
+	amount := conversions.ParseFloatAmountToInt(input.Token, input.Amount)
+	interval := conversions.ParseDaysToNanoSeconds(int64(input.Interval))
 
 	product := &models.Product{
 		ID:             productID,

@@ -2,7 +2,6 @@ package wallet
 
 import (
 	"fmt"
-	"math"
 	"math/big"
 	"math/rand"
 	"os"
@@ -14,6 +13,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/lucidconnect/silver-arrow/conversions"
 	"github.com/lucidconnect/silver-arrow/erc20"
 
 	// "github.com/lucidconnect/silver-arrow/erc4337"
@@ -304,7 +304,7 @@ func (ws *WalletService) AddSubscription(merchantId uuid.UUID, input NewSubscrip
 	}
 
 	interval := daysToNanoSeconds(int64(input.Interval))
-	amount = parseTransferAmount(input.Token, input.Amount)
+	amount = conversions.ParseTransferAmount(input.Token, input.Amount)
 
 	if input.NextChargeDate != nil {
 		nextChargeAt = *input.NextChargeDate
@@ -401,11 +401,11 @@ func (w *WalletService) FetchSubscriptions(walletAddress string, status *string)
 				Chain:     int(p.Chain),
 				Token:     p.Token,
 				Status:    model.PaymentStatus(p.Status),
-				Amount:    parseTransferAmountFloat(p.Token, p.Amount),
+				Amount:    conversions.ParseTransferAmountFloat(p.Token, p.Amount),
 				Reference: p.Reference.String(),
 			})
 		}
-		interval := nanoSecondsToDay(v.Interval)
+		interval := conversions.ParseNanoSecondsToDay(v.Interval)
 		createdAt := v.CreatedAt.Format("dd:mm:yyyy")
 		sd := &model.SubscriptionData{
 			ID:             v.ID.String(),
@@ -443,7 +443,7 @@ func (ws *WalletService) FetchPayment(reference string) (*model.Payment, error) 
 		Chain:     int(payment.Chain),
 		Token:     payment.Token,
 		Status:    model.PaymentStatus(payment.Status),
-		Amount:    parseTransferAmountFloat(payment.Token, payment.Amount),
+		Amount:    conversions.ParseTransferAmountFloat(payment.Token, payment.Amount),
 		Source:    payment.Source,
 		ProductID: payment.ProductID.String(),
 		Reference: payment.Reference.String(),
@@ -452,28 +452,28 @@ func (ws *WalletService) FetchPayment(reference string) (*model.Payment, error) 
 	return paymentData, nil
 }
 
-func amountToWei(amount any) (*big.Int, error) {
-	etherInWei := new(big.Int)
-	etherInWei.SetString("1000000000000000000", 10)
+// func amountToWei(amount any) (*big.Int, error) {
+// 	etherInWei := new(big.Int)
+// 	etherInWei.SetString("1000000000000000000", 10)
 
-	switch v := amount.(type) {
-	case *big.Int:
-		weiAmount := new(big.Int).Mul(v, etherInWei)
-		return weiAmount, nil
-	case *big.Float:
-		weiAmount := new(big.Int)
-		weiAmountFloat := new(big.Float).Mul(v, big.NewFloat(1e18))
-		weiAmountFloat.Int(weiAmount)
-		return weiAmount, nil
-	default:
-		return nil, fmt.Errorf("unsupported input type: %T", amount)
-	}
-}
+// 	switch v := amount.(type) {
+// 	case *big.Int:
+// 		weiAmount := new(big.Int).Mul(v, etherInWei)
+// 		return weiAmount, nil
+// 	case *big.Float:
+// 		weiAmount := new(big.Int)
+// 		weiAmountFloat := new(big.Float).Mul(v, big.NewFloat(1e18))
+// 		weiAmountFloat.Int(weiAmount)
+// 		return weiAmount, nil
+// 	default:
+// 		return nil, fmt.Errorf("unsupported input type: %T", amount)
+// 	}
+// }
 
-func amountToMwei(amount int64) *big.Int {
-	etherInMWei := new(big.Int)
-	return etherInMWei.SetInt64(amount)
-}
+// func amountToMwei(amount int64) *big.Int {
+// 	etherInMWei := new(big.Int)
+// 	return etherInMWei.SetInt64(amount)
+// }
 
 // CreatePayment creates a userop for an initiated payment, amount is already in the minor factor form
 // generates the userop hash, sets the payment status to a pending state
@@ -481,7 +481,7 @@ func amountToMwei(amount int64) *big.Int {
 func (ws *WalletService) CreatePayment(payment *models.Payment) (map[string]any, common.Hash, error) {
 	tokenAddress := common.HexToAddress(payment.TokenAddress)
 
-	actualAmount := amountToMwei(payment.Amount)
+	actualAmount := conversions.ParseAmountToMwei(payment.Amount)
 	data, err := erc4337.TransferErc20Action(tokenAddress, common.HexToAddress(payment.Destination), actualAmount)
 	if err != nil {
 		err = errors.Wrap(err, "creating TransferErc20Action call data failed")
@@ -655,7 +655,7 @@ func (ws *WalletService) ExecuteCharge(sender, target, token, key string, amount
 	}
 	org := wallet.TurnkeySubOrgID
 
-	actualAmount := amountToMwei(amount)
+	actualAmount := conversions.ParseAmountToMwei(amount)
 	data, err := erc4337.TransferErc20Action(tokenAddress, common.HexToAddress(target), actualAmount)
 	if err != nil {
 		err = errors.Wrap(err, "creating TransferErc20Action call data failed")
@@ -748,7 +748,7 @@ func (ws *WalletService) InitiateTransfer(sender, target, token string, amount f
 		return nil, nil, err
 	}
 
-	transferAmount := parseTransferAmount(token, amount)
+	transferAmount := conversions.ParseTransferAmount(token, amount)
 	callData, err = erc4337.CreateTransferCallData(target, token, chain, transferAmount)
 	if err != nil {
 		err = errors.Wrapf(err, "creating transfer call data failed")
@@ -1056,7 +1056,7 @@ func (ws *WalletService) FetchUserBillingHistory(walletAddress, productID string
 
 	for _, payment := range payments {
 		if payment.ProductID == pid {
-			amount := parseTransferAmountFloat(payment.Token, payment.Amount)
+			amount := conversions.ParseTransferAmountFloat(payment.Token, payment.Amount)
 			bh := BillingHistory{
 				Date:        payment.CreatedAt,
 				Amount:      amount,
@@ -1080,31 +1080,31 @@ func randKey(length int) string {
 	return hexutil.Encode(key)
 }
 
-func parseTransferAmount(token string, amount float64) *big.Int {
-	var divisor int
-	if token == "USDC" || token == "USDT" {
-		divisor = 6
-	} else {
-		divisor = 18
-	}
-	minorFactor := math.Pow10(divisor)
-	parsedAmount := int64(amount * minorFactor)
+// func parseTransferAmount(token string, amount float64) *big.Int {
+// 	var divisor int
+// 	if token == "USDC" || token == "USDT" {
+// 		divisor = 6
+// 	} else {
+// 		divisor = 18
+// 	}
+// 	minorFactor := math.Pow10(divisor)
+// 	parsedAmount := int64(amount * minorFactor)
 
-	return big.NewInt(parsedAmount)
-}
+// 	return big.NewInt(parsedAmount)
+// }
 
-func parseTransferAmountFloat(token string, amount int64) float64 {
-	var divisor int
-	if token == "USDC" || token == "USDT" {
-		divisor = 6
-	} else {
-		divisor = 18
-	}
-	minorFactor := math.Pow10(divisor)
-	parsedAmount := float64(amount) / minorFactor
+// func parseTransferAmountFloat(token string, amount int64) float64 {
+// 	var divisor int
+// 	if token == "USDC" || token == "USDT" {
+// 		divisor = 6
+// 	} else {
+// 		divisor = 18
+// 	}
+// 	minorFactor := math.Pow10(divisor)
+// 	parsedAmount := float64(amount) / minorFactor
 
-	return parsedAmount
-}
+// 	return parsedAmount
+// }
 
 func isPaymentDue(dueDate time.Time) bool {
 	return dueDate.Before(time.Now())
