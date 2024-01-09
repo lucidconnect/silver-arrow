@@ -76,8 +76,8 @@ func (m *MerchantService) FetchPaymentLink(queryParam PaymentLinkQueryParams) (*
 	amount := conversions.ParseTransferAmountFloat(paymentLink.Product.Token, paymentLink.Product.Amount)
 
 	paymentLinkDetalais := &model.PaymentLinkDetails{
-		ID: paymentLink.ID.String(),
-		Mode: paymentLink.Product.Mode,
+		ID:           paymentLink.ID.String(),
+		Mode:         paymentLink.Product.Mode,
 		ProductID:    paymentLink.ProductID.String(),
 		MerchantID:   paymentLink.MerchantID.String(),
 		MerchantName: paymentLink.MerchantName,

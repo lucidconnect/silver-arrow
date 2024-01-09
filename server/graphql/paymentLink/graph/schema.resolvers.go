@@ -154,8 +154,8 @@ func (r *queryResolver) GetPaymentLink(ctx context.Context, id string) (*model.P
 		return nil, gqlerror.ErrToGraphQLError(gqlerror.InternalError, err.Error(), ctx)
 	}
 	paymentLinkDetails := &model.PaymentLinkDetails{
-		ID: pd.ID,
-		// Mode: pd.Mode,
+		ID:           pd.ID,
+		Mode:         pd.Mode,
 		ProductID:    pd.ProductID,
 		MerchantID:   pd.MerchantID,
 		Amount:       pd.Amount,
