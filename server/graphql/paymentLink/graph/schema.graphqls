@@ -1,0 +1,72 @@
+type Mutation {
+  createPaymentIntent(input: PaymentIntent!): String!
+  validatePaymentIntent(input: RequestValidation!): TransactionData!
+}
+
+type Query {
+  getPaymentLink(id: String!): PaymentLinkDetails!
+  getBillingHistory(walletAddress: String!, productId: String!): [BillingHistory!]
+}
+
+type PaymentLinkDetails {
+  id: ID!
+  mode: String!
+  productId: ID!
+  productName: String!
+  interval: Int!
+  merchantId: ID!
+  merchantName: String!
+  callbackUrl: String!
+  amount: Float!
+  token: String!
+  chain: Int!
+}
+
+type BillingHistory {
+  date: Time!
+  amount: Float!
+  explorerUrl: String!
+}
+
+# payment data
+input PaymentIntent {
+  type: PaymentType!
+  email: String
+  chain: Int!
+  token: String!
+  amount: Float!
+  interval: Int!
+  productId: String!
+  ownerAddress: String!
+  walletAddress: String!
+  firstChargeNow: Boolean! # should be decided upon creating a product
+}
+
+input RequestValidation {
+  chain: Int!
+  userOpHash: String!
+  signedMessage: String!
+}
+
+type TransactionData {
+  id: ID
+  type: PaymentType!
+  chain: Int!
+  token: String!
+  amount: Int!
+  interval: Int!
+  reference: String!
+  productId: String!
+  walletAddress: String!
+  subscriptionKey: String!
+  createdAt: String!
+  transactionHash: String!
+  transactionExplorer: String!
+}
+
+enum PaymentType {
+  single
+  recurring
+}
+
+scalar Time

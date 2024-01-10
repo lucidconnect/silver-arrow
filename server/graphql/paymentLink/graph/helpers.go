@@ -3,8 +3,6 @@ package graph
 import (
 	"context"
 	"fmt"
-	"os"
-	"strconv"
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -14,17 +12,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func validateProductMode(product *models.Product, key *models.MerchantAccessKey) bool {
-	return product.Mode.String() == key.Mode
-}
-
-func getAuthenticatedAndActiveMerchant(ctx context.Context) (*models.Merchant, error) {
-	useAuthStr := os.Getenv("USE_AUTH")
-	useAuth, _ := strconv.ParseBool(useAuthStr)
-	if !useAuth {
-		return &models.Merchant{}, nil
-	}
-
+func getActiveMerchant(ctx context.Context) (*models.Merchant, error) {
 	merchant, err := auth.ForContext(ctx)
 	if err != nil {
 		err = errors.Wrapf(err, "merchant authorization failed %v", ctx)
@@ -33,6 +21,16 @@ func getAuthenticatedAndActiveMerchant(ctx context.Context) (*models.Merchant, e
 	}
 
 	return merchant, nil
+}
+
+func getActiveProduct(ctx context.Context) (*models.Product, error) {
+	product, err := auth.ProductContext(ctx)
+	if err != nil {
+		err = errors.Wrapf(err, "no product found in context %v", ctx)
+		log.Err(err).Send()
+		return nil, err
+	}
+	return product, nil
 }
 
 func validateSignature(rawString, signature, pk string) error {
@@ -44,12 +42,11 @@ func validateSignature(rawString, signature, pk string) error {
 	pub, _ := crypto.UnmarshalPubkey(pbk)
 
 	fmt.Println("pk -", pk)
-	publicKey := hexutil.Encode(crypto.CompressPubkey(pub))
-	fmt.Println("recovered public key", publicKey)
-	// recoveredAddress := crypto.PubkeyToAddress(*pub)
-	// fmt.Println(recoveredAddress)
 
-	if publicKey != pk {
+	recoveredAddress := crypto.PubkeyToAddress(*pub)
+	fmt.Println(recoveredAddress)
+
+	if recoveredAddress.Hex() != pk {
 		return errors.New("signature invalid")
 	}
 	return nil

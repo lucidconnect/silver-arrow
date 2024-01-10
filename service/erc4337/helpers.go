@@ -7,7 +7,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/lucidconnect/silver-arrow/abi/KernelFactory"
 	Kernel "github.com/lucidconnect/silver-arrow/abi/kernel"
 	KernelStorage "github.com/lucidconnect/silver-arrow/abi/kernelStorage"
@@ -142,33 +141,6 @@ func GetExecuteFnData(to string, amount *big.Int, callData []byte) ([]byte, erro
 	payload, err := contractABI.Pack("execute", dest, amount, callData, uint8(0))
 	if err != nil {
 		err = errors.Wrap(err, "PacK() unable to prepare tx payload")
-		return nil, err
-	}
-	return payload, nil
-}
-
-func GetSetExecutionFnData(accountABI, validator, kernel string, enableData []byte) ([]byte, error) {
-	contractABI, err := abi.JSON(strings.NewReader(accountABI))
-	if err != nil {
-		err = errors.Wrap(err, "abi.JSON() unable to read contract abi")
-		return nil, err
-	}
-
-	// kernel execute fn selector: 0x51945447
-	selector, err := hexutil.Decode("0x51945447")
-	if err != nil {
-		err = errors.Wrap(err, "invalid selector hex")
-		return nil, err
-	}
-	fnSelector := [4]byte{}
-	copy(fnSelector[:], selector)
-	executorAddress := common.HexToAddress(kernel)
-	validatorAddress := common.HexToAddress(validator)
-
-	fmt.Println("enable data -", hexutil.Encode(enableData))
-	payload, err := contractABI.Pack("setExecution", fnSelector, executorAddress, validatorAddress, big.NewInt(99999999999), big.NewInt(0), enableData)
-	if err != nil {
-		err = errors.Wrap(err, "abi.Pack() - ")
 		return nil, err
 	}
 	return payload, nil

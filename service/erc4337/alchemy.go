@@ -36,6 +36,7 @@ func initialiseAlchemyService(chain int64) (*AlchemyService, error) {
 	ctx := context.Background()
 	network, err := GetNetwork(chain)
 	if err != nil {
+		log.Err(err).Msgf("chain %v not supported", chain)
 		return nil, err
 	}
 

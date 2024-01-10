@@ -13,6 +13,7 @@ import (
 
 var (
 	ModeCtxKey          = &contextKey{"mode"}
+	ProductCtxKey       = &contextKey{"product"}
 	MerchantCtxKey      = &contextKey{"merchant"}
 	AuthMerchantCtxKey  = &contextKey{"authMerchant"}
 	AuthSignatureCtxKey = &contextKey{"authSignature"}
@@ -24,6 +25,14 @@ type contextKey struct {
 
 func ForContext(ctx context.Context) (*models.Merchant, error) {
 	raw, _ := ctx.Value(MerchantCtxKey).(*models.Merchant)
+	if raw == nil {
+		return nil, errors.New("invalid token")
+	}
+	return raw, nil
+}
+
+func ProductContext(ctx context.Context) (*models.Product, error) {
+	raw, _ := ctx.Value(ProductCtxKey).(*models.Product)
 	if raw == nil {
 		return nil, errors.New("invalid token")
 	}
