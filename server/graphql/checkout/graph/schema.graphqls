@@ -3,8 +3,6 @@
 # https://gqlgen.com/getting-started/
 
 type Query {
-  fetchSubscriptionsByMerchant(account: String!, merchantId: ID!, status: String): [SubscriptionData!]!
-  fetchSubscriptions(account: String!, status: String): [SubscriptionData!]!
   fetchPayment(reference: String!): Payment!
 }
 
@@ -13,12 +11,6 @@ type Mutation {
   addAccount(input: Account!): String!
   createPaymentIntent(input: PaymentIntent!): String!
   validatePaymentIntent(input: RequestValidation!): TransactionData!
-
-  # user's dashboard ops
-  modifySubscriptionState(input: SubscriptionMod!): String!
-  confirmCancelSubscription(input: RequestValidation!): String!
-  initiateTransferRequest(input: NewTransferRequest!): String!
-  validateTransferRequest(input: RequestValidation!): TransactionData!
 }
 
 # account creation
@@ -30,7 +22,6 @@ input Account {
 
 # payment data
 input PaymentIntent {
-  mode: Mode!
   type: PaymentType!
   email: String
   chain: Int!
@@ -40,7 +31,7 @@ input PaymentIntent {
   productId: String!
   ownerAddress: String!
   walletAddress: String!
-  firstChargeNow: Boolean!
+  firstChargeNow: Boolean! # should be decided upon creating a product
 }
 
 type Payment {
@@ -59,27 +50,6 @@ input RequestValidation {
   signedMessage: String!
 }
 
-type ValidationData {
-  userOpHash: String!
-}
-
-type SubscriptionData {
-  id: ID!
-	token: String!
-  amount: Int!
-	interval: Int!
-  productId: String!
-  merchantId: String!
-  productName: String!
-	walletAddress: String!
-  subscriptionKey: String!
-  createdAt: String!
-  nextChargeDate: Time!
-  transactionHash: String!
-  transactionExplorer: String!
-  payments: [Payment!]
-}
-
 type TransactionData {
   id: ID
   type: PaymentType!
@@ -96,25 +66,6 @@ type TransactionData {
   transactionExplorer: String!
 }
 
-input NewTransferRequest {
-  chain: Int!
-  token: String!
-  amount: Float!
-  sender: String!
-  target: String!
-}
-
-input SubscriptionMod {
-  subscriptionId: String!
-  toggle: StatusToggle!
-}
-
-enum StatusToggle {
-  cancel
-  disable
-  enable
-}
-
 enum PaymentType {
   single
   recurring
@@ -124,17 +75,6 @@ enum PaymentStatus {
   failed
   pending
   success
-}
-
-enum SubscriptionStatus {
-  active
-  disabled
-  cancelled
-}
-
-enum Mode {
-  test
-  live
 }
 
 scalar Time

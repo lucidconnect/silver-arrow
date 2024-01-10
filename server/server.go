@@ -12,11 +12,15 @@ import (
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
-	merchant_graph "github.com/lucidconnect/silver-arrow/graphql/merchant/graph"
-	merchant_generated "github.com/lucidconnect/silver-arrow/graphql/merchant/graph/generated"
-	wallet_graph "github.com/lucidconnect/silver-arrow/graphql/wallet/graph"
-	wallet_generated "github.com/lucidconnect/silver-arrow/graphql/wallet/graph/generated"
 	"github.com/lucidconnect/silver-arrow/repository"
+	checkout_graph "github.com/lucidconnect/silver-arrow/server/graphql/checkout/graph"
+	checkout_generated "github.com/lucidconnect/silver-arrow/server/graphql/checkout/graph/generated"
+	merchant_graph "github.com/lucidconnect/silver-arrow/server/graphql/merchant/graph"
+	merchant_generated "github.com/lucidconnect/silver-arrow/server/graphql/merchant/graph/generated"
+	payment_link_graph "github.com/lucidconnect/silver-arrow/server/graphql/paymentLink/graph"
+	payment_link_generated "github.com/lucidconnect/silver-arrow/server/graphql/paymentLink/graph/generated"
+	wallet_graph "github.com/lucidconnect/silver-arrow/server/graphql/wallet/graph"
+	wallet_generated "github.com/lucidconnect/silver-arrow/server/graphql/wallet/graph/generated"
 	"github.com/lucidconnect/silver-arrow/service/erc4337"
 	"github.com/rs/cors"
 	"github.com/rs/zerolog/log"
@@ -83,8 +87,10 @@ func (s *Server) Routes() {
 	})
 	// merchant authentication
 	authRouter := s.router.PathPrefix("/auth").Subrouter()
-	authRouter.HandleFunc("/nonce", s.GetNonce()).Methods(http.MethodGet)
-	authRouter.HandleFunc("/verify", s.VerifyMerchant())
+	nonceRoute := authRouter.HandleFunc("/nonce", s.GetNonce()).Methods(http.MethodGet)
+	siweVerifyRoute := authRouter.HandleFunc("/verify", s.VerifyMerchant())
+	authRouter.HandleFunc("/jwt", s.GenerateJwt()).Methods(http.MethodPost)
+	authRouter.Use(MiddlewareExcept(s.BasicAuthMiddleware(), nonceRoute, siweVerifyRoute))
 
 	merchantRouter := s.router.PathPrefix("/merchant").Subrouter()
 	merchantRouter.Use(s.JWTMiddleware())
@@ -92,19 +98,43 @@ func (s *Server) Routes() {
 	merchantRouter.Handle("/query", s.merchantGraphqlHandler())
 
 	// checkout
-	walletRouter := s.router.PathPrefix("/wallet").Subrouter()
-	walletRouter.Use(s.CheckoutMiddleware())
-	walletRouter.Handle("/query", s.walletGraphqlHandler())
-	walletRouter.Handle("/graphiql", playground.Handler("/api/Graphql playground", "/wallet/query"))
-	// s.router.Handle("/merchant/graphiql",  playground.Handler("api/GraphQL playground", "/merchant/query"))
-	// s.router.Handle("/", playground.Handler("api/GraphQL playground", "/query"))
+	checkout := s.router.PathPrefix("/checkout").Subrouter()
+	checkout.Use(s.CheckoutMiddleware())
+	checkout.Handle("/query", s.checkoutGraphqlHandler())
+	checkout.Handle("/graphiql", playground.Handler("/api/Graphql playground", "/checkout/query"))
+
+	// wallet
+	wallet := s.router.PathPrefix("/wallet").Subrouter()
+	wallet.Handle("/query", s.walletGraphqlHandler())
+	wallet.Handle("/graphiql", playground.Handler("/api/Graphql playground", "/wallet/query"))
+
+	// payment page
+	paymentLink := s.router.PathPrefix("/pay").Subrouter()
+	paymentLink.Use(s.PaymentLinkMiddleware())
+	paymentLink.Handle("/query", s.paymentLinksGraphqlHandler())
+	paymentLink.Handle("/graphiql", playground.Handler("/api/Graphql plaground", "/pay/query"))
+}
+
+func (s *Server) checkoutGraphqlHandler() *handler.Server {
+	checkoutsrv := handler.NewDefaultServer(checkout_generated.NewExecutableSchema(checkout_generated.Config{Resolvers: &checkout_graph.Resolver{
+		Cache:    repository.NewMCache(),
+		Database: s.database,
+	}}))
+	return checkoutsrv
+}
+
+func (s *Server) paymentLinksGraphqlHandler() *handler.Server {
+	paymentLinkSrv := handler.NewDefaultServer(payment_link_generated.NewExecutableSchema(payment_link_generated.Config{Resolvers: &payment_link_graph.Resolver{
+		Cache:    repository.NewMCache(),
+		Database: s.database,
+	}}))
+	return paymentLinkSrv
 }
 
 func (s *Server) walletGraphqlHandler() *handler.Server {
 	walletSrv := handler.NewDefaultServer(wallet_generated.NewExecutableSchema(wallet_generated.Config{Resolvers: &wallet_graph.Resolver{
 		Cache:    repository.NewMCache(),
 		Database: s.database,
-		// TurnkeyService: tunkeyService,
 	}}))
 	return walletSrv
 }

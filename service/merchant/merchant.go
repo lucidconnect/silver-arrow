@@ -11,7 +11,7 @@ import (
 	convoy "github.com/frain-dev/convoy-go"
 	"github.com/google/uuid"
 	"github.com/lucidconnect/silver-arrow/auth"
-	"github.com/lucidconnect/silver-arrow/graphql/merchant/graph/model"
+	"github.com/lucidconnect/silver-arrow/server/graphql/merchant/graph/model"
 	"github.com/lucidconnect/silver-arrow/repository"
 	"github.com/lucidconnect/silver-arrow/repository/models"
 	"github.com/rs/zerolog/log"

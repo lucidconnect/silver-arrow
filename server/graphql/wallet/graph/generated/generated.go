@@ -14,7 +14,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
-	"github.com/lucidconnect/silver-arrow/graphql/wallet/graph/model"
+	"github.com/lucidconnect/silver-arrow/server/graphql/wallet/graph/model"
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -46,12 +46,9 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	Mutation struct {
-		AddAccount                func(childComplexity int, input model.Account) int
 		ConfirmCancelSubscription func(childComplexity int, input model.RequestValidation) int
-		CreatePaymentIntent       func(childComplexity int, input model.PaymentIntent) int
 		InitiateTransferRequest   func(childComplexity int, input model.NewTransferRequest) int
 		ModifySubscriptionState   func(childComplexity int, input model.SubscriptionMod) int
-		ValidatePaymentIntent     func(childComplexity int, input model.RequestValidation) int
 		ValidateTransferRequest   func(childComplexity int, input model.RequestValidation) int
 	}
 
@@ -110,9 +107,6 @@ type ComplexityRoot struct {
 }
 
 type MutationResolver interface {
-	AddAccount(ctx context.Context, input model.Account) (string, error)
-	CreatePaymentIntent(ctx context.Context, input model.PaymentIntent) (string, error)
-	ValidatePaymentIntent(ctx context.Context, input model.RequestValidation) (*model.TransactionData, error)
 	ModifySubscriptionState(ctx context.Context, input model.SubscriptionMod) (string, error)
 	ConfirmCancelSubscription(ctx context.Context, input model.RequestValidation) (string, error)
 	InitiateTransferRequest(ctx context.Context, input model.NewTransferRequest) (string, error)
@@ -139,18 +133,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	_ = ec
 	switch typeName + "." + field {
 
-	case "Mutation.addAccount":
-		if e.complexity.Mutation.AddAccount == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_addAccount_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.AddAccount(childComplexity, args["input"].(model.Account)), true
-
 	case "Mutation.confirmCancelSubscription":
 		if e.complexity.Mutation.ConfirmCancelSubscription == nil {
 			break
@@ -162,18 +144,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.ConfirmCancelSubscription(childComplexity, args["input"].(model.RequestValidation)), true
-
-	case "Mutation.createPaymentIntent":
-		if e.complexity.Mutation.CreatePaymentIntent == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_createPaymentIntent_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.CreatePaymentIntent(childComplexity, args["input"].(model.PaymentIntent)), true
 
 	case "Mutation.initiateTransferRequest":
 		if e.complexity.Mutation.InitiateTransferRequest == nil {
@@ -198,18 +168,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.ModifySubscriptionState(childComplexity, args["input"].(model.SubscriptionMod)), true
-
-	case "Mutation.validatePaymentIntent":
-		if e.complexity.Mutation.ValidatePaymentIntent == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_validatePaymentIntent_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.ValidatePaymentIntent(childComplexity, args["input"].(model.RequestValidation)), true
 
 	case "Mutation.validateTransferRequest":
 		if e.complexity.Mutation.ValidateTransferRequest == nil {
@@ -626,9 +584,9 @@ type Query {
 
 type Mutation {
   # frontend sdk
-  addAccount(input: Account!): String!
-  createPaymentIntent(input: PaymentIntent!): String!
-  validatePaymentIntent(input: RequestValidation!): TransactionData!
+  # addAccount(input: Account!): String!
+  # createPaymentIntent(input: PaymentIntent!): String!
+  # validatePaymentIntent(input: RequestValidation!): TransactionData!
 
   # user's dashboard ops
   modifySubscriptionState(input: SubscriptionMod!): String!
@@ -761,21 +719,6 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
 // region    ***************************** args.gotpl *****************************
 
-func (ec *executionContext) field_Mutation_addAccount_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 model.Account
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNAccount2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐAccount(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
 func (ec *executionContext) field_Mutation_confirmCancelSubscription_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -783,21 +726,6 @@ func (ec *executionContext) field_Mutation_confirmCancelSubscription_args(ctx co
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 		arg0, err = ec.unmarshalNRequestValidation2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐRequestValidation(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_createPaymentIntent_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 model.PaymentIntent
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNPaymentIntent2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐPaymentIntent(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -828,21 +756,6 @@ func (ec *executionContext) field_Mutation_modifySubscriptionState_args(ctx cont
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 		arg0, err = ec.unmarshalNSubscriptionMod2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐSubscriptionMod(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_validatePaymentIntent_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 model.RequestValidation
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNRequestValidation2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐRequestValidation(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -990,199 +903,6 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
-
-func (ec *executionContext) _Mutation_addAccount(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_addAccount(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().AddAccount(rctx, fc.Args["input"].(model.Account))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_addAccount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_addAccount_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_createPaymentIntent(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_createPaymentIntent(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreatePaymentIntent(rctx, fc.Args["input"].(model.PaymentIntent))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_createPaymentIntent(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_createPaymentIntent_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_validatePaymentIntent(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_validatePaymentIntent(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().ValidatePaymentIntent(rctx, fc.Args["input"].(model.RequestValidation))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*model.TransactionData)
-	fc.Result = res
-	return ec.marshalNTransactionData2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐTransactionData(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_validatePaymentIntent(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_TransactionData_id(ctx, field)
-			case "type":
-				return ec.fieldContext_TransactionData_type(ctx, field)
-			case "chain":
-				return ec.fieldContext_TransactionData_chain(ctx, field)
-			case "token":
-				return ec.fieldContext_TransactionData_token(ctx, field)
-			case "amount":
-				return ec.fieldContext_TransactionData_amount(ctx, field)
-			case "interval":
-				return ec.fieldContext_TransactionData_interval(ctx, field)
-			case "reference":
-				return ec.fieldContext_TransactionData_reference(ctx, field)
-			case "productId":
-				return ec.fieldContext_TransactionData_productId(ctx, field)
-			case "walletAddress":
-				return ec.fieldContext_TransactionData_walletAddress(ctx, field)
-			case "subscriptionKey":
-				return ec.fieldContext_TransactionData_subscriptionKey(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_TransactionData_createdAt(ctx, field)
-			case "transactionHash":
-				return ec.fieldContext_TransactionData_transactionHash(ctx, field)
-			case "transactionExplorer":
-				return ec.fieldContext_TransactionData_transactionExplorer(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type TransactionData", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_validatePaymentIntent_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
 
 func (ec *executionContext) _Mutation_modifySubscriptionState(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Mutation_modifySubscriptionState(ctx, field)
@@ -5468,27 +5188,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Mutation")
-		case "addAccount":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_addAccount(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "createPaymentIntent":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_createPaymentIntent(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "validatePaymentIntent":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_validatePaymentIntent(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "modifySubscriptionState":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_modifySubscriptionState(ctx, field)
@@ -6287,11 +5986,6 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
-func (ec *executionContext) unmarshalNAccount2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐAccount(ctx context.Context, v interface{}) (model.Account, error) {
-	res, err := ec.unmarshalInputAccount(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
 func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -6379,11 +6073,6 @@ func (ec *executionContext) marshalNPayment2ᚖgithubᚗcomᚋlucidconnectᚋsil
 		return graphql.Null
 	}
 	return ec._Payment(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalNPaymentIntent2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐPaymentIntent(ctx context.Context, v interface{}) (model.PaymentIntent, error) {
-	res, err := ec.unmarshalInputPaymentIntent(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNPaymentStatus2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋwalletᚋgraphᚋmodelᚐPaymentStatus(ctx context.Context, v interface{}) (model.PaymentStatus, error) {

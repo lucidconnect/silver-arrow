@@ -55,12 +55,35 @@ type NewMerchantKey struct {
 	Mode            Mode   `json:"mode"`
 }
 
+type NewPaymentLink struct {
+	ProductID   string `json:"productId"`
+	CallbackURL string `json:"callbackUrl"`
+}
+
 type NewProduct struct {
-	Name             string `json:"name"`
-	Owner            string `json:"owner"`
-	Chain            int    `json:"chain"`
-	Token            string `json:"token"`
-	ReceivingAddress string `json:"receivingAddress"`
+	Name             string      `json:"name"`
+	Owner            string      `json:"owner"`
+	Chain            int         `json:"chain"`
+	Token            string      `json:"token"`
+	Amount           float64     `json:"amount"`
+	Interval         int         `json:"interval"`
+	PaymentType      PaymentType `json:"paymentType"`
+	ReceivingAddress string      `json:"receivingAddress"`
+	FirstChargeNow   bool        `json:"firstChargeNow"`
+}
+
+type PaymentLinkDetails struct {
+	ID           string  `json:"id"`
+	Mode         string  `json:"mode"`
+	ProductID    string  `json:"productId"`
+	ProductName  string  `json:"productName"`
+	Interval     int     `json:"interval"`
+	MerchantID   string  `json:"merchantId"`
+	MerchantName string  `json:"merchantName"`
+	CallbackURL  string  `json:"callbackUrl"`
+	Amount       float64 `json:"amount"`
+	Token        string  `json:"token"`
+	Chain        int     `json:"chain"`
 }
 
 type Product struct {
@@ -133,5 +156,46 @@ func (e *Mode) UnmarshalGQL(v interface{}) error {
 }
 
 func (e Mode) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type PaymentType string
+
+const (
+	PaymentTypeSingle    PaymentType = "single"
+	PaymentTypeRecurring PaymentType = "recurring"
+)
+
+var AllPaymentType = []PaymentType{
+	PaymentTypeSingle,
+	PaymentTypeRecurring,
+}
+
+func (e PaymentType) IsValid() bool {
+	switch e {
+	case PaymentTypeSingle, PaymentTypeRecurring:
+		return true
+	}
+	return false
+}
+
+func (e PaymentType) String() string {
+	return string(e)
+}
+
+func (e *PaymentType) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = PaymentType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid PaymentType", str)
+	}
+	return nil
+}
+
+func (e PaymentType) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }

@@ -27,7 +27,7 @@ func SetupDatabase(dbconn *sql.DB) (*gorm.DB, error) {
 	}
 
 	// ...
-	if err = db.AutoMigrate(models.MerchantAccessKey{}, models.Payment{}, models.Wallet{}, models.Merchant{}, models.Key{}, models.Subscription{}, models.Product{}); err != nil {
+	if err = db.AutoMigrate(models.PaymentLink{}, models.MerchantAccessKey{}, models.Payment{}, models.Wallet{}, models.Merchant{}, models.Key{}, models.Subscription{}, models.Product{}); err != nil {
 		log.Fatal().Err(err).Msg("Error migrating database models")
 	}
 	// db.Model(&models.Subscription{}).
@@ -341,4 +341,40 @@ func (p *PostgresDB) CreateWebhookEvent(webhookEvent *models.WebhookEvent) error
 
 func (p *PostgresDB) UpdateWebhookEvent(webhookEvent *models.WebhookEvent) error {
 	return p.Db.Save(webhookEvent).Error
+}
+
+func (p *PostgresDB) CreatePaymentLink(paymentLink *models.PaymentLink) error {
+	return p.Db.Create(paymentLink).Error
+}
+
+func (p *PostgresDB) FetchPaymentLink(id uuid.UUID) (*models.PaymentLink, error) {
+	var paymentLink *models.PaymentLink
+	if err := p.Db.Where("id = ?", id).Preload("Product").First(&paymentLink).Error; err != nil {
+		return nil, err
+	}
+	return paymentLink, nil
+}
+
+func (p *PostgresDB) FetchPaymentLinkByProduct(productId uuid.UUID) (*models.PaymentLink, error) {
+	var paymentLink *models.PaymentLink
+	if err := p.Db.Where("product_id = ?", productId).Preload("Product").First(&paymentLink).Error; err != nil {
+		return nil, err
+	}
+	return paymentLink, nil
+}
+
+func (p *PostgresDB) FetchPaymentLinkByMerchant(merchantId uuid.UUID) ([]models.PaymentLink, error) {
+	var paymentLink []models.PaymentLink
+	if err := p.Db.Where("merchant_id = ?", merchantId).Preload("Product").Find(&paymentLink).Error; err != nil {
+		return nil, err
+	}
+	return paymentLink, nil
+}
+
+func (p *PostgresDB) DeletePaymentLink(paymentLinkId uuid.UUID) error {
+	var paymentLink *models.PaymentLink
+	if err := p.Db.Where("id = ?", paymentLinkId).Delete(&paymentLink).Error; err != nil {
+		return err
+	}
+	return nil
 }
