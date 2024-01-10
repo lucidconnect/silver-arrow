@@ -262,6 +262,7 @@ func MiddlewareExcept(middleware mux.MiddlewareFunc, routes ...*mux.Route) mux.M
 				if route.Match(r, &routeMatch) {
 					if next != nil {
 						next.ServeHTTP(rw, r)
+						return
 					}
 				}
 			}
