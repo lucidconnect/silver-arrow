@@ -27,7 +27,7 @@ func SetupDatabase(dbconn *sql.DB) (*gorm.DB, error) {
 	}
 
 	// ...
-	if err = db.AutoMigrate(models.MerchantAccessKey{}, models.Payment{}, models.Wallet{}, models.Merchant{}, models.Key{}, models.Subscription{}, models.Product{}); err != nil {
+	if err = db.AutoMigrate(models.PaymentLink{}, models.MerchantAccessKey{}, models.Payment{}, models.Wallet{}, models.Merchant{}, models.Key{}, models.Subscription{}, models.Product{}); err != nil {
 		log.Fatal().Err(err).Msg("Error migrating database models")
 	}
 	// db.Model(&models.Subscription{}).
@@ -152,9 +152,9 @@ func (p *PostgresDB) FindSubscriptionById(id uuid.UUID) (*models.Subscription, e
 	return subscription, nil
 }
 
-func (p *PostgresDB) FindSubscriptionByProductId(id uuid.UUID) (*models.Subscription, error) {
+func (p *PostgresDB) FindSubscriptionByProductId(id uuid.UUID, wallet string) (*models.Subscription, error) {
 	var subscription *models.Subscription
-	if err := p.Db.Where("product_id = ? AND active = ?", id, true).First(&subscription).Error; err != nil {
+	if err := p.Db.Where("product_id = ? AND active = ? AND wallet_address = ?", id, true, wallet).First(&subscription).Error; err != nil {
 		return nil, err
 	}
 	return subscription, nil
@@ -225,7 +225,7 @@ func (p *PostgresDB) FetchMerchantByAddress(address string) (*models.Merchant, e
 func (p *PostgresDB) FetchMerchantByPublicKey(key string) (*models.Merchant, error) {
 	var merchant *models.Merchant
 
-	if err := p.Db.Preload("MerchantAccessKeys").Joins("JOIN merchant_access_keys ON merchant_access_keys.merchant_id = merchants.id").Where("merchant_access_keys.public_key = ?", key).Find(&merchant).Error; err != nil {
+	if err := p.Db.Preload("MerchantAccessKeys", "public_key = ?", key).Joins("JOIN merchant_access_keys ON merchant_access_keys.merchant_id = merchants.id").Where("merchant_access_keys.public_key = ?", key).Find(&merchant).Error; err != nil {
 		return nil, err
 	}
 
@@ -354,4 +354,40 @@ func (p *PostgresDB) FetchCheckoutSession(id uuid.UUID) (*models.CheckoutSession
 	}
 
 	return session, nil
+}
+
+func (p *PostgresDB) CreatePaymentLink(paymentLink *models.PaymentLink) error {
+	return p.Db.Create(paymentLink).Error
+}
+
+func (p *PostgresDB) FetchPaymentLink(id uuid.UUID) (*models.PaymentLink, error) {
+	var paymentLink *models.PaymentLink
+	if err := p.Db.Where("id = ?", id).Preload("Product").First(&paymentLink).Error; err != nil {
+		return nil, err
+	}
+	return paymentLink, nil
+}
+
+func (p *PostgresDB) FetchPaymentLinkByProduct(productId uuid.UUID) (*models.PaymentLink, error) {
+	var paymentLink *models.PaymentLink
+	if err := p.Db.Where("product_id = ?", productId).Preload("Product").First(&paymentLink).Error; err != nil {
+		return nil, err
+	}
+	return paymentLink, nil
+}
+
+func (p *PostgresDB) FetchPaymentLinkByMerchant(merchantId uuid.UUID) ([]models.PaymentLink, error) {
+	var paymentLink []models.PaymentLink
+	if err := p.Db.Where("merchant_id = ?", merchantId).Preload("Product").Find(&paymentLink).Error; err != nil {
+		return nil, err
+	}
+	return paymentLink, nil
+}
+
+func (p *PostgresDB) DeletePaymentLink(paymentLinkId uuid.UUID) error {
+	var paymentLink *models.PaymentLink
+	if err := p.Db.Where("id = ?", paymentLinkId).Delete(&paymentLink).Error; err != nil {
+		return err
+	}
+	return nil
 }

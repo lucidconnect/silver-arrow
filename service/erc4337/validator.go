@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math"
 	"math/big"
-	"os"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -29,9 +28,9 @@ type SessionKeyOwnedValidator struct {
 	ValidatorAddress common.Address
 }
 
-func InitialiseValidator(validatorAddress, sessionKey, mode string, chainId int64) (*SessionKeyOwnedValidator, error) {
+func InitialiseValidator(validatorAddress, executorAddress, sessionKey, mode string, chainId int64) (*SessionKeyOwnedValidator, error) {
 	validator := common.HexToAddress(validatorAddress)
-	executor := common.HexToAddress("0x")
+	executor := common.HexToAddress(executorAddress)
 	session := common.HexToAddress(sessionKey)
 	md, err := hexutil.Decode(mode)
 	if err != nil {
@@ -97,12 +96,12 @@ func (v *SessionKeyOwnedValidator) SetExecution(enableData []byte, ownerAccount 
 		return nil, err
 	}
 	copy(selector[:], sel)
-	executorAddress := common.HexToAddress(os.Getenv("EXECUTOR_ADDRESS"))
-	validatorAddress := v.ValidatorAddress
+	// executorAddress := common.HexToAddress(os.Getenv("EXECUTOR_ADDRESS"))
+	// validatorAddress := v.ValidatorAddress
 	validUntil := big.NewInt(99999999999)
 	validAfter := big.NewInt(0)
 
-	callData, err := kernelAbi.Pack("setExecution", selector, executorAddress, validatorAddress, validUntil, validAfter, enableData)
+	callData, err := kernelAbi.Pack("setExecution", selector, v.ExecutorAddress, v.ValidatorAddress, validUntil, validAfter, enableData)
 	if err != nil {
 		return nil, err
 	}

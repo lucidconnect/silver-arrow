@@ -10,10 +10,9 @@ type Query {
 
 type Mutation {
   # frontend sdk
-  addAccount(input: Account!): String!
-  fetchSession(sessionid: String!): CheckoutSession!
-  createPaymentIntent(input: PaymentIntent!): String!
-  validatePaymentIntent(input: RequestValidation!): TransactionData!
+  # addAccount(input: Account!): String!
+  # createPaymentIntent(input: PaymentIntent!): String!
+  # validatePaymentIntent(input: RequestValidation!): TransactionData!
 
   # user's dashboard ops
   modifySubscriptionState(input: SubscriptionMod!): String!
@@ -31,6 +30,7 @@ input Account {
 
 # payment data
 input PaymentIntent {
+  mode: Mode!
   type: PaymentType!
   email: String
   chain: Int!
@@ -41,18 +41,6 @@ input PaymentIntent {
   ownerAddress: String!
   walletAddress: String!
   firstChargeNow: Boolean!
-}
-
-type CheckoutSession {
-  id: ID!
-  chain: Int!
-  token: String!
-  amount: Int!
-  interval: Int!
-  productId: String!
-  merchantId: String!
-  paymentType: PaymentType!
-  chargeLater: Boolean!
 }
 
 type Payment {
@@ -142,6 +130,11 @@ enum SubscriptionStatus {
   active
   disabled
   cancelled
+}
+
+enum Mode {
+  test
+  live
 }
 
 scalar Time

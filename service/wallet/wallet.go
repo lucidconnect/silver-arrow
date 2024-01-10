@@ -2,7 +2,6 @@ package wallet
 
 import (
 	"fmt"
-	"math"
 	"math/big"
 	"math/rand"
 	"os"
@@ -14,12 +13,13 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/lucidconnect/silver-arrow/conversions"
 	"github.com/lucidconnect/silver-arrow/erc20"
 
 	// "github.com/lucidconnect/silver-arrow/erc4337"
-	"github.com/lucidconnect/silver-arrow/graphql/wallet/graph/model"
 	"github.com/lucidconnect/silver-arrow/repository"
 	"github.com/lucidconnect/silver-arrow/repository/models"
+	"github.com/lucidconnect/silver-arrow/server/graphql/wallet/graph/model"
 	"github.com/lucidconnect/silver-arrow/service/erc4337"
 	"github.com/lucidconnect/silver-arrow/service/turnkey"
 	"github.com/pkg/errors"
@@ -32,14 +32,24 @@ type WalletService struct {
 	database         repository.Database
 	bundlerService   *erc4337.AlchemyService
 	validatorAddress string
+	executorAddress  string
 }
 
 func NewWalletService(r repository.Database, chain int64) *WalletService {
-	validatorAddress := os.Getenv("VALIDATOR_ADDRESS")
+	// validatorAddress := os.Getenv("VALIDATOR_ADDRESS")
 	var bundler *erc4337.AlchemyService
 	var err error
+	var validatorAddress, executorAddress string
 
 	if chain != 0 {
+		network, err := erc4337.GetNetwork(chain)
+		if err != nil {
+			log.Err(err).Msgf("chain %v not supported", chain)
+			return nil
+		}
+
+		validatorAddress = os.Getenv(fmt.Sprintf("%s_VALIDATOR_ADDRESS", network))
+		executorAddress = os.Getenv(fmt.Sprintf("%s_EXECUTOR_ADDRESS", network))
 		bundler, err = initialiseBundler(chain)
 		if err != nil {
 			return nil
@@ -56,6 +66,7 @@ func NewWalletService(r repository.Database, chain int64) *WalletService {
 		database:         r,
 		bundlerService:   bundler,
 		validatorAddress: validatorAddress,
+		executorAddress:  executorAddress,
 	}
 }
 
@@ -68,7 +79,7 @@ func initialiseBundler(chain int64) (*erc4337.AlchemyService, error) {
 	return bundler, nil
 }
 
-func (ws *WalletService) AddAccount(input model.Account) error {
+func (ws *WalletService) AddAccount(input Account) error {
 	walletAddress := input.Address
 	// Check if account exists
 	_, err := ws.database.FetchAccountByAddress(walletAddress)
@@ -245,22 +256,31 @@ func (ws *WalletService) ValidateSubscription(userop map[string]any, chain int64
 	return subData, nil
 }
 
-func (ws *WalletService) AddSubscription(merchantId uuid.UUID, input model.NewSubscription, usePaymaster bool, index *big.Int, chain int64) (*model.ValidationData, map[string]any, error) {
+func (ws *WalletService) AddSubscription(merchantId uuid.UUID, input NewSubscription, usePaymaster bool, index *big.Int, chain int64) (*model.ValidationData, map[string]any, error) {
 	var nextChargeAt time.Time
 	var initCode []byte
 	var nonce, amount *big.Int
 
 	// check if a subscription already exists for this product
 	pid := input.ProductID
-	existingSub, _ := ws.database.FindSubscriptionByProductId(pid)
+	existingSub, _ := ws.database.FindSubscriptionByProductId(pid, input.WalletAddress)
 	if existingSub != nil {
-		return nil, nil, errors.New("an active subscription exists for this product")
+		log.Info().Msg("an active subscription exists for this product")
+		return nil, nil, errors.New("an active subscription exists for this product cancel subscription before creating a new one")
+	}
+
+	// NB: figure out a way to check if the subscription exist without having to do the above operation
+	// fetch the product by id, use the details in the product to create a subscription
+	product, err := ws.database.FetchProduct(pid)
+	if err != nil {
+		log.Err(err).Msgf("failed to fetch product with id [%v]", pid)
+		return nil, nil, errors.New("product not found")
 	}
 
 	tagId, orgId, walletID, err := ws.database.GetWalletMetadata(input.WalletAddress)
 	if err != nil {
 		log.Err(err).Msgf("failed to fetch private key tag for wallet - %v", input.WalletAddress)
-		return nil, nil, err
+		return nil, nil, errors.New("failed to fetch wallet metadata")
 	}
 
 	randomSalt := randKey(4)
@@ -284,7 +304,7 @@ func (ws *WalletService) AddSubscription(merchantId uuid.UUID, input model.NewSu
 	}
 
 	interval := daysToNanoSeconds(int64(input.Interval))
-	amount = parseTransferAmount(input.Token, input.Amount)
+	amount = conversions.ParseTransferAmount(input.Token, input.Amount)
 
 	if input.NextChargeDate != nil {
 		nextChargeAt = *input.NextChargeDate
@@ -308,7 +328,7 @@ func (ws *WalletService) AddSubscription(merchantId uuid.UUID, input model.NewSu
 		}
 	}
 
-	callData, err := setValidatorExecutor(sessionKey, ws.validatorAddress, input.WalletAddress, int64(input.Chain))
+	callData, err := setValidatorExecutor(sessionKey, ws.validatorAddress, ws.executorAddress, input.WalletAddress, int64(input.Chain))
 	if err != nil {
 		log.Err(err).Msg("failed to set a validator")
 		return nil, nil, err
@@ -343,8 +363,8 @@ func (ws *WalletService) AddSubscription(merchantId uuid.UUID, input model.NewSu
 		UserOpHash:             opHash.Hex(),
 		MerchantId:             merchantId.String(),
 		ProductID:              input.ProductID,
-		ProductName:            input.ProductName,
-		MerchantDepositAddress: input.DepositAddress,
+		ProductName:            product.Name,
+		MerchantDepositAddress: product.DepositAddress,
 		NextChargeAt:           nextChargeAt,
 		ExpiresAt:              nextChargeAt,
 		WalletID:               walletID,
@@ -381,11 +401,11 @@ func (w *WalletService) FetchSubscriptions(walletAddress string, status *string)
 				Chain:     int(p.Chain),
 				Token:     p.Token,
 				Status:    model.PaymentStatus(p.Status),
-				Amount:    parseTransferAmountFloat(p.Token, p.Amount),
+				Amount:    conversions.ParseTransferAmountFloat(p.Token, p.Amount),
 				Reference: p.Reference.String(),
 			})
 		}
-		interval := nanoSecondsToDay(v.Interval)
+		interval := conversions.ParseNanoSecondsToDay(v.Interval)
 		createdAt := v.CreatedAt.Format("dd:mm:yyyy")
 		sd := &model.SubscriptionData{
 			ID:             v.ID.String(),
@@ -423,7 +443,7 @@ func (ws *WalletService) FetchPayment(reference string) (*model.Payment, error) 
 		Chain:     int(payment.Chain),
 		Token:     payment.Token,
 		Status:    model.PaymentStatus(payment.Status),
-		Amount:    parseTransferAmountFloat(payment.Token, payment.Amount),
+		Amount:    conversions.ParseTransferAmountFloat(payment.Token, payment.Amount),
 		Source:    payment.Source,
 		ProductID: payment.ProductID.String(),
 		Reference: payment.Reference.String(),
@@ -432,28 +452,28 @@ func (ws *WalletService) FetchPayment(reference string) (*model.Payment, error) 
 	return paymentData, nil
 }
 
-func amountToWei(amount any) (*big.Int, error) {
-	etherInWei := new(big.Int)
-	etherInWei.SetString("1000000000000000000", 10)
+// func amountToWei(amount any) (*big.Int, error) {
+// 	etherInWei := new(big.Int)
+// 	etherInWei.SetString("1000000000000000000", 10)
 
-	switch v := amount.(type) {
-	case *big.Int:
-		weiAmount := new(big.Int).Mul(v, etherInWei)
-		return weiAmount, nil
-	case *big.Float:
-		weiAmount := new(big.Int)
-		weiAmountFloat := new(big.Float).Mul(v, big.NewFloat(1e18))
-		weiAmountFloat.Int(weiAmount)
-		return weiAmount, nil
-	default:
-		return nil, fmt.Errorf("unsupported input type: %T", amount)
-	}
-}
+// 	switch v := amount.(type) {
+// 	case *big.Int:
+// 		weiAmount := new(big.Int).Mul(v, etherInWei)
+// 		return weiAmount, nil
+// 	case *big.Float:
+// 		weiAmount := new(big.Int)
+// 		weiAmountFloat := new(big.Float).Mul(v, big.NewFloat(1e18))
+// 		weiAmountFloat.Int(weiAmount)
+// 		return weiAmount, nil
+// 	default:
+// 		return nil, fmt.Errorf("unsupported input type: %T", amount)
+// 	}
+// }
 
-func amountToMwei(amount int64) *big.Int {
-	etherInMWei := new(big.Int)
-	return etherInMWei.SetInt64(amount)
-}
+// func amountToMwei(amount int64) *big.Int {
+// 	etherInMWei := new(big.Int)
+// 	return etherInMWei.SetInt64(amount)
+// }
 
 // CreatePayment creates a userop for an initiated payment, amount is already in the minor factor form
 // generates the userop hash, sets the payment status to a pending state
@@ -461,7 +481,7 @@ func amountToMwei(amount int64) *big.Int {
 func (ws *WalletService) CreatePayment(payment *models.Payment) (map[string]any, common.Hash, error) {
 	tokenAddress := common.HexToAddress(payment.TokenAddress)
 
-	actualAmount := amountToMwei(payment.Amount)
+	actualAmount := conversions.ParseAmountToMwei(payment.Amount)
 	data, err := erc4337.TransferErc20Action(tokenAddress, common.HexToAddress(payment.Destination), actualAmount)
 	if err != nil {
 		err = errors.Wrap(err, "creating TransferErc20Action call data failed")
@@ -635,7 +655,7 @@ func (ws *WalletService) ExecuteCharge(sender, target, token, key string, amount
 	}
 	org := wallet.TurnkeySubOrgID
 
-	actualAmount := amountToMwei(amount)
+	actualAmount := conversions.ParseAmountToMwei(amount)
 	data, err := erc4337.TransferErc20Action(tokenAddress, common.HexToAddress(target), actualAmount)
 	if err != nil {
 		err = errors.Wrap(err, "creating TransferErc20Action call data failed")
@@ -728,7 +748,7 @@ func (ws *WalletService) InitiateTransfer(sender, target, token string, amount f
 		return nil, nil, err
 	}
 
-	transferAmount := parseTransferAmount(token, amount)
+	transferAmount := conversions.ParseTransferAmount(token, amount)
 	callData, err = erc4337.CreateTransferCallData(target, token, chain, transferAmount)
 	if err != nil {
 		err = errors.Wrapf(err, "creating transfer call data failed")
@@ -812,9 +832,9 @@ func nanoSecondsToDay(ns int64) int64 {
 }
 
 // creats the calldata that scopes a kernel executor to a validator
-func setValidatorExecutor(sessionKey, validatorAddress, ownerAddress string, chain int64) ([]byte, error) {
+func setValidatorExecutor(sessionKey, validatorAddress, executorAddress, ownerAddress string, chain int64) ([]byte, error) {
 	mode := erc4337.ENABLE_MODE
-	validator, err := erc4337.InitialiseValidator(validatorAddress, sessionKey, mode, chain)
+	validator, err := erc4337.InitialiseValidator(validatorAddress, executorAddress, sessionKey, mode, chain)
 	if err != nil {
 		return nil, err
 	}
@@ -1019,6 +1039,36 @@ func (ws *WalletService) getTransactionHash(useropHash string) (string, error) {
 	return transactionHash, nil
 }
 
+func (ws *WalletService) FetchUserBillingHistory(walletAddress, productID string) ([]BillingHistory, error) {
+	var billingHistory []BillingHistory
+
+	pid, err := uuid.Parse(productID)
+	if err != nil {
+		log.Err(err).Msg("parsing uuid failed")
+		return nil, err
+	}
+
+	payments, err := ws.database.FindAllPaymentsByWallet(walletAddress)
+	if err != nil {
+		log.Err(err).Msgf("failed to fetch payments from wallet %v", walletAddress)
+		return nil, err
+	}
+
+	for _, payment := range payments {
+		if payment.ProductID == pid {
+			amount := conversions.ParseTransferAmountFloat(payment.Token, payment.Amount)
+			bh := BillingHistory{
+				Date:        payment.CreatedAt,
+				Amount:      amount,
+				ExplorerURL: payment.BlockExplorerTx,
+			}
+			billingHistory = append(billingHistory, bh)
+		}
+	}
+
+	return billingHistory, nil
+}
+
 func randKey(length int) string {
 	key := make([]byte, length)
 
@@ -1030,31 +1080,31 @@ func randKey(length int) string {
 	return hexutil.Encode(key)
 }
 
-func parseTransferAmount(token string, amount float64) *big.Int {
-	var divisor int
-	if token == "USDC" || token == "USDT" {
-		divisor = 6
-	} else {
-		divisor = 18
-	}
-	minorFactor := math.Pow10(divisor)
-	parsedAmount := int64(amount * minorFactor)
+// func parseTransferAmount(token string, amount float64) *big.Int {
+// 	var divisor int
+// 	if token == "USDC" || token == "USDT" {
+// 		divisor = 6
+// 	} else {
+// 		divisor = 18
+// 	}
+// 	minorFactor := math.Pow10(divisor)
+// 	parsedAmount := int64(amount * minorFactor)
 
-	return big.NewInt(parsedAmount)
-}
+// 	return big.NewInt(parsedAmount)
+// }
 
-func parseTransferAmountFloat(token string, amount int64) float64 {
-	var divisor int
-	if token == "USDC" || token == "USDT" {
-		divisor = 6
-	} else {
-		divisor = 18
-	}
-	minorFactor := math.Pow10(divisor)
-	parsedAmount := float64(amount) / minorFactor
+// func parseTransferAmountFloat(token string, amount int64) float64 {
+// 	var divisor int
+// 	if token == "USDC" || token == "USDT" {
+// 		divisor = 6
+// 	} else {
+// 		divisor = 18
+// 	}
+// 	minorFactor := math.Pow10(divisor)
+// 	parsedAmount := float64(amount) / minorFactor
 
-	return parsedAmount
-}
+// 	return parsedAmount
+// }
 
 func isPaymentDue(dueDate time.Time) bool {
 	return dueDate.Before(time.Now())

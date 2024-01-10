@@ -9,10 +9,13 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/google/uuid"
+	"github.com/lucidconnect/silver-arrow/conversions"
 	"github.com/lucidconnect/silver-arrow/gqlerror"
-	"github.com/lucidconnect/silver-arrow/graphql/merchant/graph/generated"
-	"github.com/lucidconnect/silver-arrow/graphql/merchant/graph/model"
+	"github.com/lucidconnect/silver-arrow/server/graphql/merchant/graph/generated"
+	"github.com/lucidconnect/silver-arrow/server/graphql/merchant/graph/model"
 	"github.com/lucidconnect/silver-arrow/service/merchant"
+	"github.com/rs/zerolog/log"
 )
 
 // AddProduct is the resolver for the addProduct field.
@@ -99,6 +102,53 @@ func (r *mutationResolver) ToggleProductMode(ctx context.Context, input model.Pr
 	return input.Mode, nil
 }
 
+// CreatePaymentLink is the resolver for the createPaymentLink field.
+func (r *mutationResolver) CreatePaymentLink(ctx context.Context, input model.NewPaymentLink) (string, error) {
+	merchantService := merchant.NewMerchantService(r.Database)
+	merchant, err := getAuthenticatedAndActiveMerchant(ctx)
+	if err != nil {
+		log.Err(err).Send()
+		return "", gqlerror.ErrToGraphQLError(gqlerror.MerchantAuthorisationFailed, err.Error(), ctx)
+	}
+
+	productId, err := uuid.Parse(input.ProductID)
+	if err != nil {
+		log.Err(err).Send()
+		return "", gqlerror.ErrToGraphQLError(gqlerror.MerchantDataInvalid, err.Error(), ctx)
+	}
+
+	product, err := r.Database.FetchProduct(productId)
+	if err != nil {
+		log.Err(err).Send()
+		return "", gqlerror.ErrToGraphQLError(gqlerror.InternalError, err.Error(), ctx)
+	}
+
+	if merchant.ID != product.MerchantID {
+		return "", gqlerror.ErrToGraphQLError(gqlerror.MerchantDataInvalid, err.Error(), ctx)
+	}
+
+	id, err := merchantService.CreatePaymentLink(input)
+	if err != nil {
+		return "", err
+	}
+	return id, nil
+}
+
+// DeletePaymentLink is the resolver for the deletePaymentLink field.
+func (r *mutationResolver) DeletePaymentLink(ctx context.Context, id string) (string, error) {
+	pid, err := uuid.Parse(id)
+	if err != nil {
+		log.Err(err).Caller().Msg("parsing uuid failed")
+		return "", gqlerror.ErrToGraphQLError(gqlerror.InternalError, err.Error(), ctx)
+	}
+	err = r.Database.DeletePaymentLink(pid)
+	if err != nil {
+		log.Err(err).Caller().Msgf("deleting payment link [%v] failed", id)
+		return "", gqlerror.ErrToGraphQLError(gqlerror.InternalError, err.Error(), ctx)
+	}
+	return id, nil
+}
+
 // FetchOneProduct is the resolver for the fetchOneProduct field.
 func (r *queryResolver) FetchOneProduct(ctx context.Context, id string) (*model.Product, error) {
 	merchantService := merchant.NewMerchantService(r.Database)
@@ -138,6 +188,72 @@ func (r *queryResolver) FetchMerchantStats(ctx context.Context, owner string) (*
 		return nil, err
 	}
 	return stats, nil
+}
+
+// FetchMerchantInfo is the resolver for the fetchMerchantInfo field.
+func (r *queryResolver) FetchMerchantInfo(ctx context.Context, owner string) (*model.Merchant, error) {
+	merchant, err := r.Database.FetchMerchantByAddress(owner)
+	if err != nil {
+		log.Err(err).Caller().Send()
+		return nil, err
+	}
+	merchantInfo := &model.Merchant{
+		ID:         merchant.ID.String(),
+		Name:       merchant.Name,
+		Email:      merchant.Email,
+		WebHookURL: merchant.WebhookUrl,
+	}
+	return merchantInfo, nil
+}
+
+// GetPaymentLink is the resolver for the getPaymentLink field.
+func (r *queryResolver) GetPaymentLink(ctx context.Context, id string) (*model.PaymentLinkDetails, error) {
+	merchantService := merchant.NewMerchantService(r.Database)
+
+	paymentLinkQuery := merchant.PaymentLinkQueryParams{
+		PaymentLinkId: &id,
+	}
+	paymentLinkDetails, err := merchantService.FetchPaymentLink(paymentLinkQuery)
+	if err != nil {
+		return nil, gqlerror.ErrToGraphQLError(gqlerror.InternalError, err.Error(), ctx)
+	}
+
+	return paymentLinkDetails, nil
+}
+
+// GetMerchantPaymentLinks is the resolver for the getMerchantPaymentLinks field.
+func (r *queryResolver) GetMerchantPaymentLinks(ctx context.Context, merchantID string) ([]*model.PaymentLinkDetails, error) {
+	var paymentLinkDetails []*model.PaymentLinkDetails
+	mid, err := uuid.Parse(merchantID)
+	if err != nil {
+		log.Err(err).Caller().Msg("parsing uuid failed")
+		return nil, gqlerror.ErrToGraphQLError(gqlerror.InternalError, err.Error(), ctx)
+	}
+	paymentLinks, err := r.Database.FetchPaymentLinkByMerchant(mid)
+	if err != nil {
+		log.Err(err).Caller().Msg("parsing uuid failed")
+	}
+
+	for _, paymentLink := range paymentLinks {
+		interval := conversions.ParseNanoSecondsToDay(paymentLink.Product.Interval)
+		amount := conversions.ParseTransferAmountFloat(paymentLink.Product.Token, paymentLink.Product.Amount)
+
+		paymentLinkDetail := &model.PaymentLinkDetails{
+			ID:           paymentLink.ID.String(),
+			Mode:         paymentLink.Product.Mode,
+			ProductID:    paymentLink.ProductID.String(),
+			MerchantID:   paymentLink.MerchantID.String(),
+			MerchantName: paymentLink.MerchantName,
+			ProductName:  paymentLink.Product.Name,
+			Interval:     int(interval),
+			CallbackURL:  paymentLink.CallbackURL,
+			Amount:       amount,
+			Token:        paymentLink.Product.Token,
+			Chain:        int(paymentLink.Product.Chain),
+		}
+		paymentLinkDetails = append(paymentLinkDetails, paymentLinkDetail)
+	}
+	return paymentLinkDetails, nil
 }
 
 // Mutation returns generated.MutationResolver implementation.

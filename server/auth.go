@@ -10,6 +10,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/golang-jwt/jwt"
+	"github.com/google/uuid"
+	"github.com/pkg/errors"
 
 	"github.com/rs/zerolog/log"
 	"github.com/spruceid/siwe-go"
@@ -75,7 +77,7 @@ func (s *Server) VerifyMerchant() http.HandlerFunc {
 			writeJsonResponse(w, response)
 			return
 		}
-		log.Info().Msgf("siwe message %v",message)
+		log.Info().Msgf("siwe message %v", message)
 		siweObj, err := siwe.ParseMessage(message)
 		if err != nil {
 			log.Err(err).Msg("parsing siwe message failed")
@@ -122,6 +124,30 @@ func (s *Server) VerifyMerchant() http.HandlerFunc {
 	}
 }
 
+func (s *Server) GenerateJwt() http.HandlerFunc {
+	var requestBody struct {
+		MerchantId string `json:"merchant-id"`
+		ProductId  string `json:"product-id"`
+	}
+	return func(w http.ResponseWriter, r *http.Request) {
+		request := &requestBody
+		if err := json.NewDecoder(r.Body).Decode(request); err != nil {
+			log.Err(err).Msg("decoding request failed")
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		jwt, err := generatePaymentLinkJwt(request.ProductId, request.MerchantId)
+		if err != nil {
+			log.Err(err).Msg("genereating jwt failed")
+			w.WriteHeader(http.StatusInternalServerError)
+			return 
+		}
+
+		json.NewEncoder(w).Encode(jwt)
+	}
+}
+
 func writeJsonResponse(w http.ResponseWriter, response *httpResponse) {
 	if err := json.NewEncoder(w).Encode(response); err != nil {
 		log.Err(err).Send()
@@ -153,4 +179,106 @@ func generateJwt(address string) (string, error) {
 	}
 
 	return tokenString, nil
+}
+
+func generatePaymentLinkJwt(productId, merchantId string) (string, error) {
+	var secretKey = os.Getenv("JWT_SECRET")
+	key, err := hex.DecodeString(secretKey)
+	if err != nil {
+		log.Err(err).Msg("decoding secret key failed")
+		return "", err
+	}
+	log.Info().Msg(string(key))
+
+	claims := jwt.MapClaims{}
+	claims["exp"] = time.Now().Add(24 * time.Hour).Unix()
+	claims["merchant-id"] = merchantId
+	claims["product-id"] = productId
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	fmt.Println("claims", token.Claims)
+
+	tokenString, err := token.SignedString(key)
+	if err != nil {
+		return "", err
+	}
+
+	return tokenString, nil
+}
+
+func parseJwt(jwToken string) (jwt.MapClaims, error) {
+	var secretKey = os.Getenv("JWT_SECRET")
+	key, err := hex.DecodeString(secretKey)
+	if err != nil {
+		return nil, err
+	}
+
+	token, err := jwt.Parse(jwToken, func(token *jwt.Token) (interface{}, error) {
+		log.Info().Msgf("token method %v", token.Method)
+		log.Info().Msgf("Token %v", jwToken)
+		_, ok := token.Method.(*jwt.SigningMethodHMAC)
+		if !ok {
+			log.Error().Msg("invalid token method")
+			return nil, errors.New("token method invalid")
+		}
+		return key, nil
+	})
+	if err != nil {
+		log.Err(err).Msg("parsing/validating token failed")
+		return nil, err
+	}
+
+	if !token.Valid {
+		return nil, errors.New("invalid token")
+	}
+
+	log.Debug().Msgf("token claims %v", token.Claims)
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return nil, errors.New("parsing claims failed")
+	}
+
+	return claims, nil
+}
+
+func parsePaymentLinkClaims(claims jwt.MapClaims) (merchantId, productId uuid.UUID, err error) {
+	merchantIdString, ok := claims["merchant-id"].(string)
+	if !ok {
+		err = errors.New("invalid merchant id")
+		return
+	}
+	productIdString, ok := claims["product-id"].(string)
+	if !ok {
+		err = errors.New("invalid product id")
+		return
+	}
+
+	merchantId, err = uuid.Parse(merchantIdString)
+	if err != nil {
+		return
+	}
+
+	productId, err = uuid.Parse(productIdString)
+	if err != nil {
+		return
+	}
+
+	return
+}
+
+func parseSiweClaim(claim interface{}) (*siwe.Message, error) {
+	fmt.Println(claim)
+	claimStr, ok := claim.(string)
+	if !ok {
+		err := errors.New("parsing claim failed")
+		return nil, err
+	}
+
+	siweClaim, err := siwe.ParseMessage(claimStr)
+	if err != nil {
+		log.Err(err).Send()
+		return nil, err
+	}
+	return siweClaim, nil
 }

@@ -46,6 +46,7 @@ type Payment struct {
 }
 
 type PaymentIntent struct {
+	Mode           Mode        `json:"mode"`
 	Type           PaymentType `json:"type"`
 	Email          *string     `json:"email,omitempty"`
 	Chain          int         `json:"chain"`
@@ -104,6 +105,47 @@ type TransactionData struct {
 
 type ValidationData struct {
 	UserOpHash string `json:"userOpHash"`
+}
+
+type Mode string
+
+const (
+	ModeTest Mode = "test"
+	ModeLive Mode = "live"
+)
+
+var AllMode = []Mode{
+	ModeTest,
+	ModeLive,
+}
+
+func (e Mode) IsValid() bool {
+	switch e {
+	case ModeTest, ModeLive:
+		return true
+	}
+	return false
+}
+
+func (e Mode) String() string {
+	return string(e)
+}
+
+func (e *Mode) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = Mode(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid Mode", str)
+	}
+	return nil
+}
+
+func (e Mode) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 type PaymentStatus string

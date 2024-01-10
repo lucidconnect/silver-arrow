@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/lucidconnect/silver-arrow/graphql/wallet/graph/model"
 	"gorm.io/gorm"
 )
 
@@ -15,7 +14,7 @@ type Subscription struct {
 	Token                  string    `gorm:"not null"` // really the token contract
 	Amount                 int64     `gorm:"not null"` // amount in decimal precision
 	Active                 bool      `gorm:"not null"`
-	Status                 model.SubscriptionStatus
+	Status                 string
 	Interval               int64     `gorm:"not null"`
 	UserOpHash             string    `gorm:"index"`
 	MerchantId             string    `gorm:"index"`

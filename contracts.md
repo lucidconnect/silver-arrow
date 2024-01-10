@@ -12,7 +12,7 @@ These are the Zerodev kernel contracts (and more) used by lucid
 | Kernel Factory | Optimism | 10 | 0x5de4839a76cf55d0c90e2061ef4386d962E15ae3 |
 | Kernel Factory | Optimism Goerli | 420 | 0x5de4839a76cf55d0c90e2061ef4386d962E15ae3 |
 |
-| ECDSA Validator | Polygon Mumbai | 80001 | 0x180D6465F921C7E0DEA0040107D342c87455fFF5 |
+| ECDSA Validator | Polygon Mumbai | 80001 | 0xd9AB5096a832b9ce79914329DAEE236f8Eea0390 |
 | ECDSA Validator | Base Goerli | 84531 | 0xd9AB5096a832b9ce79914329DAEE236f8Eea0390 |
 | ECDSA Validator | Base | 8453 | 0xd9AB5096a832b9ce79914329DAEE236f8Eea0390 |
 | ECDSA Validator | Optimism | 10 | 0xd9AB5096a832b9ce79914329DAEE236f8Eea0390 |

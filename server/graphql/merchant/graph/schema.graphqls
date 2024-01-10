@@ -7,6 +7,9 @@ type Query {
   fetchProducts(owner: String!): [Product!]!
   fetchMerchantKey(input: MerchantAccessKeyQuery!): String!
   fetchMerchantStats(owner: String!): MerchantStats!
+  fetchMerchantInfo(owner: String!): Merchant!
+  getPaymentLink(id: String!): PaymentLinkDetails!
+  getMerchantPaymentLinks(merchantId: String!): [PaymentLinkDetails!]!
 }
 
 type Mutation {
@@ -16,6 +19,8 @@ type Mutation {
   createMerchant(input: NewMerchant!): Merchant!
   updateMerchantwebHookUrl(webhookUrl: String!): Merchant!
   toggleProductMode(input: ProductModeUpdate!): Mode!
+  createPaymentLink(input: NewPaymentLink!): String!
+  deletePaymentLink(id: String!): String!
 }
 
 input NewMerchant {
@@ -50,7 +55,30 @@ input NewProduct {
   owner: String!
   chain: Int!
   token: String!
+  amount: Float!
+  interval: Int!
+  paymentType: PaymentType!
   receivingAddress: String!
+  firstChargeNow: Boolean!
+}
+
+input NewPaymentLink {
+  productId: String!
+  callbackUrl: String!
+}
+
+type PaymentLinkDetails {
+  id: ID!
+  mode: String!
+  productId: ID!
+  productName: String!
+  interval: Int!
+  merchantId: ID!
+  merchantName: String!
+  callbackUrl: String!
+  amount: Float!
+  token: String!
+  chain: Int!
 }
 
 input ProductUpdate {
@@ -108,6 +136,12 @@ type MerchantStats {
 enum Mode {
   test
   live
+}
+
+
+enum PaymentType {
+  single
+  recurring
 }
 
 scalar Time
