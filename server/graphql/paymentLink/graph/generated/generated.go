@@ -71,8 +71,9 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		GetBillingHistory func(childComplexity int, walletAddress string, productID string) int
-		GetPaymentLink    func(childComplexity int, id string) int
+		GetBillingHistory       func(childComplexity int, walletAddress string, productID string) int
+		GetPaymentLink          func(childComplexity int, id string) int
+		GetPaymentLinkBySession func(childComplexity int, id string) int
 	}
 
 	TransactionData struct {
@@ -97,6 +98,7 @@ type MutationResolver interface {
 	ValidatePaymentIntent(ctx context.Context, input model.RequestValidation) (*model.TransactionData, error)
 }
 type QueryResolver interface {
+	GetPaymentLinkBySession(ctx context.Context, id string) (*model.PaymentLinkDetails, error)
 	GetPaymentLink(ctx context.Context, id string) (*model.PaymentLinkDetails, error)
 	GetBillingHistory(ctx context.Context, walletAddress string, productID string) ([]*model.BillingHistory, error)
 }
@@ -261,6 +263,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.GetPaymentLink(childComplexity, args["id"].(string)), true
+
+	case "Query.getPaymentLinkBySession":
+		if e.complexity.Query.GetPaymentLinkBySession == nil {
+			break
+		}
+
+		args, err := ec.field_Query_getPaymentLinkBySession_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GetPaymentLinkBySession(childComplexity, args["id"].(string)), true
 
 	case "TransactionData.amount":
 		if e.complexity.TransactionData.Amount == nil {
@@ -466,6 +480,7 @@ var sources = []*ast.Source{
 }
 
 type Query {
+  getPaymentLinkBySession(id: String!): PaymentLinkDetails!
   getPaymentLink(id: String!): PaymentLinkDetails!
   getBillingHistory(walletAddress: String!, productId: String!): [BillingHistory!]
 }
@@ -491,13 +506,14 @@ type BillingHistory {
 }
 
 # payment data
-input PaymentIntent {
+input PaymentIntent {# attach the checkout session id
   type: PaymentType!
   email: String
   chain: Int!
   token: String!
   amount: Float!
   interval: Int!
+  checkoutSessionId: String
   productId: String!
   ownerAddress: String!
   walletAddress: String!
@@ -545,7 +561,7 @@ func (ec *executionContext) field_Mutation_createPaymentIntent_args(ctx context.
 	var arg0 model.PaymentIntent
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNPaymentIntent2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋpaymentLinkᚋgraphᚋmodelᚐPaymentIntent(ctx, tmp)
+		arg0, err = ec.unmarshalNPaymentIntent2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋpaymentLinkᚋgraphᚋmodelᚐPaymentIntent(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -560,7 +576,7 @@ func (ec *executionContext) field_Mutation_validatePaymentIntent_args(ctx contex
 	var arg0 model.RequestValidation
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNRequestValidation2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋpaymentLinkᚋgraphᚋmodelᚐRequestValidation(ctx, tmp)
+		arg0, err = ec.unmarshalNRequestValidation2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋpaymentLinkᚋgraphᚋmodelᚐRequestValidation(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -605,6 +621,21 @@ func (ec *executionContext) field_Query_getBillingHistory_args(ctx context.Conte
 		}
 	}
 	args["productId"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_getPaymentLinkBySession_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
 	return args, nil
 }
 
@@ -876,7 +907,7 @@ func (ec *executionContext) _Mutation_validatePaymentIntent(ctx context.Context,
 	}
 	res := resTmp.(*model.TransactionData)
 	fc.Result = res
-	return ec.marshalNTransactionData2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋpaymentLinkᚋgraphᚋmodelᚐTransactionData(ctx, field.Selections, res)
+	return ec.marshalNTransactionData2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋpaymentLinkᚋgraphᚋmodelᚐTransactionData(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_validatePaymentIntent(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1415,6 +1446,85 @@ func (ec *executionContext) fieldContext_PaymentLinkDetails_chain(ctx context.Co
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_getPaymentLinkBySession(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_getPaymentLinkBySession(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetPaymentLinkBySession(rctx, fc.Args["id"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.PaymentLinkDetails)
+	fc.Result = res
+	return ec.marshalNPaymentLinkDetails2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋpaymentLinkᚋgraphᚋmodelᚐPaymentLinkDetails(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_getPaymentLinkBySession(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_PaymentLinkDetails_id(ctx, field)
+			case "mode":
+				return ec.fieldContext_PaymentLinkDetails_mode(ctx, field)
+			case "productId":
+				return ec.fieldContext_PaymentLinkDetails_productId(ctx, field)
+			case "productName":
+				return ec.fieldContext_PaymentLinkDetails_productName(ctx, field)
+			case "interval":
+				return ec.fieldContext_PaymentLinkDetails_interval(ctx, field)
+			case "merchantId":
+				return ec.fieldContext_PaymentLinkDetails_merchantId(ctx, field)
+			case "merchantName":
+				return ec.fieldContext_PaymentLinkDetails_merchantName(ctx, field)
+			case "callbackUrl":
+				return ec.fieldContext_PaymentLinkDetails_callbackUrl(ctx, field)
+			case "amount":
+				return ec.fieldContext_PaymentLinkDetails_amount(ctx, field)
+			case "token":
+				return ec.fieldContext_PaymentLinkDetails_token(ctx, field)
+			case "chain":
+				return ec.fieldContext_PaymentLinkDetails_chain(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PaymentLinkDetails", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_getPaymentLinkBySession_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_getPaymentLink(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_getPaymentLink(ctx, field)
 	if err != nil {
@@ -1443,7 +1553,7 @@ func (ec *executionContext) _Query_getPaymentLink(ctx context.Context, field gra
 	}
 	res := resTmp.(*model.PaymentLinkDetails)
 	fc.Result = res
-	return ec.marshalNPaymentLinkDetails2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋpaymentLinkᚋgraphᚋmodelᚐPaymentLinkDetails(ctx, field.Selections, res)
+	return ec.marshalNPaymentLinkDetails2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋpaymentLinkᚋgraphᚋmodelᚐPaymentLinkDetails(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_getPaymentLink(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1519,7 +1629,7 @@ func (ec *executionContext) _Query_getBillingHistory(ctx context.Context, field 
 	}
 	res := resTmp.([]*model.BillingHistory)
 	fc.Result = res
-	return ec.marshalOBillingHistory2ᚕᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋpaymentLinkᚋgraphᚋmodelᚐBillingHistoryᚄ(ctx, field.Selections, res)
+	return ec.marshalOBillingHistory2ᚕᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋpaymentLinkᚋgraphᚋmodelᚐBillingHistoryᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_getBillingHistory(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1752,7 +1862,7 @@ func (ec *executionContext) _TransactionData_type(ctx context.Context, field gra
 	}
 	res := resTmp.(model.PaymentType)
 	fc.Result = res
-	return ec.marshalNPaymentType2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋpaymentLinkᚋgraphᚋmodelᚐPaymentType(ctx, field.Selections, res)
+	return ec.marshalNPaymentType2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋpaymentLinkᚋgraphᚋmodelᚐPaymentType(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TransactionData_type(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4032,7 +4142,7 @@ func (ec *executionContext) unmarshalInputPaymentIntent(ctx context.Context, obj
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"type", "email", "chain", "token", "amount", "interval", "productId", "ownerAddress", "walletAddress", "firstChargeNow"}
+	fieldsInOrder := [...]string{"type", "email", "chain", "token", "amount", "interval", "checkoutSessionId", "productId", "ownerAddress", "walletAddress", "firstChargeNow"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -4043,7 +4153,7 @@ func (ec *executionContext) unmarshalInputPaymentIntent(ctx context.Context, obj
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
-			data, err := ec.unmarshalNPaymentType2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋpaymentLinkᚋgraphᚋmodelᚐPaymentType(ctx, v)
+			data, err := ec.unmarshalNPaymentType2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋpaymentLinkᚋgraphᚋmodelᚐPaymentType(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -4093,6 +4203,15 @@ func (ec *executionContext) unmarshalInputPaymentIntent(ctx context.Context, obj
 				return it, err
 			}
 			it.Interval = data
+		case "checkoutSessionId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("checkoutSessionId"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CheckoutSessionID = data
 		case "productId":
 			var err error
 
@@ -4403,6 +4522,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Query")
+		case "getPaymentLinkBySession":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getPaymentLinkBySession(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "getPaymentLink":
 			field := field
 
@@ -4897,7 +5038,7 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
-func (ec *executionContext) marshalNBillingHistory2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋpaymentLinkᚋgraphᚋmodelᚐBillingHistory(ctx context.Context, sel ast.SelectionSet, v *model.BillingHistory) graphql.Marshaler {
+func (ec *executionContext) marshalNBillingHistory2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋpaymentLinkᚋgraphᚋmodelᚐBillingHistory(ctx context.Context, sel ast.SelectionSet, v *model.BillingHistory) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -4967,16 +5108,16 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 	return res
 }
 
-func (ec *executionContext) unmarshalNPaymentIntent2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋpaymentLinkᚋgraphᚋmodelᚐPaymentIntent(ctx context.Context, v interface{}) (model.PaymentIntent, error) {
+func (ec *executionContext) unmarshalNPaymentIntent2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋpaymentLinkᚋgraphᚋmodelᚐPaymentIntent(ctx context.Context, v interface{}) (model.PaymentIntent, error) {
 	res, err := ec.unmarshalInputPaymentIntent(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNPaymentLinkDetails2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋpaymentLinkᚋgraphᚋmodelᚐPaymentLinkDetails(ctx context.Context, sel ast.SelectionSet, v model.PaymentLinkDetails) graphql.Marshaler {
+func (ec *executionContext) marshalNPaymentLinkDetails2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋpaymentLinkᚋgraphᚋmodelᚐPaymentLinkDetails(ctx context.Context, sel ast.SelectionSet, v model.PaymentLinkDetails) graphql.Marshaler {
 	return ec._PaymentLinkDetails(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNPaymentLinkDetails2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋpaymentLinkᚋgraphᚋmodelᚐPaymentLinkDetails(ctx context.Context, sel ast.SelectionSet, v *model.PaymentLinkDetails) graphql.Marshaler {
+func (ec *executionContext) marshalNPaymentLinkDetails2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋpaymentLinkᚋgraphᚋmodelᚐPaymentLinkDetails(ctx context.Context, sel ast.SelectionSet, v *model.PaymentLinkDetails) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -4986,17 +5127,17 @@ func (ec *executionContext) marshalNPaymentLinkDetails2ᚖgithubᚗcomᚋlucidco
 	return ec._PaymentLinkDetails(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNPaymentType2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋpaymentLinkᚋgraphᚋmodelᚐPaymentType(ctx context.Context, v interface{}) (model.PaymentType, error) {
+func (ec *executionContext) unmarshalNPaymentType2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋpaymentLinkᚋgraphᚋmodelᚐPaymentType(ctx context.Context, v interface{}) (model.PaymentType, error) {
 	var res model.PaymentType
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNPaymentType2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋpaymentLinkᚋgraphᚋmodelᚐPaymentType(ctx context.Context, sel ast.SelectionSet, v model.PaymentType) graphql.Marshaler {
+func (ec *executionContext) marshalNPaymentType2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋpaymentLinkᚋgraphᚋmodelᚐPaymentType(ctx context.Context, sel ast.SelectionSet, v model.PaymentType) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) unmarshalNRequestValidation2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋpaymentLinkᚋgraphᚋmodelᚐRequestValidation(ctx context.Context, v interface{}) (model.RequestValidation, error) {
+func (ec *executionContext) unmarshalNRequestValidation2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋpaymentLinkᚋgraphᚋmodelᚐRequestValidation(ctx context.Context, v interface{}) (model.RequestValidation, error) {
 	res, err := ec.unmarshalInputRequestValidation(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -5031,11 +5172,11 @@ func (ec *executionContext) marshalNTime2timeᚐTime(ctx context.Context, sel as
 	return res
 }
 
-func (ec *executionContext) marshalNTransactionData2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋpaymentLinkᚋgraphᚋmodelᚐTransactionData(ctx context.Context, sel ast.SelectionSet, v model.TransactionData) graphql.Marshaler {
+func (ec *executionContext) marshalNTransactionData2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋpaymentLinkᚋgraphᚋmodelᚐTransactionData(ctx context.Context, sel ast.SelectionSet, v model.TransactionData) graphql.Marshaler {
 	return ec._TransactionData(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNTransactionData2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋpaymentLinkᚋgraphᚋmodelᚐTransactionData(ctx context.Context, sel ast.SelectionSet, v *model.TransactionData) graphql.Marshaler {
+func (ec *executionContext) marshalNTransactionData2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋpaymentLinkᚋgraphᚋmodelᚐTransactionData(ctx context.Context, sel ast.SelectionSet, v *model.TransactionData) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -5298,7 +5439,7 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 	return res
 }
 
-func (ec *executionContext) marshalOBillingHistory2ᚕᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋpaymentLinkᚋgraphᚋmodelᚐBillingHistoryᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.BillingHistory) graphql.Marshaler {
+func (ec *executionContext) marshalOBillingHistory2ᚕᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋpaymentLinkᚋgraphᚋmodelᚐBillingHistoryᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.BillingHistory) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -5325,7 +5466,7 @@ func (ec *executionContext) marshalOBillingHistory2ᚕᚖgithubᚗcomᚋlucidcon
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNBillingHistory2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋgraphqlᚋpaymentLinkᚋgraphᚋmodelᚐBillingHistory(ctx, sel, v[i])
+			ret[i] = ec.marshalNBillingHistory2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋpaymentLinkᚋgraphᚋmodelᚐBillingHistory(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)

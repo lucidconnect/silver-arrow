@@ -4,6 +4,7 @@ type Mutation {
 }
 
 type Query {
+  getPaymentLinkBySession(id: String!): PaymentLinkDetails!
   getPaymentLink(id: String!): PaymentLinkDetails!
   getBillingHistory(walletAddress: String!, productId: String!): [BillingHistory!]
 }
@@ -29,13 +30,14 @@ type BillingHistory {
 }
 
 # payment data
-input PaymentIntent {
+input PaymentIntent {# attach the checkout session id
   type: PaymentType!
   email: String
   chain: Int!
   token: String!
   amount: Float!
   interval: Int!
+  checkoutSessionId: String
   productId: String!
   ownerAddress: String!
   walletAddress: String!
