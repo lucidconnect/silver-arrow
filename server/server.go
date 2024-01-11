@@ -102,6 +102,7 @@ func (s *Server) Routes() {
 	checkout.Use(s.CheckoutMiddleware())
 	checkout.Handle("/query", s.checkoutGraphqlHandler())
 	checkout.Handle("/graphiql", playground.Handler("/api/Graphql playground", "/checkout/query"))
+	checkout.HandleFunc("/sessions", s.CreateCheckoutSession()).Methods(http.MethodPost)
 
 	// wallet
 	wallet := s.router.PathPrefix("/wallet").Subrouter()
