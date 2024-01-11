@@ -91,8 +91,10 @@ type ComplexityRoot struct {
 	}
 
 	Product struct {
+		Amount           func(childComplexity int) int
 		Chain            func(childComplexity int) int
 		CreatedAt        func(childComplexity int) int
+		Interval         func(childComplexity int) int
 		MerchantID       func(childComplexity int) int
 		Mode             func(childComplexity int) int
 		Name             func(childComplexity int) int
@@ -415,6 +417,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.PaymentLinkDetails.Token(childComplexity), true
 
+	case "Product.amount":
+		if e.complexity.Product.Amount == nil {
+			break
+		}
+
+		return e.complexity.Product.Amount(childComplexity), true
+
 	case "Product.chain":
 		if e.complexity.Product.Chain == nil {
 			break
@@ -428,6 +437,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Product.CreatedAt(childComplexity), true
+
+	case "Product.interval":
+		if e.complexity.Product.Interval == nil {
+			break
+		}
+
+		return e.complexity.Product.Interval(childComplexity), true
 
 	case "Product.merchantId":
 		if e.complexity.Product.MerchantID == nil {
@@ -840,6 +856,8 @@ type Product {
   owner: String!
   chain: Int!
   token: String!
+  amount: Float!
+  interval: Int!
   productId: String!
   merchantId: String!
   receivingAddress: String!
@@ -1741,6 +1759,10 @@ func (ec *executionContext) fieldContext_Mutation_addProduct(ctx context.Context
 				return ec.fieldContext_Product_chain(ctx, field)
 			case "token":
 				return ec.fieldContext_Product_token(ctx, field)
+			case "amount":
+				return ec.fieldContext_Product_amount(ctx, field)
+			case "interval":
+				return ec.fieldContext_Product_interval(ctx, field)
 			case "productId":
 				return ec.fieldContext_Product_productId(ctx, field)
 			case "merchantId":
@@ -1818,6 +1840,10 @@ func (ec *executionContext) fieldContext_Mutation_updateProduct(ctx context.Cont
 				return ec.fieldContext_Product_chain(ctx, field)
 			case "token":
 				return ec.fieldContext_Product_token(ctx, field)
+			case "amount":
+				return ec.fieldContext_Product_amount(ctx, field)
+			case "interval":
+				return ec.fieldContext_Product_interval(ctx, field)
 			case "productId":
 				return ec.fieldContext_Product_productId(ctx, field)
 			case "merchantId":
@@ -2916,6 +2942,94 @@ func (ec *executionContext) fieldContext_Product_token(ctx context.Context, fiel
 	return fc, nil
 }
 
+func (ec *executionContext) _Product_amount(ctx context.Context, field graphql.CollectedField, obj *model.Product) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Product_amount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Amount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(float64)
+	fc.Result = res
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Product_amount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Product",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Product_interval(ctx context.Context, field graphql.CollectedField, obj *model.Product) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Product_interval(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Interval, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Product_interval(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Product",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Product_productId(ctx context.Context, field graphql.CollectedField, obj *model.Product) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Product_productId(ctx, field)
 	if err != nil {
@@ -3193,6 +3307,10 @@ func (ec *executionContext) fieldContext_Query_fetchOneProduct(ctx context.Conte
 				return ec.fieldContext_Product_chain(ctx, field)
 			case "token":
 				return ec.fieldContext_Product_token(ctx, field)
+			case "amount":
+				return ec.fieldContext_Product_amount(ctx, field)
+			case "interval":
+				return ec.fieldContext_Product_interval(ctx, field)
 			case "productId":
 				return ec.fieldContext_Product_productId(ctx, field)
 			case "merchantId":
@@ -3270,6 +3388,10 @@ func (ec *executionContext) fieldContext_Query_fetchProducts(ctx context.Context
 				return ec.fieldContext_Product_chain(ctx, field)
 			case "token":
 				return ec.fieldContext_Product_token(ctx, field)
+			case "amount":
+				return ec.fieldContext_Product_amount(ctx, field)
+			case "interval":
+				return ec.fieldContext_Product_interval(ctx, field)
 			case "productId":
 				return ec.fieldContext_Product_productId(ctx, field)
 			case "merchantId":
@@ -6611,6 +6733,16 @@ func (ec *executionContext) _Product(ctx context.Context, sel ast.SelectionSet, 
 			}
 		case "token":
 			out.Values[i] = ec._Product_token(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "amount":
+			out.Values[i] = ec._Product_amount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "interval":
+			out.Values[i] = ec._Product_interval(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

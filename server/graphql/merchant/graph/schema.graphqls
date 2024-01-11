@@ -114,6 +114,8 @@ type Product {
   owner: String!
   chain: Int!
   token: String!
+  amount: Float!
+  interval: Int!
   productId: String!
   merchantId: String!
   receivingAddress: String!

@@ -92,6 +92,8 @@ type Product struct {
 	Owner            string  `json:"owner"`
 	Chain            int     `json:"chain"`
 	Token            string  `json:"token"`
+	Amount           float64 `json:"amount"`
+	Interval         int     `json:"interval"`
 	ProductID        string  `json:"productId"`
 	MerchantID       string  `json:"merchantId"`
 	ReceivingAddress string  `json:"receivingAddress"`
