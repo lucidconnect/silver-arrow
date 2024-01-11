@@ -55,6 +55,8 @@ func (m *MerchantService) CreateProduct(input model.NewProduct) (*model.Product,
 		Chain:            input.Chain,
 		Owner:            input.Owner,
 		Token:            input.Token,
+		Interval:         int(interval),
+		Amount:           input.Amount,
 		ProductID:        productID.String(),
 		ReceivingAddress: input.ReceivingAddress,
 	}
@@ -75,11 +77,16 @@ func (m *MerchantService) FetchProductsByOwner(owner string) ([]*model.Product, 
 			log.Err(err).Send()
 			continue
 		}
+		interval := conversions.ParseNanoSecondsToDay(v.Interval)
+		amount := conversions.ParseTransferAmountFloat(v.Token, v.Amount)
 		product := &model.Product{
 			Name:             v.Name,
 			Mode:             model.Mode(v.Mode),
 			Owner:            v.Owner,
 			Chain:            int(v.Chain),
+			Token:            v.Token,
+			Interval:         int(interval),
+			Amount:           amount,
 			ProductID:        v.ID.String(),
 			MerchantID:       v.MerchantID.String(),
 			ReceivingAddress: v.DepositAddress,
@@ -117,7 +124,11 @@ func (m *MerchantService) FetchProduct(pid string) (*model.Product, error) {
 			return nil, errors.New("invalid product id")
 		}
 	}
-	v, _ := m.repository.FetchProduct(id)
+	v, err := m.repository.FetchProduct(id)
+	if err != nil {
+		log.Err(err).Caller().Send()
+		return nil, errors.New("product not found")
+	}
 
 	subscriptions, err := parseMerchantSubscriptions(v.Subscriptions)
 	if err != nil {
@@ -125,11 +136,16 @@ func (m *MerchantService) FetchProduct(pid string) (*model.Product, error) {
 		return nil, err
 	}
 	createdAt := v.CreatedAt.Format(time.RFC3339)
+	interval := conversions.ParseNanoSecondsToDay(v.Interval)
+	amount := conversions.ParseTransferAmountFloat(v.Token, v.Amount)
 	product := &model.Product{
 		Name:             v.Name,
 		Mode:             model.Mode(v.Mode),
 		Owner:            v.Owner,
 		Chain:            int(v.Chain),
+		Token:            v.Token,
+		Interval:         int(interval),
+		Amount:           amount,
 		ProductID:        pid,
 		MerchantID:       v.MerchantID.String(),
 		ReceivingAddress: v.DepositAddress,

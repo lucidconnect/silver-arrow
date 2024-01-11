@@ -127,9 +127,12 @@ func (m *MerchantService) UpdateMerchantWebhook(merchant models.Merchant, webHoo
 		}
 	} else {
 		endpoint, err := convoyClient.Endpoints.Create(&convoy.CreateEndpointRequest{
+			Name:         merchant.Name,
 			Secret:       merchant.WebhookToken,
 			Description:  merchant.Name + "'s default endpoint",
 			SupportEmail: merchant.Email,
+			URL:          webHookUrl,
+			OwnerID:      merchant.ID.String(),
 		}, &convoy.EndpointQueryParam{
 			GroupID: os.Getenv("CONVOY_PROJECT_ID"),
 		})
