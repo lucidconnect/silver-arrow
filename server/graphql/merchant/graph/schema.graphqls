@@ -47,6 +47,7 @@ type Merchant {
   email: String!
   publicKey: String!
   webHookUrl: String!
+  webhookToken: String!
   accessKey: MerchantAccessKey!
 }
 

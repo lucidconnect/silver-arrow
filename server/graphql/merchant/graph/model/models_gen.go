@@ -9,12 +9,13 @@ import (
 )
 
 type Merchant struct {
-	ID         string             `json:"id"`
-	Name       string             `json:"name"`
-	Email      string             `json:"email"`
-	PublicKey  string             `json:"publicKey"`
-	WebHookURL string             `json:"webHookUrl"`
-	AccessKey  *MerchantAccessKey `json:"accessKey"`
+	ID           string             `json:"id"`
+	Name         string             `json:"name"`
+	Email        string             `json:"email"`
+	PublicKey    string             `json:"publicKey"`
+	WebHookURL   string             `json:"webHookUrl"`
+	WebhookToken string             `json:"webhookToken"`
+	AccessKey    *MerchantAccessKey `json:"accessKey"`
 }
 
 type MerchantAccessKey struct {
