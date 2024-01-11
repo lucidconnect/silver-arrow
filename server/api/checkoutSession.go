@@ -1,28 +1,13 @@
 package api
 
 type NewCheckoutSession struct {
-	Amount            int64  `json:"amount"` // Amount intended to be collected by this PaymentIntent. A positive integer representing how much to charge in the smallest currency unit
-	Chain             int64  `json:"chain"`
-	Token             string `json:"token"` // Token intended for this Payment intent e.g USDC
 	Customer          string `json:"customer"`
-	Interval          int64  `json:"interval"`
 	ProductId         string `json:"product_id"`
-	ChargeLater       bool   `json:"charge_later"`
-	PaymentMode       Mode   `json:"payment_type"`
-	ClientReferenceId string `json:"client_reference_id"`
+	CallbackUrl       string `json:"callback_url"`
 }
 
-type CheckoutSessiontResponse struct {
-	Id          string `json:"id"`
-	Amount      int64  `json:"amount"`
-	Chain       int64  `json:"chain"`
-	Token       string `json:"token"` // Token intended for this Payment intent e.g USDC
-	Customer    string `json:"customer"`
-	Interval    int64  `json:"interval"`
-	ProductId   string `json:"product_id"`
-	ChargeLater bool   `json:"charge_later"`
-	PaymentMode string `json:"payment_type"`
-	Mode        string `json:"mode"`
+type CheckoutSessionResponse struct {
+	SessionId   string `json:"session_id"`
 }
 
 type Mode string

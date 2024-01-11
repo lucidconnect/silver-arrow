@@ -27,7 +27,7 @@ func SetupDatabase(dbconn *sql.DB) (*gorm.DB, error) {
 	}
 
 	// ...
-	if err = db.AutoMigrate(models.PaymentLink{}, models.MerchantAccessKey{}, models.Payment{}, models.Wallet{}, models.Merchant{}, models.Key{}, models.Subscription{}, models.Product{}); err != nil {
+	if err = db.AutoMigrate(models.CheckoutSession{},models.PaymentLink{}, models.MerchantAccessKey{}, models.Payment{}, models.Wallet{}, models.Merchant{}, models.Key{}, models.Subscription{}, models.Product{}); err != nil {
 		log.Fatal().Err(err).Msg("Error migrating database models")
 	}
 	// db.Model(&models.Subscription{}).
@@ -345,6 +345,10 @@ func (p *PostgresDB) UpdateWebhookEvent(webhookEvent *models.WebhookEvent) error
 
 func (p *PostgresDB) CreateCheckoutSession(session *models.CheckoutSession) error {
 	return p.Db.Create(session).Error
+}
+
+func (p *PostgresDB) UpdateCheckoutSession(session *models.CheckoutSession) error {
+	return p.Db.Save(session).Error
 }
 
 func (p *PostgresDB) FetchCheckoutSession(id uuid.UUID) (*models.CheckoutSession, error) {

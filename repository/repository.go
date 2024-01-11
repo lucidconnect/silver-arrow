@@ -56,6 +56,7 @@ type Database interface {
 	// Checkout Sesison
 	CreateCheckoutSession(*models.CheckoutSession) error
 	FetchCheckoutSession(id uuid.UUID) (*models.CheckoutSession, error)
+	UpdateCheckoutSession(*models.CheckoutSession) error
 
 	// PaymentLink
 	CreatePaymentLink(*models.PaymentLink) error
