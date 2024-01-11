@@ -11,9 +11,9 @@ import (
 	convoy "github.com/frain-dev/convoy-go"
 	"github.com/google/uuid"
 	"github.com/lucidconnect/silver-arrow/auth"
-	"github.com/lucidconnect/silver-arrow/server/graphql/merchant/graph/model"
 	"github.com/lucidconnect/silver-arrow/repository"
 	"github.com/lucidconnect/silver-arrow/repository/models"
+	"github.com/lucidconnect/silver-arrow/server/graphql/merchant/graph/model"
 	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 )
@@ -86,6 +86,7 @@ func (m *MerchantService) CreateMerchant(input model.NewMerchant) (*model.Mercha
 		Email:        input.Email,
 		OwnerAddress: input.Owner,
 		WebhookToken: token,
+		CreatedAt:    time.Now(),
 		// ConvoyEndpointID: endpoint.UID,
 		// TestPublicKey: key.PublicKey,
 	}
@@ -110,18 +111,45 @@ func (m *MerchantService) UpdateMerchantWebhook(merchant models.Merchant, webHoo
 		ProjectID: os.Getenv("CONVOY_PROJECT_ID"),
 	})
 
-	_, err := convoyClient.Endpoints.Update(merchant.ConvoyEndpointID, &convoy.CreateEndpointRequest{
-		Secret:       merchant.WebhookToken,
-		URL:          webHookUrl,
-		Description:  merchant.Name + "'s default endpoint",
-		SupportEmail: merchant.Email,
-	}, &convoy.EndpointQueryParam{
-		GroupID: os.Getenv("CONVOY_PROJECT_ID"),
-	})
+	if merchant.ConvoyEndpointID != "" {
+		_, err := convoyClient.Endpoints.Update(merchant.ConvoyEndpointID, &convoy.CreateEndpointRequest{
+			Secret:       merchant.WebhookToken,
+			URL:          webHookUrl,
+			Description:  merchant.Name + "'s default endpoint",
+			SupportEmail: merchant.Email,
+		}, &convoy.EndpointQueryParam{
+			GroupID: os.Getenv("CONVOY_PROJECT_ID"),
+		})
 
-	if err != nil {
-		log.Err(err).Msg("failed to update app endpoint")
-		return nil, errors.New("failed to update merchant's endpoint on Convoy")
+		if err != nil {
+			log.Err(err).Msg("failed to update app endpoint")
+			return nil, errors.New("failed to update merchant's endpoint on Convoy")
+		}
+	} else {
+		endpoint, err := convoyClient.Endpoints.Create(&convoy.CreateEndpointRequest{
+			Secret:       merchant.WebhookToken,
+			Description:  merchant.Name + "'s default endpoint",
+			SupportEmail: merchant.Email,
+		}, &convoy.EndpointQueryParam{
+			GroupID: os.Getenv("CONVOY_PROJECT_ID"),
+		})
+
+		if err != nil {
+			log.Err(err).Msg("failed to create app endpoint")
+			return nil, errors.New("failed to create merchant's endpoint on Convoy")
+		}
+
+		_, err = convoyClient.Subscriptions.Create(&convoy.CreateSubscriptionRequest{
+			Name:       merchant.Name + "'s default subscription",
+			EndpointID: endpoint.UID,
+			FilterConfig: &convoy.FilterConfiguration{
+				EventTypes: []string{"*"},
+			},
+		})
+
+		if err != nil {
+			log.Err(err).Msgf("failed to create convoy subscription for merchant with convoy endpoint id %v.", endpoint.UID)
+		}
 	}
 
 	if err := m.repository.UpdateMerchantWebhookUrl(merchant.ID, webHookUrl); err != nil {
@@ -129,9 +157,10 @@ func (m *MerchantService) UpdateMerchantWebhook(merchant models.Merchant, webHoo
 		return nil, errors.New("updating merchant webhook url failed")
 	}
 	return &model.Merchant{
-		ID:         merchant.ID.String(),
-		Name:       merchant.Name,
-		WebHookURL: webHookUrl,
+		ID:           merchant.ID.String(),
+		Name:         merchant.Name,
+		WebHookURL:   webHookUrl,
+		WebhookToken: merchant.WebhookToken,
 	}, nil
 }
 
