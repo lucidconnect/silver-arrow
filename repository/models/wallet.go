@@ -30,17 +30,3 @@ type User struct {
 	ClientUniqueID string
 	WalletParams   []Wallet
 }
-
-type CheckoutSession struct {
-	ID                uuid.UUID `gorm:"primaryKey"`
-	Token             string
-	Chain             int64
-	Amount            int64
-	Customer          string
-	Interval          int64
-	ProductID         uuid.UUID
-	MerchantID        uuid.UUID
-	PaymentType       string
-	ChargeLater       bool
-	Subscription      Subscription
-}

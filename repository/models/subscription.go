@@ -64,6 +64,9 @@ type Payment struct {
 	SubscriptionPublicKey string
 	CreatedAt             time.Time
 	WebhookAcknowledgedAt time.Time
+	Customer              string
+	CheckoutSessionID     uuid.UUID
+	MerchantID            uuid.UUID
 }
 
 func (p *Payment) BeforeCreate(tx *gorm.DB) (err error) {
