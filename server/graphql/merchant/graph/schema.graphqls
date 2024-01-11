@@ -47,6 +47,7 @@ type Merchant {
   email: String!
   publicKey: String!
   webHookUrl: String!
+  webhookToken: String!
   accessKey: MerchantAccessKey!
 }
 
@@ -114,6 +115,8 @@ type Product {
   owner: String!
   chain: Int!
   token: String!
+  amount: Float!
+  interval: Int!
   productId: String!
   merchantId: String!
   receivingAddress: String!
