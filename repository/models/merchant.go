@@ -36,6 +36,7 @@ type Merchant struct {
 	ConvoyEndpointID   string
 	MerchantAccessKeys []MerchantAccessKey
 	PaymentLinks       []PaymentLink
+	CreatedAt          time.Time
 }
 
 type MerchantAccessKey struct {
