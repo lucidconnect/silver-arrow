@@ -15,6 +15,18 @@ type Account struct {
 	Signer  *string `json:"signer,omitempty"`
 }
 
+type CheckoutSession struct {
+	ID          string      `json:"id"`
+	Chain       int         `json:"chain"`
+	Token       string      `json:"token"`
+	Amount      int         `json:"amount"`
+	Interval    int         `json:"interval"`
+	ProductID   string      `json:"productId"`
+	MerchantID  string      `json:"merchantId"`
+	PaymentType PaymentType `json:"paymentType"`
+	ChargeLater bool        `json:"chargeLater"`
+}
+
 type NewTransferRequest struct {
 	Chain  int     `json:"chain"`
 	Token  string  `json:"token"`

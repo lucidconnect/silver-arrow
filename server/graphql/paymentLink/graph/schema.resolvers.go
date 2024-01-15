@@ -12,6 +12,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/google/uuid"
 	"github.com/lucidconnect/silver-arrow/gqlerror"
 	"github.com/lucidconnect/silver-arrow/server/graphql/paymentLink/graph/generated"
 	"github.com/lucidconnect/silver-arrow/server/graphql/paymentLink/graph/model"
@@ -65,18 +66,24 @@ func (r *mutationResolver) CreatePaymentIntent(ctx context.Context, input model.
 		if input.Email != nil {
 			email = *input.Email
 		}
+		sessionId, err := uuid.Parse(*input.CheckoutSessionID)
+		if err != nil {
+			log.Err(err).Caller().Send()
+			return "", gqlerror.ErrToGraphQLError(gqlerror.MerchantDataInvalid, "invalid session id", ctx)
+		}
 		newSubscription := wallet.NewSubscription{
-			Chain:          input.Chain,
-			Token:          input.Token,
-			Email:          email,
-			Amount:         input.Amount,
-			Interval:       input.Interval,
-			ProductID:      product.ID,
-			ProductName:    product.Name,
-			OwnerAddress:   input.OwnerAddress,
-			WalletAddress:  input.WalletAddress,
-			DepositAddress: product.DepositAddress,
-			NextChargeDate: &nextCharge,
+			Chain:             input.Chain,
+			Token:             input.Token,
+			Email:             email,
+			Amount:            input.Amount,
+			Interval:          input.Interval,
+			ProductID:         product.ID,
+			CheckoutSessionID: sessionId,
+			ProductName:       product.Name,
+			OwnerAddress:      input.OwnerAddress,
+			WalletAddress:     input.WalletAddress,
+			DepositAddress:    product.DepositAddress,
+			NextChargeDate:    &nextCharge,
 		}
 
 		validationData, userOp, err := walletService.AddSubscription(merchantId, newSubscription, usePaymaster, common.Big0, int64(input.Chain))
@@ -140,6 +147,43 @@ func (r *mutationResolver) ValidatePaymentIntent(ctx context.Context, input mode
 		TransactionExplorer: subData.TransactionExplorer,
 	}
 	return result, nil
+}
+
+// GetPaymentLinkBySession is the resolver for the getPaymentLinkBySession field.
+func (r *queryResolver) GetPaymentLinkBySession(ctx context.Context, id string) (*model.PaymentLinkDetails, error) {
+	merchantService := merchant.NewMerchantService(r.Database)
+
+	sid, err := uuid.Parse(id)
+	if err != nil {
+		return nil, gqlerror.ErrToGraphQLError(gqlerror.InternalError, err.Error(), ctx)
+	}
+	checkoutSession, err := r.Database.FetchCheckoutSession(sid)
+	if err != nil {
+		return nil, gqlerror.ErrToGraphQLError(gqlerror.InternalError, err.Error(), ctx)
+	}
+
+	paymentLinkId := checkoutSession.PaymentLinkID.String()
+	paymentLinkQuery := merchant.PaymentLinkQueryParams{
+		PaymentLinkId: &paymentLinkId,
+	}
+	pd, err := merchantService.FetchPaymentLink(paymentLinkQuery)
+	if err != nil {
+		return nil, gqlerror.ErrToGraphQLError(gqlerror.InternalError, err.Error(), ctx)
+	}
+	paymentLinkDetails := &model.PaymentLinkDetails{
+		ID:           pd.ID,
+		Mode:         pd.Mode,
+		ProductID:    pd.ProductID,
+		MerchantID:   pd.MerchantID,
+		Amount:       pd.Amount,
+		Token:        pd.Token,
+		Chain:        pd.Chain,
+		ProductName:  pd.ProductName,
+		MerchantName: pd.MerchantName,
+		Interval:     pd.Interval,
+		CallbackURL:  pd.CallbackURL,
+	}
+	return paymentLinkDetails, nil
 }
 
 // GetPaymentLink is the resolver for the getPaymentLink field.

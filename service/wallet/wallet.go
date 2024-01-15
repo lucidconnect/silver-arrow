@@ -149,6 +149,12 @@ func (ws *WalletService) ValidateSubscription(userop map[string]any, chain int64
 		return nil, err
 	}
 
+	session, err := ws.database.FetchCheckoutSession(result.CheckoutSessionID)
+	if err != nil {
+		log.Err(err).Caller().Send()
+		return nil, err
+	}
+
 	productId := result.ProductID.String()
 	if err != nil {
 		log.Err(err).Msg("encoding product id failed")
@@ -216,6 +222,9 @@ func (ws *WalletService) ValidateSubscription(userop map[string]any, chain int64
 			SubscriptionID:        result.ID,
 			SubscriptionPublicKey: result.Key.PublicKey,
 			TokenAddress:          result.TokenAddress,
+			Customer:              session.Customer,
+			CheckoutSessionID:     session.ID,
+			MerchantID:            session.MerchantID,
 		}
 
 		userop, useropHash, err := ws.CreatePayment(payment)
@@ -252,7 +261,7 @@ func (ws *WalletService) ValidateSubscription(userop map[string]any, chain int64
 	} else {
 		subData.TransactionExplorer = blockExplorerTx
 	}
-
+	// I should trigger a webhook somewhere here
 	return subData, nil
 }
 
@@ -260,6 +269,12 @@ func (ws *WalletService) AddSubscription(merchantId uuid.UUID, input NewSubscrip
 	var nextChargeAt time.Time
 	var initCode []byte
 	var nonce, amount *big.Int
+
+	_, err := ws.database.FetchCheckoutSession(input.CheckoutSessionID)
+	if err != nil {
+		log.Err(err).Caller().Msg("invalid session id")
+		return nil, nil, errors.New("invalid sesison id")
+	}
 
 	// check if a subscription already exists for this product
 	pid := input.ProductID
@@ -364,6 +379,7 @@ func (ws *WalletService) AddSubscription(merchantId uuid.UUID, input NewSubscrip
 		MerchantId:             merchantId.String(),
 		ProductID:              input.ProductID,
 		ProductName:            product.Name,
+		CheckoutSessionID:      input.CheckoutSessionID,
 		MerchantDepositAddress: product.DepositAddress,
 		NextChargeAt:           nextChargeAt,
 		ExpiresAt:              nextChargeAt,

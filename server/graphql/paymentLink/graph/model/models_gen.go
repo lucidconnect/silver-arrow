@@ -16,16 +16,17 @@ type BillingHistory struct {
 }
 
 type PaymentIntent struct {
-	Type           PaymentType `json:"type"`
-	Email          *string     `json:"email,omitempty"`
-	Chain          int         `json:"chain"`
-	Token          string      `json:"token"`
-	Amount         float64     `json:"amount"`
-	Interval       int         `json:"interval"`
-	ProductID      string      `json:"productId"`
-	OwnerAddress   string      `json:"ownerAddress"`
-	WalletAddress  string      `json:"walletAddress"`
-	FirstChargeNow bool        `json:"firstChargeNow"`
+	Type              PaymentType `json:"type"`
+	Email             *string     `json:"email,omitempty"`
+	Chain             int         `json:"chain"`
+	Token             string      `json:"token"`
+	Amount            float64     `json:"amount"`
+	Interval          int         `json:"interval"`
+	CheckoutSessionID *string     `json:"checkoutSessionId,omitempty"`
+	ProductID         string      `json:"productId"`
+	OwnerAddress      string      `json:"ownerAddress"`
+	WalletAddress     string      `json:"walletAddress"`
+	FirstChargeNow    bool        `json:"firstChargeNow"`
 }
 
 type PaymentLinkDetails struct {

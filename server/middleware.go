@@ -150,7 +150,7 @@ func (s *Server) CheckoutMiddleware() func(http.Handler) http.Handler {
 			// attach the mode to the context
 			// attach the merchant to the context
 			// attach the public key to the context
-
+			
 			merchant, err := s.database.FetchMerchantByPublicKey(authorizationValue)
 			if err != nil {
 				log.Err(err).Send()
