@@ -53,6 +53,11 @@ type Database interface {
 	CreateWebhookEvent(*models.WebhookEvent) error
 	UpdateWebhookEvent(*models.WebhookEvent) error
 
+	// Checkout Sesison
+	CreateCheckoutSession(*models.CheckoutSession) error
+	FetchCheckoutSession(id uuid.UUID) (*models.CheckoutSession, error)
+	UpdateCheckoutSession(*models.CheckoutSession) error
+
 	// PaymentLink
 	CreatePaymentLink(*models.PaymentLink) error
 	FetchPaymentLink(id uuid.UUID) (*models.PaymentLink, error)

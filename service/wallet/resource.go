@@ -31,17 +31,18 @@ type Account struct {
 }
 
 type NewSubscription struct {
-	Chain          int
-	Email          string
-	Token          string
-	Amount         float64
-	Interval       int
-	ProductID      uuid.UUID
-	ProductName    string
-	OwnerAddress   string
-	WalletAddress  string
-	DepositAddress string
-	NextChargeDate *time.Time
+	Chain             int
+	Email             string
+	Token             string
+	Amount            float64
+	Interval          int
+	ProductID         uuid.UUID
+	CheckoutSessionID uuid.UUID
+	ProductName       string
+	OwnerAddress      string
+	WalletAddress     string
+	DepositAddress    string
+	NextChargeDate    *time.Time
 }
 
 type PaymentRequestValidation struct {
