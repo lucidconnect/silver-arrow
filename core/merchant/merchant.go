@@ -77,11 +77,6 @@ func (m *MerchantService) CreateMerchant(input model.NewMerchant) (*model.Mercha
 	// 	log.Err(err).Msgf("failed to create convoy subscription for merchant with convoy endpoint id %v.", endpoint.UID)
 	// }
 
-	key, err := m.CreateAccessKeys(input.Owner, model.ModeTest.String())
-	if err != nil {
-		log.Err(err).Msg("creating merchant test keys failed")
-		return nil, errors.New("creating merchant test keys failed")
-	}
 	merchant := &models.Merchant{
 		ID:           id,
 		Name:         input.Name,
@@ -96,6 +91,12 @@ func (m *MerchantService) CreateMerchant(input model.NewMerchant) (*model.Mercha
 	if err := m.repository.AddMerchant(merchant); err != nil {
 		log.Err(err).Msg("creating merchant failed")
 		return nil, errors.New("merchant creation failed")
+	}
+
+	key, err := m.CreateAccessKeys(input.Owner, model.ModeTest.String())
+	if err != nil {
+		log.Err(err).Msg("creating merchant test keys failed")
+		return nil, errors.New("creating merchant test keys failed")
 	}
 
 	merchantObj := &model.Merchant{
