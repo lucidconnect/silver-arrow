@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/lucidconnect/silver-arrow/repository/models"
@@ -35,7 +36,9 @@ func (s *Server) CreateCheckoutSession() http.HandlerFunc {
 			writeJsonResponse(w, response)
 			return
 		}
-		merchantID, err := uuid.Parse("merchantId")
+		auth := strings.Split(r.Header.Get("Authorization"), " ")[1]
+		merchant, err := s.database.FetchMerchantByPublicKey(auth)
+		// merchantID, err := uuid.Parse("merchantId")
 		if err != nil {
 			log.Err(err).Msg("decoding request failed")
 			response = &httpResponse{
@@ -45,6 +48,7 @@ func (s *Server) CreateCheckoutSession() http.HandlerFunc {
 			writeJsonResponse(w, response)
 			return
 		}
+		merchantID := merchant.ID
 
 		paymentLink, err := s.database.FetchPaymentLinkByProduct(productId)
 		if err != nil {
