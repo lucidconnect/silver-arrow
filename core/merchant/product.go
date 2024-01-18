@@ -19,13 +19,13 @@ import (
 
 // ProductId is base64 encoded
 
-func (m *MerchantService) CreateProduct(input model.NewProduct) (*model.Product, error) {
+func (m *MerchantService) CreateProduct(merchant uuid.UUID, input model.NewProduct) (*model.Product, error) {
 	productID := uuid.New()
 
-	merchant, err := m.repository.FetchMerchantByAddress(input.Owner)
-	if err != nil {
-		return nil, err
-	}
+	// merchant, err := m.repository.FetchMerchantByAddress(input.Owner)
+	// if err != nil {
+	// 	return nil, err
+	// }
 	chainId := int64(input.Chain)
 	amount := conversions.ParseFloatAmountToInt(input.Token, input.Amount)
 	interval := conversions.ParseDaysToNanoSeconds(int64(input.Interval))
@@ -37,7 +37,7 @@ func (m *MerchantService) CreateProduct(input model.NewProduct) (*model.Product,
 		Owner:          input.Owner,
 		Token:          input.Token,
 		DepositAddress: input.ReceivingAddress,
-		MerchantID:     merchant.ID,
+		MerchantID:     merchant,
 		CreatedAt:      time.Now(),
 		Mode:           model.ModeTest.String(),
 		Amount:         amount,

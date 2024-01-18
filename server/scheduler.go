@@ -10,8 +10,8 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/lucidconnect/silver-arrow/core/wallet"
 	"github.com/lucidconnect/silver-arrow/repository/models"
-	"github.com/lucidconnect/silver-arrow/service/wallet"
 	"github.com/pkg/errors"
 )
 

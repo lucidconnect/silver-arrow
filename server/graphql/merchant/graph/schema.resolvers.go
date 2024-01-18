@@ -11,10 +11,10 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/lucidconnect/silver-arrow/conversions"
+	"github.com/lucidconnect/silver-arrow/core/merchant"
 	"github.com/lucidconnect/silver-arrow/gqlerror"
 	"github.com/lucidconnect/silver-arrow/server/graphql/merchant/graph/generated"
 	"github.com/lucidconnect/silver-arrow/server/graphql/merchant/graph/model"
-	"github.com/lucidconnect/silver-arrow/service/merchant"
 	"github.com/rs/zerolog/log"
 )
 
@@ -29,7 +29,8 @@ func (r *mutationResolver) AddProduct(ctx context.Context, input model.NewProduc
 	if merchant == nil {
 		return nil, errors.New("merchant does not exist")
 	}
-	result, err := merchantService.CreateProduct(input)
+	// use merchant id to create product
+	result, err := merchantService.CreateProduct(merchant.ID, input)
 	if err != nil {
 		return nil, err
 	}
