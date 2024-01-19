@@ -27,13 +27,17 @@ func (m *MerchantService) CreatePaymentLink(input model.NewPaymentLink) (string,
 		log.Err(err).Msgf("failed to fetch product with id %v", productId)
 		return "", err
 	}
-
+	price, err := uuid.Parse(input.PriceID)
+	if err != nil {
+		log.Err(err).Msg("invalid price id")
+		return "", err
+	}
 	newPaymentLink := &models.PaymentLink{
 		ID:          id,
 		MerchantID:  product.MerchantID,
 		CallbackURL: input.CallbackURL,
 		ProductID:   productId,
-		Product:     *product,
+		PriceID:     price,
 		CreatedAt:   time.Now(),
 	}
 
@@ -72,21 +76,22 @@ func (m *MerchantService) FetchPaymentLink(queryParam PaymentLinkQueryParams) (*
 		}
 	}
 
-	interval := conversions.ParseNanoSecondsToDay(paymentLink.Product.Interval)
-	amount := conversions.ParseTransferAmountFloat(paymentLink.Product.Token, paymentLink.Product.Amount)
+	interval := conversions.ParseNanoSecondsToDay(paymentLink.Price.IntervalCount)
+	amount := conversions.ParseTransferAmountFloat(paymentLink.Price.Token, paymentLink.Price.Amount)
 
 	paymentLinkDetalais := &model.PaymentLinkDetails{
-		ID:           paymentLink.ID.String(),
-		Mode:         paymentLink.Product.Mode,
-		ProductID:    paymentLink.ProductID.String(),
-		MerchantID:   paymentLink.MerchantID.String(),
-		MerchantName: paymentLink.MerchantName,
-		ProductName:  paymentLink.Product.Name,
-		Interval:     int(interval),
-		CallbackURL:  paymentLink.CallbackURL,
-		Amount:       amount,
-		Token:        paymentLink.Product.Token,
-		Chain:        int(paymentLink.Product.Chain),
+		ID:            paymentLink.ID.String(),
+		Mode:          paymentLink.Product.Mode,
+		ProductID:     paymentLink.ProductID.String(),
+		MerchantID:    paymentLink.MerchantID.String(),
+		MerchantName:  paymentLink.MerchantName,
+		ProductName:   paymentLink.Product.Name,
+		IntervalCount: int(interval),
+		Interval:      paymentLink.Price.Interval,
+		CallbackURL:   paymentLink.CallbackURL,
+		Amount:        amount,
+		Token:         paymentLink.Price.Token,
+		Chain:         int(paymentLink.Product.Chain),
 	}
 
 	return paymentLinkDetalais, nil

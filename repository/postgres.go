@@ -366,7 +366,7 @@ func (p *PostgresDB) CreatePaymentLink(paymentLink *models.PaymentLink) error {
 
 func (p *PostgresDB) FetchPaymentLink(id uuid.UUID) (*models.PaymentLink, error) {
 	var paymentLink *models.PaymentLink
-	if err := p.Db.Where("id = ?", id).Preload("Product").First(&paymentLink).Error; err != nil {
+	if err := p.Db.Where("id = ?", id).Preload("Product").Preload("Price").First(&paymentLink).Error; err != nil {
 		return nil, err
 	}
 	return paymentLink, nil
@@ -374,7 +374,7 @@ func (p *PostgresDB) FetchPaymentLink(id uuid.UUID) (*models.PaymentLink, error)
 
 func (p *PostgresDB) FetchPaymentLinkByProduct(productId uuid.UUID) (*models.PaymentLink, error) {
 	var paymentLink *models.PaymentLink
-	if err := p.Db.Where("product_id = ?", productId).Preload("Product").First(&paymentLink).Error; err != nil {
+	if err := p.Db.Where("product_id = ?", productId).Preload("Product").Preload("Price").First(&paymentLink).Error; err != nil {
 		return nil, err
 	}
 	return paymentLink, nil
@@ -382,7 +382,7 @@ func (p *PostgresDB) FetchPaymentLinkByProduct(productId uuid.UUID) (*models.Pay
 
 func (p *PostgresDB) FetchPaymentLinkByMerchant(merchantId uuid.UUID) ([]models.PaymentLink, error) {
 	var paymentLink []models.PaymentLink
-	if err := p.Db.Where("merchant_id = ?", merchantId).Preload("Product").Find(&paymentLink).Error; err != nil {
+	if err := p.Db.Where("merchant_id = ?", merchantId).Preload("Product").Preload("Price").Find(&paymentLink).Error; err != nil {
 		return nil, err
 	}
 	return paymentLink, nil
