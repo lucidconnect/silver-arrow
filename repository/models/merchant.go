@@ -7,33 +7,24 @@ import (
 	"gorm.io/gorm"
 )
 
-type Product struct {
-	ID               uuid.UUID `gorm:"primaryKey"`
-	Name             string    `gorm:"unique"`
-	Chain            int64     `gorm:"not null"`
-	Owner            string    `gorm:"index;not null"`
-	Token            string    `gorm:"not null"`
-	DepositAddress   string    `gorm:"not null"`
-	MerchantID       uuid.UUID
-	CreatedAt        time.Time
-	Subscriptions    []Subscription
-	CheckoutSessions []CheckoutSession
-	Payments         []Payment
-	Mode             string
-	Amount         int64
-	Interval       int64
-	InstantCharge  bool
-	PaymentType    string
+// Each product created will have a deposit wallet attached to it
+// A deposit wallet can be used for more than one product
+// A product can only have one deposit wallet attached to it
+type DepositWallet struct {
+	ID            uuid.UUID `gorm:"primaryKey"`
+	MerchantID    uuid.UUID
+	Merchant      Merchant
+	WalletAddress string
 }
 
 type Merchant struct {
-	ID                 uuid.UUID `gorm:"primaryKey"`
-	Name               string
-	Email              string
-	WebhookUrl         string
-	WebhookToken       string
-	OwnerAddress       string `gorm:"unique"` // web3 wallet that owns this account
-	Products           []Product
+	ID           uuid.UUID `gorm:"primaryKey"`
+	Name         string
+	Email        string
+	WebhookUrl   string
+	WebhookToken string
+	OwnerAddress string `gorm:"unique"` // web3 wallet that owns this account
+	// Products           []Product
 	ConvoyEndpointID   string
 	MerchantAccessKeys []MerchantAccessKey
 	PaymentLinks       []PaymentLink

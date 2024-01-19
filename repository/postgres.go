@@ -27,7 +27,7 @@ func SetupDatabase(dbconn *sql.DB) (*gorm.DB, error) {
 	}
 
 	// ...
-	if err = db.AutoMigrate(models.CheckoutSession{},models.PaymentLink{}, models.MerchantAccessKey{}, models.Payment{}, models.Wallet{}, models.Merchant{}, models.Key{}, models.Subscription{}, models.Product{}); err != nil {
+	if err = db.AutoMigrate(models.Price{}, models.DepositWallet{}, models.CheckoutSession{}, models.PaymentLink{}, models.MerchantAccessKey{}, models.Payment{}, models.Wallet{}, models.Merchant{}, models.Key{}, models.Subscription{}, models.Product{}); err != nil {
 		log.Fatal().Err(err).Msg("Error migrating database models")
 	}
 	// db.Model(&models.Subscription{}).
@@ -391,6 +391,35 @@ func (p *PostgresDB) FetchPaymentLinkByMerchant(merchantId uuid.UUID) ([]models.
 func (p *PostgresDB) DeletePaymentLink(paymentLinkId uuid.UUID) error {
 	var paymentLink *models.PaymentLink
 	if err := p.Db.Where("id = ?", paymentLinkId).Delete(&paymentLink).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+// Prices
+func (p *PostgresDB) CreatePrice(price *models.Price) error {
+	return p.Db.Create(price).Error
+}
+
+func (p *PostgresDB) FetchPrice(id uuid.UUID) (*models.Price, error) {
+	var price *models.Price
+	if err := p.Db.Where("id = ?", id).First(&price).Error; err != nil {
+		return nil, err
+	}
+	return price, nil
+}
+
+func (p *PostgresDB) FetchAllPrices(merchantId uuid.UUID) ([]models.Price, error) {
+	var prices []models.Price
+	if err := p.Db.Where("merchant_id = ?", merchantId).Find(&prices).Error; err != nil {
+		return nil, err
+	}
+	return prices, nil
+}
+func (p *PostgresDB) UpdatePrice(priceId uuid.UUID, update map[string]interface{}) error {
+	var price *models.Price
+
+	if err := p.Db.Model(&price).Where("id = ?", priceId).Updates(update).Error; err != nil {
 		return err
 	}
 	return nil
