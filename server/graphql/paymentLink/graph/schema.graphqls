@@ -4,8 +4,8 @@ type Mutation {
 }
 
 type Query {
-  getPaymentLinkBySession(id: String!): PaymentLinkDetails!
-  getPaymentLink(id: String!): PaymentLinkDetails!
+  resolvePaymentLinkBySession(id: String!): PaymentLinkDetails!
+  resolvePaymentLink(id: String!): PaymentLinkDetails!
   getBillingHistory(walletAddress: String!, productId: String!): [BillingHistory!]
 }
 

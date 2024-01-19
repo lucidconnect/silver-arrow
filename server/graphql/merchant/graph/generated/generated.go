@@ -91,15 +91,28 @@ type ComplexityRoot struct {
 		Token        func(childComplexity int) int
 	}
 
+	PriceData struct {
+		Active        func(childComplexity int) int
+		Amount        func(childComplexity int) int
+		ID            func(childComplexity int) int
+		Interval      func(childComplexity int) int
+		IntervalCount func(childComplexity int) int
+		ProductID     func(childComplexity int) int
+		Token         func(childComplexity int) int
+		TrialPeriod   func(childComplexity int) int
+		Type          func(childComplexity int) int
+	}
+
 	Product struct {
-		Amount           func(childComplexity int) int
 		Chain            func(childComplexity int) int
 		CreatedAt        func(childComplexity int) int
+		DefaultPrice     func(childComplexity int) int
 		Interval         func(childComplexity int) int
 		MerchantID       func(childComplexity int) int
 		Mode             func(childComplexity int) int
 		Name             func(childComplexity int) int
 		Owner            func(childComplexity int) int
+		PriceData        func(childComplexity int) int
 		ProductID        func(childComplexity int) int
 		ReceivingAddress func(childComplexity int) int
 		Subscriptions    func(childComplexity int) int
@@ -110,7 +123,7 @@ type ComplexityRoot struct {
 		FetchMerchantInfo       func(childComplexity int, owner string) int
 		FetchMerchantKey        func(childComplexity int, input model.MerchantAccessKeyQuery) int
 		FetchMerchantStats      func(childComplexity int, owner string) int
-		FetchOneProduct         func(childComplexity int, id string) int
+		FetchOneProduct         func(childComplexity int, id string, price *string) int
 		FetchProducts           func(childComplexity int, owner string) int
 		GetMerchantPaymentLinks func(childComplexity int, merchantID string) int
 		GetPaymentLink          func(childComplexity int, id string) int
@@ -137,7 +150,7 @@ type MutationResolver interface {
 	DeletePaymentLink(ctx context.Context, id string) (string, error)
 }
 type QueryResolver interface {
-	FetchOneProduct(ctx context.Context, id string) (*model.Product, error)
+	FetchOneProduct(ctx context.Context, id string, price *string) (*model.Product, error)
 	FetchProducts(ctx context.Context, owner string) ([]*model.Product, error)
 	FetchMerchantKey(ctx context.Context, input model.MerchantAccessKeyQuery) (string, error)
 	FetchMerchantStats(ctx context.Context, owner string) (*model.MerchantStats, error)
@@ -425,12 +438,68 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.PaymentLinkDetails.Token(childComplexity), true
 
-	case "Product.amount":
-		if e.complexity.Product.Amount == nil {
+	case "PriceData.active":
+		if e.complexity.PriceData.Active == nil {
 			break
 		}
 
-		return e.complexity.Product.Amount(childComplexity), true
+		return e.complexity.PriceData.Active(childComplexity), true
+
+	case "PriceData.amount":
+		if e.complexity.PriceData.Amount == nil {
+			break
+		}
+
+		return e.complexity.PriceData.Amount(childComplexity), true
+
+	case "PriceData.id":
+		if e.complexity.PriceData.ID == nil {
+			break
+		}
+
+		return e.complexity.PriceData.ID(childComplexity), true
+
+	case "PriceData.interval":
+		if e.complexity.PriceData.Interval == nil {
+			break
+		}
+
+		return e.complexity.PriceData.Interval(childComplexity), true
+
+	case "PriceData.intervalCount":
+		if e.complexity.PriceData.IntervalCount == nil {
+			break
+		}
+
+		return e.complexity.PriceData.IntervalCount(childComplexity), true
+
+	case "PriceData.productId":
+		if e.complexity.PriceData.ProductID == nil {
+			break
+		}
+
+		return e.complexity.PriceData.ProductID(childComplexity), true
+
+	case "PriceData.token":
+		if e.complexity.PriceData.Token == nil {
+			break
+		}
+
+		return e.complexity.PriceData.Token(childComplexity), true
+
+	case "PriceData.trialPeriod":
+		if e.complexity.PriceData.TrialPeriod == nil {
+			break
+		}
+
+		return e.complexity.PriceData.TrialPeriod(childComplexity), true
+
+	case "PriceData.type":
+		if e.complexity.PriceData.Type == nil {
+			break
+		}
+
+		return e.complexity.PriceData.Type(childComplexity), true
 
 	case "Product.chain":
 		if e.complexity.Product.Chain == nil {
@@ -445,6 +514,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Product.CreatedAt(childComplexity), true
+
+	case "Product.defaultPrice":
+		if e.complexity.Product.DefaultPrice == nil {
+			break
+		}
+
+		return e.complexity.Product.DefaultPrice(childComplexity), true
 
 	case "Product.interval":
 		if e.complexity.Product.Interval == nil {
@@ -480,6 +556,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Product.Owner(childComplexity), true
+
+	case "Product.priceData":
+		if e.complexity.Product.PriceData == nil {
+			break
+		}
+
+		return e.complexity.Product.PriceData(childComplexity), true
 
 	case "Product.productId":
 		if e.complexity.Product.ProductID == nil {
@@ -555,7 +638,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.FetchOneProduct(childComplexity, args["id"].(string)), true
+		return e.complexity.Query.FetchOneProduct(childComplexity, args["id"].(string), args["price"].(*string)), true
 
 	case "Query.fetchProducts":
 		if e.complexity.Query.FetchProducts == nil {
@@ -648,6 +731,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputNewMerchant,
 		ec.unmarshalInputNewMerchantKey,
 		ec.unmarshalInputNewPaymentLink,
+		ec.unmarshalInputNewPrice,
 		ec.unmarshalInputNewProduct,
 		ec.unmarshalInputProductModeUpdate,
 		ec.unmarshalInputProductUpdate,
@@ -753,7 +837,7 @@ var sources = []*ast.Source{
 # https://gqlgen.com/getting-started/
 
 type Query {
-  fetchOneProduct(id: String!): Product!
+  fetchOneProduct(id: String!, price: String ): Product!
   fetchProducts(owner: String!): [Product!]!
   fetchMerchantKey(input: MerchantAccessKeyQuery!): String!
   fetchMerchantStats(owner: String!): MerchantStats!
@@ -805,16 +889,44 @@ input NewProduct {
   name: String!
   owner: String!
   chain: Int!
-  token: String!
-  amount: Float!
-  interval: Int!
   paymentType: PaymentType!
   receivingAddress: String!
   firstChargeNow: Boolean!
+  # price data
+  priceData: NewPrice!
 }
 
+type PriceData {
+  id: ID!
+  type: PaymentType!
+  active: Boolean!
+  amount: Float!
+  token: String!
+  interval: IntervalType!
+  intervalCount: Int!
+  productId: String!
+  trialPeriod: Int!
+}
+
+input NewPrice {
+  type: PaymentType!
+  token: String!
+  amount: Float!
+  interval: IntervalType!
+  intervalCount: Int!
+  productId: String!
+  trialPeriod: Int
+}
+
+enum IntervalType {
+  day
+  week
+  month
+  year
+}
 input NewPaymentLink {
   productId: String!
+  priceId: String!
   callbackUrl: String!
 }
 
@@ -865,7 +977,8 @@ type Product {
   owner: String!
   chain: Int!
   token: String!
-  amount: Float!
+  defaultPrice: String!
+  priceData: PriceData
   interval: Int!
   productId: String!
   merchantId: String!
@@ -1097,6 +1210,15 @@ func (ec *executionContext) field_Query_fetchOneProduct_args(ctx context.Context
 		}
 	}
 	args["id"] = arg0
+	var arg1 *string
+	if tmp, ok := rawArgs["price"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("price"))
+		arg1, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["price"] = arg1
 	return args, nil
 }
 
@@ -1812,8 +1934,10 @@ func (ec *executionContext) fieldContext_Mutation_addProduct(ctx context.Context
 				return ec.fieldContext_Product_chain(ctx, field)
 			case "token":
 				return ec.fieldContext_Product_token(ctx, field)
-			case "amount":
-				return ec.fieldContext_Product_amount(ctx, field)
+			case "defaultPrice":
+				return ec.fieldContext_Product_defaultPrice(ctx, field)
+			case "priceData":
+				return ec.fieldContext_Product_priceData(ctx, field)
 			case "interval":
 				return ec.fieldContext_Product_interval(ctx, field)
 			case "productId":
@@ -1893,8 +2017,10 @@ func (ec *executionContext) fieldContext_Mutation_updateProduct(ctx context.Cont
 				return ec.fieldContext_Product_chain(ctx, field)
 			case "token":
 				return ec.fieldContext_Product_token(ctx, field)
-			case "amount":
-				return ec.fieldContext_Product_amount(ctx, field)
+			case "defaultPrice":
+				return ec.fieldContext_Product_defaultPrice(ctx, field)
+			case "priceData":
+				return ec.fieldContext_Product_priceData(ctx, field)
 			case "interval":
 				return ec.fieldContext_Product_interval(ctx, field)
 			case "productId":
@@ -2779,6 +2905,402 @@ func (ec *executionContext) fieldContext_PaymentLinkDetails_chain(ctx context.Co
 	return fc, nil
 }
 
+func (ec *executionContext) _PriceData_id(ctx context.Context, field graphql.CollectedField, obj *model.PriceData) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PriceData_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PriceData_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PriceData",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PriceData_type(ctx context.Context, field graphql.CollectedField, obj *model.PriceData) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PriceData_type(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Type, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.PaymentType)
+	fc.Result = res
+	return ec.marshalNPaymentType2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐPaymentType(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PriceData_type(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PriceData",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type PaymentType does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PriceData_active(ctx context.Context, field graphql.CollectedField, obj *model.PriceData) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PriceData_active(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Active, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PriceData_active(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PriceData",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PriceData_amount(ctx context.Context, field graphql.CollectedField, obj *model.PriceData) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PriceData_amount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Amount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(float64)
+	fc.Result = res
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PriceData_amount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PriceData",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PriceData_token(ctx context.Context, field graphql.CollectedField, obj *model.PriceData) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PriceData_token(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Token, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PriceData_token(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PriceData",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PriceData_interval(ctx context.Context, field graphql.CollectedField, obj *model.PriceData) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PriceData_interval(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Interval, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.IntervalType)
+	fc.Result = res
+	return ec.marshalNIntervalType2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐIntervalType(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PriceData_interval(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PriceData",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type IntervalType does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PriceData_intervalCount(ctx context.Context, field graphql.CollectedField, obj *model.PriceData) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PriceData_intervalCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IntervalCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PriceData_intervalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PriceData",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PriceData_productId(ctx context.Context, field graphql.CollectedField, obj *model.PriceData) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PriceData_productId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ProductID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PriceData_productId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PriceData",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PriceData_trialPeriod(ctx context.Context, field graphql.CollectedField, obj *model.PriceData) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PriceData_trialPeriod(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TrialPeriod, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PriceData_trialPeriod(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PriceData",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Product_name(ctx context.Context, field graphql.CollectedField, obj *model.Product) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Product_name(ctx, field)
 	if err != nil {
@@ -2999,8 +3521,8 @@ func (ec *executionContext) fieldContext_Product_token(ctx context.Context, fiel
 	return fc, nil
 }
 
-func (ec *executionContext) _Product_amount(ctx context.Context, field graphql.CollectedField, obj *model.Product) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Product_amount(ctx, field)
+func (ec *executionContext) _Product_defaultPrice(ctx context.Context, field graphql.CollectedField, obj *model.Product) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Product_defaultPrice(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -3013,7 +3535,7 @@ func (ec *executionContext) _Product_amount(ctx context.Context, field graphql.C
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Amount, nil
+		return obj.DefaultPrice, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3025,19 +3547,80 @@ func (ec *executionContext) _Product_amount(ctx context.Context, field graphql.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.(float64)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Product_amount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Product_defaultPrice(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Product",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Float does not have child fields")
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Product_priceData(ctx context.Context, field graphql.CollectedField, obj *model.Product) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Product_priceData(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PriceData, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.PriceData)
+	fc.Result = res
+	return ec.marshalOPriceData2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐPriceData(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Product_priceData(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Product",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_PriceData_id(ctx, field)
+			case "type":
+				return ec.fieldContext_PriceData_type(ctx, field)
+			case "active":
+				return ec.fieldContext_PriceData_active(ctx, field)
+			case "amount":
+				return ec.fieldContext_PriceData_amount(ctx, field)
+			case "token":
+				return ec.fieldContext_PriceData_token(ctx, field)
+			case "interval":
+				return ec.fieldContext_PriceData_interval(ctx, field)
+			case "intervalCount":
+				return ec.fieldContext_PriceData_intervalCount(ctx, field)
+			case "productId":
+				return ec.fieldContext_PriceData_productId(ctx, field)
+			case "trialPeriod":
+				return ec.fieldContext_PriceData_trialPeriod(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PriceData", field.Name)
 		},
 	}
 	return fc, nil
@@ -3329,7 +3912,7 @@ func (ec *executionContext) _Query_fetchOneProduct(ctx context.Context, field gr
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().FetchOneProduct(rctx, fc.Args["id"].(string))
+		return ec.resolvers.Query().FetchOneProduct(rctx, fc.Args["id"].(string), fc.Args["price"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3364,8 +3947,10 @@ func (ec *executionContext) fieldContext_Query_fetchOneProduct(ctx context.Conte
 				return ec.fieldContext_Product_chain(ctx, field)
 			case "token":
 				return ec.fieldContext_Product_token(ctx, field)
-			case "amount":
-				return ec.fieldContext_Product_amount(ctx, field)
+			case "defaultPrice":
+				return ec.fieldContext_Product_defaultPrice(ctx, field)
+			case "priceData":
+				return ec.fieldContext_Product_priceData(ctx, field)
 			case "interval":
 				return ec.fieldContext_Product_interval(ctx, field)
 			case "productId":
@@ -3445,8 +4030,10 @@ func (ec *executionContext) fieldContext_Query_fetchProducts(ctx context.Context
 				return ec.fieldContext_Product_chain(ctx, field)
 			case "token":
 				return ec.fieldContext_Product_token(ctx, field)
-			case "amount":
-				return ec.fieldContext_Product_amount(ctx, field)
+			case "defaultPrice":
+				return ec.fieldContext_Product_defaultPrice(ctx, field)
+			case "priceData":
+				return ec.fieldContext_Product_priceData(ctx, field)
 			case "interval":
 				return ec.fieldContext_Product_interval(ctx, field)
 			case "productId":
@@ -6194,7 +6781,7 @@ func (ec *executionContext) unmarshalInputNewPaymentLink(ctx context.Context, ob
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"productId", "callbackUrl"}
+	fieldsInOrder := [...]string{"productId", "priceId", "callbackUrl"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -6210,6 +6797,15 @@ func (ec *executionContext) unmarshalInputNewPaymentLink(ctx context.Context, ob
 				return it, err
 			}
 			it.ProductID = data
+		case "priceId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("priceId"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PriceID = data
 		case "callbackUrl":
 			var err error
 
@@ -6225,6 +6821,89 @@ func (ec *executionContext) unmarshalInputNewPaymentLink(ctx context.Context, ob
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputNewPrice(ctx context.Context, obj interface{}) (model.NewPrice, error) {
+	var it model.NewPrice
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"type", "token", "amount", "interval", "intervalCount", "productId", "trialPeriod"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "type":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
+			data, err := ec.unmarshalNPaymentType2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐPaymentType(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Type = data
+		case "token":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("token"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Token = data
+		case "amount":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("amount"))
+			data, err := ec.unmarshalNFloat2float64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Amount = data
+		case "interval":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("interval"))
+			data, err := ec.unmarshalNIntervalType2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐIntervalType(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Interval = data
+		case "intervalCount":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("intervalCount"))
+			data, err := ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.IntervalCount = data
+		case "productId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("productId"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ProductID = data
+		case "trialPeriod":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("trialPeriod"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TrialPeriod = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputNewProduct(ctx context.Context, obj interface{}) (model.NewProduct, error) {
 	var it model.NewProduct
 	asMap := map[string]interface{}{}
@@ -6232,7 +6911,7 @@ func (ec *executionContext) unmarshalInputNewProduct(ctx context.Context, obj in
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "owner", "chain", "token", "amount", "interval", "paymentType", "receivingAddress", "firstChargeNow"}
+	fieldsInOrder := [...]string{"name", "owner", "chain", "paymentType", "receivingAddress", "firstChargeNow", "priceData"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -6266,33 +6945,6 @@ func (ec *executionContext) unmarshalInputNewProduct(ctx context.Context, obj in
 				return it, err
 			}
 			it.Chain = data
-		case "token":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("token"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Token = data
-		case "amount":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("amount"))
-			data, err := ec.unmarshalNFloat2float64(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Amount = data
-		case "interval":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("interval"))
-			data, err := ec.unmarshalNInt2int(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Interval = data
 		case "paymentType":
 			var err error
 
@@ -6320,6 +6972,15 @@ func (ec *executionContext) unmarshalInputNewProduct(ctx context.Context, obj in
 				return it, err
 			}
 			it.FirstChargeNow = data
+		case "priceData":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("priceData"))
+			data, err := ec.unmarshalNNewPrice2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐNewPrice(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PriceData = data
 		}
 	}
 
@@ -6764,6 +7425,85 @@ func (ec *executionContext) _PaymentLinkDetails(ctx context.Context, sel ast.Sel
 	return out
 }
 
+var priceDataImplementors = []string{"PriceData"}
+
+func (ec *executionContext) _PriceData(ctx context.Context, sel ast.SelectionSet, obj *model.PriceData) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, priceDataImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("PriceData")
+		case "id":
+			out.Values[i] = ec._PriceData_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "type":
+			out.Values[i] = ec._PriceData_type(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "active":
+			out.Values[i] = ec._PriceData_active(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "amount":
+			out.Values[i] = ec._PriceData_amount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "token":
+			out.Values[i] = ec._PriceData_token(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "interval":
+			out.Values[i] = ec._PriceData_interval(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "intervalCount":
+			out.Values[i] = ec._PriceData_intervalCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "productId":
+			out.Values[i] = ec._PriceData_productId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "trialPeriod":
+			out.Values[i] = ec._PriceData_trialPeriod(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var productImplementors = []string{"Product"}
 
 func (ec *executionContext) _Product(ctx context.Context, sel ast.SelectionSet, obj *model.Product) graphql.Marshaler {
@@ -6800,11 +7540,13 @@ func (ec *executionContext) _Product(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "amount":
-			out.Values[i] = ec._Product_amount(ctx, field, obj)
+		case "defaultPrice":
+			out.Values[i] = ec._Product_defaultPrice(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "priceData":
+			out.Values[i] = ec._Product_priceData(ctx, field, obj)
 		case "interval":
 			out.Values[i] = ec._Product_interval(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -7506,6 +8248,16 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 	return res
 }
 
+func (ec *executionContext) unmarshalNIntervalType2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐIntervalType(ctx context.Context, v interface{}) (model.IntervalType, error) {
+	var res model.IntervalType
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNIntervalType2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐIntervalType(ctx context.Context, sel ast.SelectionSet, v model.IntervalType) graphql.Marshaler {
+	return v
+}
+
 func (ec *executionContext) marshalNMerchant2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐMerchant(ctx context.Context, sel ast.SelectionSet, v model.Merchant) graphql.Marshaler {
 	return ec._Merchant(ctx, sel, &v)
 }
@@ -7576,6 +8328,11 @@ func (ec *executionContext) unmarshalNNewMerchantKey2githubᚗcomᚋlucidconnect
 func (ec *executionContext) unmarshalNNewPaymentLink2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐNewPaymentLink(ctx context.Context, v interface{}) (model.NewPaymentLink, error) {
 	res, err := ec.unmarshalInputNewPaymentLink(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNNewPrice2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐNewPrice(ctx context.Context, v interface{}) (*model.NewPrice, error) {
+	res, err := ec.unmarshalInputNewPrice(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNNewProduct2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐNewProduct(ctx context.Context, v interface{}) (model.NewProduct, error) {
@@ -8021,6 +8778,29 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	}
 	res := graphql.MarshalBoolean(*v)
 	return res
+}
+
+func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v interface{}) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.SelectionSet, v *int) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalInt(*v)
+	return res
+}
+
+func (ec *executionContext) marshalOPriceData2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐPriceData(ctx context.Context, sel ast.SelectionSet, v *model.PriceData) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._PriceData(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOString2ᚖstring(ctx context.Context, v interface{}) (*string, error) {

@@ -149,9 +149,9 @@ func (r *mutationResolver) ValidatePaymentIntent(ctx context.Context, input mode
 	return result, nil
 }
 
-// GetPaymentLinkBySession is the resolver for the getPaymentLinkBySession field.
-func (r *queryResolver) GetPaymentLinkBySession(ctx context.Context, id string) (*model.PaymentLinkDetails, error) {
-	merchantService := merchant.NewMerchantService(r.Database)
+// ResolvePaymentLinkBySession is the resolver for the resolvePaymentLinkBySession field.
+func (r *queryResolver) ResolvePaymentLinkBySession(ctx context.Context, id string) (*model.PaymentLinkDetails, error) {
+	merchantService := merchant.NewMerchantService(r.Database, uuid.Nil)
 
 	sid, err := uuid.Parse(id)
 	if err != nil {
@@ -181,14 +181,14 @@ func (r *queryResolver) GetPaymentLinkBySession(ctx context.Context, id string) 
 		ProductName:  pd.ProductName,
 		MerchantName: pd.MerchantName,
 		Interval:     pd.Interval,
-		CallbackURL:  pd.CallbackURL,
+		CallbackURL:  checkoutSession.CallbackURL,
 	}
 	return paymentLinkDetails, nil
 }
 
-// GetPaymentLink is the resolver for the getPaymentLink field.
-func (r *queryResolver) GetPaymentLink(ctx context.Context, id string) (*model.PaymentLinkDetails, error) {
-	merchantService := merchant.NewMerchantService(r.Database)
+// ResolvePaymentLink is the resolver for the resolvePaymentLink field.
+func (r *queryResolver) ResolvePaymentLink(ctx context.Context, id string) (*model.PaymentLinkDetails, error) {
+	merchantService := merchant.NewMerchantService(r.Database, uuid.Nil)
 
 	paymentLinkQuery := merchant.PaymentLinkQueryParams{
 		PaymentLinkId: &id,
@@ -245,3 +245,70 @@ func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//     it when you're done.
+//   - You have helper methods in this file. Move them out to keep these resolver files clean.
+func (r *queryResolver) GetPaymentLinkBySession(ctx context.Context, id string) (*model.PaymentLinkDetails, error) {
+	merchantService := merchant.NewMerchantService(r.Database, uuid.Nil)
+
+	sid, err := uuid.Parse(id)
+	if err != nil {
+		return nil, gqlerror.ErrToGraphQLError(gqlerror.InternalError, err.Error(), ctx)
+	}
+	checkoutSession, err := r.Database.FetchCheckoutSession(sid)
+	if err != nil {
+		return nil, gqlerror.ErrToGraphQLError(gqlerror.InternalError, err.Error(), ctx)
+	}
+
+	paymentLinkId := checkoutSession.PaymentLinkID.String()
+	paymentLinkQuery := merchant.PaymentLinkQueryParams{
+		PaymentLinkId: &paymentLinkId,
+	}
+	pd, err := merchantService.FetchPaymentLink(paymentLinkQuery)
+	if err != nil {
+		return nil, gqlerror.ErrToGraphQLError(gqlerror.InternalError, err.Error(), ctx)
+	}
+	paymentLinkDetails := &model.PaymentLinkDetails{
+		ID:           pd.ID,
+		Mode:         pd.Mode,
+		ProductID:    pd.ProductID,
+		MerchantID:   pd.MerchantID,
+		Amount:       pd.Amount,
+		Token:        pd.Token,
+		Chain:        pd.Chain,
+		ProductName:  pd.ProductName,
+		MerchantName: pd.MerchantName,
+		Interval:     pd.Interval,
+		CallbackURL:  pd.CallbackURL,
+	}
+	return paymentLinkDetails, nil
+}
+func (r *queryResolver) GetPaymentLink(ctx context.Context, id string) (*model.PaymentLinkDetails, error) {
+	merchantService := merchant.NewMerchantService(r.Database, uuid.Nil)
+
+	paymentLinkQuery := merchant.PaymentLinkQueryParams{
+		PaymentLinkId: &id,
+	}
+	pd, err := merchantService.FetchPaymentLink(paymentLinkQuery)
+	if err != nil {
+		return nil, gqlerror.ErrToGraphQLError(gqlerror.InternalError, err.Error(), ctx)
+	}
+	paymentLinkDetails := &model.PaymentLinkDetails{
+		ID:           pd.ID,
+		Mode:         pd.Mode,
+		ProductID:    pd.ProductID,
+		MerchantID:   pd.MerchantID,
+		Amount:       pd.Amount,
+		Token:        pd.Token,
+		Chain:        pd.Chain,
+		ProductName:  pd.ProductName,
+		MerchantName: pd.MerchantName,
+		Interval:     pd.Interval,
+		CallbackURL:  pd.CallbackURL,
+	}
+	return paymentLinkDetails, nil
+}

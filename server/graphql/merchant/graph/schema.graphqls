@@ -3,7 +3,7 @@
 # https://gqlgen.com/getting-started/
 
 type Query {
-  fetchOneProduct(id: String!): Product!
+  fetchOneProduct(id: String!, price: String ): Product!
   fetchProducts(owner: String!): [Product!]!
   fetchMerchantKey(input: MerchantAccessKeyQuery!): String!
   fetchMerchantStats(owner: String!): MerchantStats!
@@ -55,16 +55,43 @@ input NewProduct {
   name: String!
   owner: String!
   chain: Int!
-  token: String!
-  amount: Float!
-  interval: Int!
   paymentType: PaymentType!
   receivingAddress: String!
   firstChargeNow: Boolean!
+  priceData: NewPrice!
 }
 
+type PriceData {
+  id: ID!
+  type: PaymentType!
+  active: Boolean!
+  amount: Float!
+  token: String!
+  interval: IntervalType!
+  intervalCount: Int!
+  productId: String!
+  trialPeriod: Int!
+}
+
+input NewPrice {
+  type: PaymentType!
+  token: String!
+  amount: Float!
+  interval: IntervalType!
+  intervalCount: Int!
+  productId: String!
+  trialPeriod: Int
+}
+
+enum IntervalType {
+  day
+  week
+  month
+  year
+}
 input NewPaymentLink {
   productId: String!
+  priceId: String!
   callbackUrl: String!
 }
 
@@ -115,7 +142,8 @@ type Product {
   owner: String!
   chain: Int!
   token: String!
-  amount: Float!
+  defaultPrice: String!
+  priceData: PriceData
   interval: Int!
   productId: String!
   merchantId: String!

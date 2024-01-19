@@ -58,19 +58,28 @@ type NewMerchantKey struct {
 
 type NewPaymentLink struct {
 	ProductID   string `json:"productId"`
+	PriceID     string `json:"priceId"`
 	CallbackURL string `json:"callbackUrl"`
+}
+
+type NewPrice struct {
+	Type          PaymentType  `json:"type"`
+	Token         string       `json:"token"`
+	Amount        float64      `json:"amount"`
+	Interval      IntervalType `json:"interval"`
+	IntervalCount int          `json:"intervalCount"`
+	ProductID     string       `json:"productId"`
+	TrialPeriod   *int         `json:"trialPeriod,omitempty"`
 }
 
 type NewProduct struct {
 	Name             string      `json:"name"`
 	Owner            string      `json:"owner"`
 	Chain            int         `json:"chain"`
-	Token            string      `json:"token"`
-	Amount           float64     `json:"amount"`
-	Interval         int         `json:"interval"`
 	PaymentType      PaymentType `json:"paymentType"`
 	ReceivingAddress string      `json:"receivingAddress"`
 	FirstChargeNow   bool        `json:"firstChargeNow"`
+	PriceData        *NewPrice   `json:"priceData"`
 }
 
 type PaymentLinkDetails struct {
@@ -87,19 +96,32 @@ type PaymentLinkDetails struct {
 	Chain        int     `json:"chain"`
 }
 
+type PriceData struct {
+	ID            string       `json:"id"`
+	Type          PaymentType  `json:"type"`
+	Active        bool         `json:"active"`
+	Amount        float64      `json:"amount"`
+	Token         string       `json:"token"`
+	Interval      IntervalType `json:"interval"`
+	IntervalCount int          `json:"intervalCount"`
+	ProductID     string       `json:"productId"`
+	TrialPeriod   int          `json:"trialPeriod"`
+}
+
 type Product struct {
-	Name             string  `json:"name"`
-	Mode             Mode    `json:"mode"`
-	Owner            string  `json:"owner"`
-	Chain            int     `json:"chain"`
-	Token            string  `json:"token"`
-	Amount           float64 `json:"amount"`
-	Interval         int     `json:"interval"`
-	ProductID        string  `json:"productId"`
-	MerchantID       string  `json:"merchantId"`
-	ReceivingAddress string  `json:"receivingAddress"`
-	Subscriptions    []*Sub  `json:"subscriptions,omitempty"`
-	CreatedAt        *string `json:"createdAt,omitempty"`
+	Name             string     `json:"name"`
+	Mode             Mode       `json:"mode"`
+	Owner            string     `json:"owner"`
+	Chain            int        `json:"chain"`
+	Token            string     `json:"token"`
+	DefaultPrice     string     `json:"defaultPrice"`
+	PriceData        *PriceData `json:"priceData,omitempty"`
+	Interval         int        `json:"interval"`
+	ProductID        string     `json:"productId"`
+	MerchantID       string     `json:"merchantId"`
+	ReceivingAddress string     `json:"receivingAddress"`
+	Subscriptions    []*Sub     `json:"subscriptions,omitempty"`
+	CreatedAt        *string    `json:"createdAt,omitempty"`
 }
 
 type ProductModeUpdate struct {
@@ -119,6 +141,51 @@ type Sub struct {
 	Active        bool   `json:"active"`
 	Interval      string `json:"interval"`
 	WalletAddress string `json:"walletAddress"`
+}
+
+type IntervalType string
+
+const (
+	IntervalTypeDay   IntervalType = "day"
+	IntervalTypeWeek  IntervalType = "week"
+	IntervalTypeMonth IntervalType = "month"
+	IntervalTypeYear  IntervalType = "year"
+)
+
+var AllIntervalType = []IntervalType{
+	IntervalTypeDay,
+	IntervalTypeWeek,
+	IntervalTypeMonth,
+	IntervalTypeYear,
+}
+
+func (e IntervalType) IsValid() bool {
+	switch e {
+	case IntervalTypeDay, IntervalTypeWeek, IntervalTypeMonth, IntervalTypeYear:
+		return true
+	}
+	return false
+}
+
+func (e IntervalType) String() string {
+	return string(e)
+}
+
+func (e *IntervalType) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = IntervalType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid IntervalType", str)
+	}
+	return nil
+}
+
+func (e IntervalType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 type Mode string
