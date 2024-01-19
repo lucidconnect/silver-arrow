@@ -298,21 +298,22 @@ func (r *queryResolver) GetMerchantPaymentLinks(ctx context.Context, merchantID 
 	}
 
 	for _, paymentLink := range paymentLinks {
-		// interval := conversions.ParseNanoSecondsToDay(paymentLink.Product.Interval)
-		// amount := conversions.ParseTransferAmountFloat(paymentLink.Product.Token, paymentLink.Product.Amount)
+		interval := conversions.ParseNanoSecondsToDay(paymentLink.Price.IntervalCount)
+		amount := conversions.ParseTransferAmountFloat(paymentLink.Price.Token, paymentLink.Price.Amount)
 
 		paymentLinkDetail := &model.PaymentLinkDetails{
-			ID:           paymentLink.ID.String(),
-			Mode:         paymentLink.Product.Mode,
-			ProductID:    paymentLink.ProductID.String(),
-			MerchantID:   paymentLink.MerchantID.String(),
-			MerchantName: paymentLink.MerchantName,
-			ProductName:  paymentLink.Product.Name,
-			// Interval:     int(interval),
-			CallbackURL:  paymentLink.CallbackURL,
-			// Amount:       amount,
-			// Token:        paymentLink.Product.Token,
-			Chain:        int(paymentLink.Product.Chain),
+			ID:            paymentLink.ID.String(),
+			Mode:          paymentLink.Product.Mode,
+			ProductID:     paymentLink.ProductID.String(),
+			MerchantID:    paymentLink.MerchantID.String(),
+			MerchantName:  paymentLink.MerchantName,
+			ProductName:   paymentLink.Product.Name,
+			IntervalCount: int(interval),
+			Interval:      paymentLink.Price.Interval,
+			CallbackURL:   paymentLink.CallbackURL,
+			Amount:       amount,
+			Token:        paymentLink.Price.Token,
+			Chain: int(paymentLink.Product.Chain),
 		}
 		paymentLinkDetails = append(paymentLinkDetails, paymentLinkDetail)
 	}

@@ -83,17 +83,18 @@ type NewProduct struct {
 }
 
 type PaymentLinkDetails struct {
-	ID           string  `json:"id"`
-	Mode         string  `json:"mode"`
-	ProductID    string  `json:"productId"`
-	ProductName  string  `json:"productName"`
-	Interval     int     `json:"interval"`
-	MerchantID   string  `json:"merchantId"`
-	MerchantName string  `json:"merchantName"`
-	CallbackURL  string  `json:"callbackUrl"`
-	Amount       float64 `json:"amount"`
-	Token        string  `json:"token"`
-	Chain        int     `json:"chain"`
+	ID            string  `json:"id"`
+	Mode          string  `json:"mode"`
+	ProductID     string  `json:"productId"`
+	ProductName   string  `json:"productName"`
+	Interval      string  `json:"interval"`
+	IntervalCount int     `json:"intervalCount"`
+	MerchantID    string  `json:"merchantId"`
+	MerchantName  string  `json:"merchantName"`
+	CallbackURL   string  `json:"callbackUrl"`
+	Amount        float64 `json:"amount"`
+	Token         string  `json:"token"`
+	Chain         int     `json:"chain"`
 }
 
 type PriceData struct {

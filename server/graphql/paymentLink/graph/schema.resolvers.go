@@ -198,17 +198,18 @@ func (r *queryResolver) ResolvePaymentLink(ctx context.Context, id string) (*mod
 		return nil, gqlerror.ErrToGraphQLError(gqlerror.InternalError, err.Error(), ctx)
 	}
 	paymentLinkDetails := &model.PaymentLinkDetails{
-		ID:           pd.ID,
-		Mode:         pd.Mode,
-		ProductID:    pd.ProductID,
-		MerchantID:   pd.MerchantID,
-		Amount:       pd.Amount,
-		Token:        pd.Token,
-		Chain:        pd.Chain,
-		ProductName:  pd.ProductName,
-		MerchantName: pd.MerchantName,
-		Interval:     pd.Interval,
-		CallbackURL:  pd.CallbackURL,
+		ID:            pd.ID,
+		Mode:          pd.Mode,
+		ProductID:     pd.ProductID,
+		MerchantID:    pd.MerchantID,
+		Amount:        pd.Amount,
+		Token:         pd.Token,
+		Chain:         pd.Chain,
+		ProductName:   pd.ProductName,
+		MerchantName:  pd.MerchantName,
+		Interval:      pd.Interval,
+		IntervalCount: pd.IntervalCount,
+		CallbackURL:   pd.CallbackURL,
 	}
 	return paymentLinkDetails, nil
 }
