@@ -2,8 +2,11 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"os"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/lucidconnect/silver-arrow/repository/models"
@@ -53,18 +56,31 @@ func (s *Server) CreateCheckoutSession() http.HandlerFunc {
 		paymentLink, err := s.database.FetchPaymentLinkByProduct(productId)
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
-				response = &httpResponse{
-					Status: http.StatusNotFound,
-					Error:  "product does not exist",
+				// create a payment link
+				paymentLink = &models.PaymentLink{
+					ID:          uuid.New(),
+					MerchantID:  merchant.ID,
+					CallbackURL: request.CallbackUrl,
+					ProductID:   productId,
+					CreatedAt:   time.Now(),
+				}
+				err = s.database.CreatePaymentLink(paymentLink)
+				if err != nil {
+					log.Err(err).Msgf("could not create payment link for product [%v]", productId)
+					response = &httpResponse{
+						Status: http.StatusInternalServerError,
+					}
+					writeJsonResponse(w, response)
+					return
 				}
 			} else {
 				log.Err(err).Caller().Send()
 				response = &httpResponse{
 					Status: http.StatusInternalServerError,
 				}
+				writeJsonResponse(w, response)
+				return
 			}
-			writeJsonResponse(w, response)
-			return
 		}
 		newSession := &models.CheckoutSession{
 			ID:            sessionId,
@@ -72,7 +88,7 @@ func (s *Server) CreateCheckoutSession() http.HandlerFunc {
 			ProductID:     productId,
 			MerchantID:    merchantID,
 			PaymentLinkID: paymentLink.ID,
-			PaymentLink:   *paymentLink,
+			CallbackURL:   request.CallbackUrl,
 		}
 
 		if err = s.database.CreateCheckoutSession(newSession); err != nil {
@@ -84,9 +100,17 @@ func (s *Server) CreateCheckoutSession() http.HandlerFunc {
 			writeJsonResponse(w, response)
 			return
 		}
-
+		var url string
+		environment := os.Getenv("APP_ENV")
+		switch environment {
+		case "staging":
+			url = fmt.Sprintf("https://pay.staging.lucidconnect.xyz/c/%v", sessionId.String())
+		case "production":
+			url = fmt.Sprintf("https://pay.lucidconnect.xyz/c/%v", sessionId.String())
+		}
 		checkoutSession := &api.CheckoutSessionResponse{
 			SessionId: sessionId.String(),
+			Url:       url,
 		}
 		response = &httpResponse{
 			Status: http.StatusOK,
