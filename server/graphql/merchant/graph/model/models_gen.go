@@ -65,6 +65,7 @@ type NewPaymentLink struct {
 type NewPrice struct {
 	Type          PaymentType  `json:"type"`
 	Token         string       `json:"token"`
+	Chain         int          `json:"chain"`
 	Amount        float64      `json:"amount"`
 	Interval      IntervalType `json:"interval"`
 	IntervalCount int          `json:"intervalCount"`
@@ -75,7 +76,6 @@ type NewPrice struct {
 type NewProduct struct {
 	Name             string      `json:"name"`
 	Owner            string      `json:"owner"`
-	Chain            int         `json:"chain"`
 	PaymentType      PaymentType `json:"paymentType"`
 	ReceivingAddress string      `json:"receivingAddress"`
 	FirstChargeNow   bool        `json:"firstChargeNow"`
@@ -103,26 +103,33 @@ type PriceData struct {
 	Active        bool         `json:"active"`
 	Amount        float64      `json:"amount"`
 	Token         string       `json:"token"`
+	Chain         int          `json:"chain"`
 	Interval      IntervalType `json:"interval"`
 	IntervalCount int          `json:"intervalCount"`
 	ProductID     string       `json:"productId"`
 	TrialPeriod   int          `json:"trialPeriod"`
 }
 
+type PriceUpdate struct {
+	Token         string       `json:"token"`
+	Chain         int          `json:"chain"`
+	Amount        float64      `json:"amount"`
+	Interval      IntervalType `json:"interval"`
+	IntervalCount int          `json:"intervalCount"`
+	TrialPeriod   *int         `json:"trialPeriod,omitempty"`
+}
+
 type Product struct {
-	Name             string     `json:"name"`
-	Mode             Mode       `json:"mode"`
-	Owner            string     `json:"owner"`
-	Chain            int        `json:"chain"`
-	Token            string     `json:"token"`
-	DefaultPrice     string     `json:"defaultPrice"`
-	PriceData        *PriceData `json:"priceData,omitempty"`
-	Interval         int        `json:"interval"`
-	ProductID        string     `json:"productId"`
-	MerchantID       string     `json:"merchantId"`
-	ReceivingAddress string     `json:"receivingAddress"`
-	Subscriptions    []*Sub     `json:"subscriptions,omitempty"`
-	CreatedAt        *string    `json:"createdAt,omitempty"`
+	Name             string       `json:"name"`
+	Mode             Mode         `json:"mode"`
+	Owner            string       `json:"owner"`
+	DefaultPrice     string       `json:"defaultPrice"`
+	PriceData        []*PriceData `json:"priceData"`
+	ProductID        string       `json:"productId"`
+	MerchantID       string       `json:"merchantId"`
+	ReceivingAddress string       `json:"receivingAddress"`
+	Subscriptions    []*Sub       `json:"subscriptions,omitempty"`
+	CreatedAt        *string      `json:"createdAt,omitempty"`
 }
 
 type ProductModeUpdate struct {

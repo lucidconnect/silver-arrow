@@ -21,6 +21,8 @@ type Mutation {
   toggleProductMode(input: ProductModeUpdate!): Mode!
   createPaymentLink(input: NewPaymentLink!): String!
   deletePaymentLink(id: String!): String!
+  createPrice(input: NewPrice!): PriceData!
+  updatePrice(input: PriceUpdate): PriceData!
 }
 
 input NewMerchant {
@@ -54,7 +56,6 @@ type Merchant {
 input NewProduct {
   name: String!
   owner: String!
-  chain: Int!
   paymentType: PaymentType!
   receivingAddress: String!
   firstChargeNow: Boolean!
@@ -67,6 +68,7 @@ type PriceData {
   active: Boolean!
   amount: Float!
   token: String!
+  chain: Int!
   interval: IntervalType!
   intervalCount: Int!
   productId: String!
@@ -76,10 +78,20 @@ type PriceData {
 input NewPrice {
   type: PaymentType!
   token: String!
+  chain: Int!
   amount: Float!
   interval: IntervalType!
   intervalCount: Int!
   productId: String!
+  trialPeriod: Int
+}
+
+input PriceUpdate {
+  token: String!
+  chain: Int!
+  amount: Float!
+  interval: IntervalType!
+  intervalCount: Int!
   trialPeriod: Int
 }
 
@@ -141,11 +153,8 @@ type Product {
   name: String!
   mode: Mode!
   owner: String!
-  chain: Int!
-  token: String!
   defaultPrice: String!
-  priceData: PriceData
-  interval: Int!
+  priceData: [PriceData!]!
   productId: String!
   merchantId: String!
   receivingAddress: String!

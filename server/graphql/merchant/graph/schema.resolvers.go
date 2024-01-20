@@ -46,6 +46,7 @@ func (r *mutationResolver) AddProduct(ctx context.Context, input model.NewProduc
 	newPrice := &merchant.Price{
 		Active:        true,
 		Amount:        amount,
+		Chain:         int64(input.PriceData.Chain),
 		Token:         input.PriceData.Token,
 		Interval:      merchant.RecuringInterval(input.PriceData.Interval),
 		IntervalCount: int64(input.PriceData.IntervalCount),
@@ -68,9 +69,7 @@ func (r *mutationResolver) AddProduct(ctx context.Context, input model.NewProduc
 
 	result := &model.Product{
 		Name:  product.Name,
-		Chain: int(product.Chain),
 		Owner: product.Owner,
-		Token: product.Token,
 		// Interval:         int(interval),
 		// Amount:           input.Amount,
 		ProductID:        product.ID.String(),
@@ -193,6 +192,53 @@ func (r *mutationResolver) DeletePaymentLink(ctx context.Context, id string) (st
 	return id, nil
 }
 
+// CreatePrice is the resolver for the createPrice field.
+func (r *mutationResolver) CreatePrice(ctx context.Context, input model.NewPrice) (*model.PriceData, error) {
+	activeMerchant, err := getAuthenticatedAndActiveMerchant(ctx)
+	if err != nil {
+		log.Err(err).Send()
+		return nil, gqlerror.ErrToGraphQLError(gqlerror.MerchantAuthorisationFailed, err.Error(), ctx)
+	}
+	merchantService := merchant.NewMerchantService(r.Database, activeMerchant.ID)
+
+	amount := conversions.ParseFloatAmountToInt(input.Token, input.Amount)
+	newPrice := &merchant.Price{
+		Active:        true,
+		Amount:        amount,
+		Chain:         int64(input.Chain),
+		Token:         input.Token,
+		Interval:      merchant.RecuringInterval(input.Interval),
+		IntervalCount: int64(input.IntervalCount),
+		Type:          merchant.PriceType(input.Type),
+		TrialPeriod:   int64(*input.TrialPeriod),
+	}
+	price, err := merchantService.CreatePrice(newPrice, input.ProductID)
+	if err != nil {
+		log.Err(err).Caller().Send()
+		return nil, err
+	}
+
+	priceData := &model.PriceData{
+		ID:            price.ID.String(),
+		Type:          model.PaymentType(price.Type),
+		Active:        price.Active,
+		Amount:        input.Amount,
+		Token:         price.Token,
+		Chain:         int(price.Chain),
+		Interval:      model.IntervalType(price.Interval),
+		IntervalCount: int(price.IntervalCount),
+		ProductID:     price.ProductId,
+		TrialPeriod:   int(price.TrialPeriod),
+	}
+
+	return priceData, nil
+}
+
+// UpdatePrice is the resolver for the updatePrice field.
+func (r *mutationResolver) UpdatePrice(ctx context.Context, input *model.PriceUpdate) (*model.PriceData, error) {
+	panic(fmt.Errorf("not implemented: UpdatePrice - updatePrice"))
+}
+
 // FetchOneProduct is the resolver for the fetchOneProduct field.
 func (r *queryResolver) FetchOneProduct(ctx context.Context, id string, price *string) (*model.Product, error) {
 	merchantService := merchant.NewMerchantService(r.Database, uuid.Nil)
@@ -205,19 +251,14 @@ func (r *queryResolver) FetchOneProduct(ctx context.Context, id string, price *s
 		if err != nil {
 			return nil, err
 		}
-		amount := conversions.ParseTransferAmountFloat(priceData.Token, priceData.Amount)
-		gqlPriceData := &model.PriceData{
-			ID:            priceData.ID.String(),
-			Type:          model.PaymentType(priceData.Type),
-			Active:        priceData.Active,
-			Amount:        amount,
-			Token:         priceData.Token,
-			Interval:      model.IntervalType(priceData.Interval),
-			IntervalCount: int(priceData.IntervalCount),
-			ProductID:     priceData.ProductId,
-			TrialPeriod:   int(priceData.TrialPeriod),
+		result.PriceData = append(result.PriceData, priceData)
+	} else {
+		// return all prices
+		priceData, err := merchantService.RetrieveProductPriceData(id)
+		if err != nil {
+			return nil, err
 		}
-		result.PriceData = gqlPriceData
+		result.PriceData = priceData
 	}
 	return result, nil
 }
@@ -311,9 +352,9 @@ func (r *queryResolver) GetMerchantPaymentLinks(ctx context.Context, merchantID 
 			IntervalCount: int(interval),
 			Interval:      paymentLink.Price.Interval,
 			CallbackURL:   paymentLink.CallbackURL,
-			Amount:       amount,
-			Token:        paymentLink.Price.Token,
-			Chain: int(paymentLink.Product.Chain),
+			Amount:        amount,
+			Token:         paymentLink.Price.Token,
+			Chain:         int(paymentLink.Product.Chain),
 		}
 		paymentLinkDetails = append(paymentLinkDetails, paymentLinkDetail)
 	}

@@ -71,9 +71,11 @@ type ComplexityRoot struct {
 		CreateAccessKey          func(childComplexity int, input model.NewMerchantKey) int
 		CreateMerchant           func(childComplexity int, input model.NewMerchant) int
 		CreatePaymentLink        func(childComplexity int, input model.NewPaymentLink) int
+		CreatePrice              func(childComplexity int, input model.NewPrice) int
 		DeletePaymentLink        func(childComplexity int, id string) int
 		ToggleProductMode        func(childComplexity int, input model.ProductModeUpdate) int
 		UpdateMerchantwebHookURL func(childComplexity int, webhookURL string) int
+		UpdatePrice              func(childComplexity int, input *model.PriceUpdate) int
 		UpdateProduct            func(childComplexity int, input model.ProductUpdate) int
 	}
 
@@ -95,6 +97,7 @@ type ComplexityRoot struct {
 	PriceData struct {
 		Active        func(childComplexity int) int
 		Amount        func(childComplexity int) int
+		Chain         func(childComplexity int) int
 		ID            func(childComplexity int) int
 		Interval      func(childComplexity int) int
 		IntervalCount func(childComplexity int) int
@@ -105,10 +108,8 @@ type ComplexityRoot struct {
 	}
 
 	Product struct {
-		Chain            func(childComplexity int) int
 		CreatedAt        func(childComplexity int) int
 		DefaultPrice     func(childComplexity int) int
-		Interval         func(childComplexity int) int
 		MerchantID       func(childComplexity int) int
 		Mode             func(childComplexity int) int
 		Name             func(childComplexity int) int
@@ -117,7 +118,6 @@ type ComplexityRoot struct {
 		ProductID        func(childComplexity int) int
 		ReceivingAddress func(childComplexity int) int
 		Subscriptions    func(childComplexity int) int
-		Token            func(childComplexity int) int
 	}
 
 	Query struct {
@@ -149,6 +149,8 @@ type MutationResolver interface {
 	ToggleProductMode(ctx context.Context, input model.ProductModeUpdate) (model.Mode, error)
 	CreatePaymentLink(ctx context.Context, input model.NewPaymentLink) (string, error)
 	DeletePaymentLink(ctx context.Context, id string) (string, error)
+	CreatePrice(ctx context.Context, input model.NewPrice) (*model.PriceData, error)
+	UpdatePrice(ctx context.Context, input *model.PriceUpdate) (*model.PriceData, error)
 }
 type QueryResolver interface {
 	FetchOneProduct(ctx context.Context, id string, price *string) (*model.Product, error)
@@ -314,6 +316,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.CreatePaymentLink(childComplexity, args["input"].(model.NewPaymentLink)), true
 
+	case "Mutation.createPrice":
+		if e.complexity.Mutation.CreatePrice == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createPrice_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreatePrice(childComplexity, args["input"].(model.NewPrice)), true
+
 	case "Mutation.deletePaymentLink":
 		if e.complexity.Mutation.DeletePaymentLink == nil {
 			break
@@ -349,6 +363,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.UpdateMerchantwebHookURL(childComplexity, args["webhookUrl"].(string)), true
+
+	case "Mutation.updatePrice":
+		if e.complexity.Mutation.UpdatePrice == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updatePrice_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdatePrice(childComplexity, args["input"].(*model.PriceUpdate)), true
 
 	case "Mutation.updateProduct":
 		if e.complexity.Mutation.UpdateProduct == nil {
@@ -460,6 +486,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.PriceData.Amount(childComplexity), true
 
+	case "PriceData.chain":
+		if e.complexity.PriceData.Chain == nil {
+			break
+		}
+
+		return e.complexity.PriceData.Chain(childComplexity), true
+
 	case "PriceData.id":
 		if e.complexity.PriceData.ID == nil {
 			break
@@ -509,13 +542,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.PriceData.Type(childComplexity), true
 
-	case "Product.chain":
-		if e.complexity.Product.Chain == nil {
-			break
-		}
-
-		return e.complexity.Product.Chain(childComplexity), true
-
 	case "Product.createdAt":
 		if e.complexity.Product.CreatedAt == nil {
 			break
@@ -529,13 +555,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Product.DefaultPrice(childComplexity), true
-
-	case "Product.interval":
-		if e.complexity.Product.Interval == nil {
-			break
-		}
-
-		return e.complexity.Product.Interval(childComplexity), true
 
 	case "Product.merchantId":
 		if e.complexity.Product.MerchantID == nil {
@@ -592,13 +611,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Product.Subscriptions(childComplexity), true
-
-	case "Product.token":
-		if e.complexity.Product.Token == nil {
-			break
-		}
-
-		return e.complexity.Product.Token(childComplexity), true
 
 	case "Query.fetchMerchantInfo":
 		if e.complexity.Query.FetchMerchantInfo == nil {
@@ -741,6 +753,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputNewPaymentLink,
 		ec.unmarshalInputNewPrice,
 		ec.unmarshalInputNewProduct,
+		ec.unmarshalInputPriceUpdate,
 		ec.unmarshalInputProductModeUpdate,
 		ec.unmarshalInputProductUpdate,
 	)
@@ -863,6 +876,8 @@ type Mutation {
   toggleProductMode(input: ProductModeUpdate!): Mode!
   createPaymentLink(input: NewPaymentLink!): String!
   deletePaymentLink(id: String!): String!
+  createPrice(input: NewPrice!): PriceData!
+  updatePrice(input: PriceUpdate): PriceData!
 }
 
 input NewMerchant {
@@ -896,7 +911,6 @@ type Merchant {
 input NewProduct {
   name: String!
   owner: String!
-  chain: Int!
   paymentType: PaymentType!
   receivingAddress: String!
   firstChargeNow: Boolean!
@@ -909,6 +923,7 @@ type PriceData {
   active: Boolean!
   amount: Float!
   token: String!
+  chain: Int!
   interval: IntervalType!
   intervalCount: Int!
   productId: String!
@@ -918,10 +933,20 @@ type PriceData {
 input NewPrice {
   type: PaymentType!
   token: String!
+  chain: Int!
   amount: Float!
   interval: IntervalType!
   intervalCount: Int!
   productId: String!
+  trialPeriod: Int
+}
+
+input PriceUpdate {
+  token: String!
+  chain: Int!
+  amount: Float!
+  interval: IntervalType!
+  intervalCount: Int!
   trialPeriod: Int
 }
 
@@ -983,11 +1008,8 @@ type Product {
   name: String!
   mode: Mode!
   owner: String!
-  chain: Int!
-  token: String!
   defaultPrice: String!
-  priceData: PriceData
-  interval: Int!
+  priceData: [PriceData!]!
   productId: String!
   merchantId: String!
   receivingAddress: String!
@@ -1086,6 +1108,21 @@ func (ec *executionContext) field_Mutation_createPaymentLink_args(ctx context.Co
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_createPrice_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.NewPrice
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNNewPrice2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐNewPrice(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_deletePaymentLink_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -1128,6 +1165,21 @@ func (ec *executionContext) field_Mutation_updateMerchantwebHookUrl_args(ctx con
 		}
 	}
 	args["webhookUrl"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updatePrice_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *model.PriceUpdate
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalOPriceUpdate2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐPriceUpdate(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
 	return args, nil
 }
 
@@ -1938,16 +1990,10 @@ func (ec *executionContext) fieldContext_Mutation_addProduct(ctx context.Context
 				return ec.fieldContext_Product_mode(ctx, field)
 			case "owner":
 				return ec.fieldContext_Product_owner(ctx, field)
-			case "chain":
-				return ec.fieldContext_Product_chain(ctx, field)
-			case "token":
-				return ec.fieldContext_Product_token(ctx, field)
 			case "defaultPrice":
 				return ec.fieldContext_Product_defaultPrice(ctx, field)
 			case "priceData":
 				return ec.fieldContext_Product_priceData(ctx, field)
-			case "interval":
-				return ec.fieldContext_Product_interval(ctx, field)
 			case "productId":
 				return ec.fieldContext_Product_productId(ctx, field)
 			case "merchantId":
@@ -2021,16 +2067,10 @@ func (ec *executionContext) fieldContext_Mutation_updateProduct(ctx context.Cont
 				return ec.fieldContext_Product_mode(ctx, field)
 			case "owner":
 				return ec.fieldContext_Product_owner(ctx, field)
-			case "chain":
-				return ec.fieldContext_Product_chain(ctx, field)
-			case "token":
-				return ec.fieldContext_Product_token(ctx, field)
 			case "defaultPrice":
 				return ec.fieldContext_Product_defaultPrice(ctx, field)
 			case "priceData":
 				return ec.fieldContext_Product_priceData(ctx, field)
-			case "interval":
-				return ec.fieldContext_Product_interval(ctx, field)
 			case "productId":
 				return ec.fieldContext_Product_productId(ctx, field)
 			case "merchantId":
@@ -2423,6 +2463,160 @@ func (ec *executionContext) fieldContext_Mutation_deletePaymentLink(ctx context.
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_deletePaymentLink_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_createPrice(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_createPrice(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CreatePrice(rctx, fc.Args["input"].(model.NewPrice))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.PriceData)
+	fc.Result = res
+	return ec.marshalNPriceData2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐPriceData(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_createPrice(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_PriceData_id(ctx, field)
+			case "type":
+				return ec.fieldContext_PriceData_type(ctx, field)
+			case "active":
+				return ec.fieldContext_PriceData_active(ctx, field)
+			case "amount":
+				return ec.fieldContext_PriceData_amount(ctx, field)
+			case "token":
+				return ec.fieldContext_PriceData_token(ctx, field)
+			case "chain":
+				return ec.fieldContext_PriceData_chain(ctx, field)
+			case "interval":
+				return ec.fieldContext_PriceData_interval(ctx, field)
+			case "intervalCount":
+				return ec.fieldContext_PriceData_intervalCount(ctx, field)
+			case "productId":
+				return ec.fieldContext_PriceData_productId(ctx, field)
+			case "trialPeriod":
+				return ec.fieldContext_PriceData_trialPeriod(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PriceData", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createPrice_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updatePrice(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_updatePrice(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdatePrice(rctx, fc.Args["input"].(*model.PriceUpdate))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.PriceData)
+	fc.Result = res
+	return ec.marshalNPriceData2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐPriceData(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updatePrice(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_PriceData_id(ctx, field)
+			case "type":
+				return ec.fieldContext_PriceData_type(ctx, field)
+			case "active":
+				return ec.fieldContext_PriceData_active(ctx, field)
+			case "amount":
+				return ec.fieldContext_PriceData_amount(ctx, field)
+			case "token":
+				return ec.fieldContext_PriceData_token(ctx, field)
+			case "chain":
+				return ec.fieldContext_PriceData_chain(ctx, field)
+			case "interval":
+				return ec.fieldContext_PriceData_interval(ctx, field)
+			case "intervalCount":
+				return ec.fieldContext_PriceData_intervalCount(ctx, field)
+			case "productId":
+				return ec.fieldContext_PriceData_productId(ctx, field)
+			case "trialPeriod":
+				return ec.fieldContext_PriceData_trialPeriod(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PriceData", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updatePrice_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -3177,6 +3371,50 @@ func (ec *executionContext) fieldContext_PriceData_token(ctx context.Context, fi
 	return fc, nil
 }
 
+func (ec *executionContext) _PriceData_chain(ctx context.Context, field graphql.CollectedField, obj *model.PriceData) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PriceData_chain(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Chain, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PriceData_chain(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PriceData",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _PriceData_interval(ctx context.Context, field graphql.CollectedField, obj *model.PriceData) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_PriceData_interval(ctx, field)
 	if err != nil {
@@ -3485,94 +3723,6 @@ func (ec *executionContext) fieldContext_Product_owner(ctx context.Context, fiel
 	return fc, nil
 }
 
-func (ec *executionContext) _Product_chain(ctx context.Context, field graphql.CollectedField, obj *model.Product) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Product_chain(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Chain, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Product_chain(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Product",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Product_token(ctx context.Context, field graphql.CollectedField, obj *model.Product) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Product_token(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Token, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Product_token(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Product",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Product_defaultPrice(ctx context.Context, field graphql.CollectedField, obj *model.Product) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Product_defaultPrice(ctx, field)
 	if err != nil {
@@ -3638,11 +3788,14 @@ func (ec *executionContext) _Product_priceData(ctx context.Context, field graphq
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.PriceData)
+	res := resTmp.([]*model.PriceData)
 	fc.Result = res
-	return ec.marshalOPriceData2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐPriceData(ctx, field.Selections, res)
+	return ec.marshalNPriceData2ᚕᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐPriceDataᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Product_priceData(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3663,6 +3816,8 @@ func (ec *executionContext) fieldContext_Product_priceData(ctx context.Context, 
 				return ec.fieldContext_PriceData_amount(ctx, field)
 			case "token":
 				return ec.fieldContext_PriceData_token(ctx, field)
+			case "chain":
+				return ec.fieldContext_PriceData_chain(ctx, field)
 			case "interval":
 				return ec.fieldContext_PriceData_interval(ctx, field)
 			case "intervalCount":
@@ -3673,50 +3828,6 @@ func (ec *executionContext) fieldContext_Product_priceData(ctx context.Context, 
 				return ec.fieldContext_PriceData_trialPeriod(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type PriceData", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Product_interval(ctx context.Context, field graphql.CollectedField, obj *model.Product) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Product_interval(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Interval, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Product_interval(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Product",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -3995,16 +4106,10 @@ func (ec *executionContext) fieldContext_Query_fetchOneProduct(ctx context.Conte
 				return ec.fieldContext_Product_mode(ctx, field)
 			case "owner":
 				return ec.fieldContext_Product_owner(ctx, field)
-			case "chain":
-				return ec.fieldContext_Product_chain(ctx, field)
-			case "token":
-				return ec.fieldContext_Product_token(ctx, field)
 			case "defaultPrice":
 				return ec.fieldContext_Product_defaultPrice(ctx, field)
 			case "priceData":
 				return ec.fieldContext_Product_priceData(ctx, field)
-			case "interval":
-				return ec.fieldContext_Product_interval(ctx, field)
 			case "productId":
 				return ec.fieldContext_Product_productId(ctx, field)
 			case "merchantId":
@@ -4078,16 +4183,10 @@ func (ec *executionContext) fieldContext_Query_fetchProducts(ctx context.Context
 				return ec.fieldContext_Product_mode(ctx, field)
 			case "owner":
 				return ec.fieldContext_Product_owner(ctx, field)
-			case "chain":
-				return ec.fieldContext_Product_chain(ctx, field)
-			case "token":
-				return ec.fieldContext_Product_token(ctx, field)
 			case "defaultPrice":
 				return ec.fieldContext_Product_defaultPrice(ctx, field)
 			case "priceData":
 				return ec.fieldContext_Product_priceData(ctx, field)
-			case "interval":
-				return ec.fieldContext_Product_interval(ctx, field)
 			case "productId":
 				return ec.fieldContext_Product_productId(ctx, field)
 			case "merchantId":
@@ -6884,7 +6983,7 @@ func (ec *executionContext) unmarshalInputNewPrice(ctx context.Context, obj inte
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"type", "token", "amount", "interval", "intervalCount", "productId", "trialPeriod"}
+	fieldsInOrder := [...]string{"type", "token", "chain", "amount", "interval", "intervalCount", "productId", "trialPeriod"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -6909,6 +7008,15 @@ func (ec *executionContext) unmarshalInputNewPrice(ctx context.Context, obj inte
 				return it, err
 			}
 			it.Token = data
+		case "chain":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chain"))
+			data, err := ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Chain = data
 		case "amount":
 			var err error
 
@@ -6967,7 +7075,7 @@ func (ec *executionContext) unmarshalInputNewProduct(ctx context.Context, obj in
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "owner", "chain", "paymentType", "receivingAddress", "firstChargeNow", "priceData"}
+	fieldsInOrder := [...]string{"name", "owner", "paymentType", "receivingAddress", "firstChargeNow", "priceData"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -6992,15 +7100,6 @@ func (ec *executionContext) unmarshalInputNewProduct(ctx context.Context, obj in
 				return it, err
 			}
 			it.Owner = data
-		case "chain":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chain"))
-			data, err := ec.unmarshalNInt2int(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Chain = data
 		case "paymentType":
 			var err error
 
@@ -7037,6 +7136,80 @@ func (ec *executionContext) unmarshalInputNewProduct(ctx context.Context, obj in
 				return it, err
 			}
 			it.PriceData = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputPriceUpdate(ctx context.Context, obj interface{}) (model.PriceUpdate, error) {
+	var it model.PriceUpdate
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"token", "chain", "amount", "interval", "intervalCount", "trialPeriod"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "token":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("token"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Token = data
+		case "chain":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chain"))
+			data, err := ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Chain = data
+		case "amount":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("amount"))
+			data, err := ec.unmarshalNFloat2float64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Amount = data
+		case "interval":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("interval"))
+			data, err := ec.unmarshalNIntervalType2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐIntervalType(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Interval = data
+		case "intervalCount":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("intervalCount"))
+			data, err := ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.IntervalCount = data
+		case "trialPeriod":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("trialPeriod"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TrialPeriod = data
 		}
 	}
 
@@ -7369,6 +7542,20 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "createPrice":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createPrice(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updatePrice":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updatePrice(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -7522,6 +7709,11 @@ func (ec *executionContext) _PriceData(ctx context.Context, sel ast.SelectionSet
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "chain":
+			out.Values[i] = ec._PriceData_chain(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "interval":
 			out.Values[i] = ec._PriceData_interval(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -7591,16 +7783,6 @@ func (ec *executionContext) _Product(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "chain":
-			out.Values[i] = ec._Product_chain(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "token":
-			out.Values[i] = ec._Product_token(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "defaultPrice":
 			out.Values[i] = ec._Product_defaultPrice(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -7608,8 +7790,6 @@ func (ec *executionContext) _Product(ctx context.Context, sel ast.SelectionSet, 
 			}
 		case "priceData":
 			out.Values[i] = ec._Product_priceData(ctx, field, obj)
-		case "interval":
-			out.Values[i] = ec._Product_interval(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -8391,6 +8571,11 @@ func (ec *executionContext) unmarshalNNewPaymentLink2githubᚗcomᚋlucidconnect
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalNNewPrice2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐNewPrice(ctx context.Context, v interface{}) (model.NewPrice, error) {
+	res, err := ec.unmarshalInputNewPrice(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNNewPrice2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐNewPrice(ctx context.Context, v interface{}) (*model.NewPrice, error) {
 	res, err := ec.unmarshalInputNewPrice(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
@@ -8467,6 +8652,64 @@ func (ec *executionContext) unmarshalNPaymentType2githubᚗcomᚋlucidconnectᚋ
 
 func (ec *executionContext) marshalNPaymentType2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐPaymentType(ctx context.Context, sel ast.SelectionSet, v model.PaymentType) graphql.Marshaler {
 	return v
+}
+
+func (ec *executionContext) marshalNPriceData2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐPriceData(ctx context.Context, sel ast.SelectionSet, v model.PriceData) graphql.Marshaler {
+	return ec._PriceData(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNPriceData2ᚕᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐPriceDataᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.PriceData) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNPriceData2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐPriceData(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNPriceData2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐPriceData(ctx context.Context, sel ast.SelectionSet, v *model.PriceData) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._PriceData(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNProduct2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐProduct(ctx context.Context, sel ast.SelectionSet, v model.Product) graphql.Marshaler {
@@ -8857,11 +9100,12 @@ func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.Sele
 	return res
 }
 
-func (ec *executionContext) marshalOPriceData2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐPriceData(ctx context.Context, sel ast.SelectionSet, v *model.PriceData) graphql.Marshaler {
+func (ec *executionContext) unmarshalOPriceUpdate2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐPriceUpdate(ctx context.Context, v interface{}) (*model.PriceUpdate, error) {
 	if v == nil {
-		return graphql.Null
+		return nil, nil
 	}
-	return ec._PriceData(ctx, sel, v)
+	res, err := ec.unmarshalInputPriceUpdate(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalOString2ᚖstring(ctx context.Context, v interface{}) (*string, error) {
