@@ -45,10 +45,10 @@ func (m *MerchantService) CreateProduct(product *Product) (*Product, error) {
 	// interval := conversions.ParseDaysToNanoSeconds(int64(input.Interval))
 
 	productObj := &models.Product{
-		ID:             productID,
-		Name:           product.Name,
-		Chain:          chainId,
-		Owner:          product.Owner,
+		ID:    productID,
+		Name:  product.Name,
+		Chain: chainId,
+		Owner: product.Owner,
 		// Token:          product.Token,
 		DepositAddress: product.DepositAddress,
 		MerchantID:     m.merchant,
@@ -78,63 +78,27 @@ func (m *MerchantService) FetchProductsByOwner(owner string) ([]*model.Product, 
 		subscriptions, err := parseMerchantSubscriptions(v.Subscriptions)
 		if err != nil {
 			log.Err(err).Send()
-			continue
 		}
+		priceObjects, err := m.repository.FetchAllPricesByProduct(v.ID)
+		if err != nil {
+			log.Err(err).Send()
+		}
+		priceData, _ := ParsePriceObjects(priceObjects)
 		// interval := conversions.ParseNanoSecondsToDay(v.Interval)
 
 		product := &model.Product{
 			Name:             v.Name,
 			Mode:             model.Mode(v.Mode),
 			Owner:            v.Owner,
-			Chain:            int(v.Chain),
-			// Token:            v.Token,
-			// Interval:         int(interval),
 			ProductID:        v.ID.String(),
 			MerchantID:       v.MerchantID.String(),
 			ReceivingAddress: v.DepositAddress,
 			Subscriptions:    subscriptions,
-		}
-		defaultPrice := v.DefaultPriceID
-		if defaultPrice != uuid.Nil {
-			priceData, err := m.RetrievePriceData(defaultPrice.String())
-			if err != nil {
-				log.Err(err).Send()
-			}
-			amount := conversions.ParseTransferAmountFloat(priceData.Token, priceData.Amount)
-			gqlPriceData := &model.PriceData{
-				ID:            priceData.ID.String(),
-				Type:          model.PaymentType(priceData.Type),
-				Active:        priceData.Active,
-				Amount:        amount,
-				Token:         priceData.Token,
-				Interval:      model.IntervalType(priceData.Interval),
-				IntervalCount: int(priceData.IntervalCount),
-				ProductID:     priceData.ProductId,
-				TrialPeriod:   int(priceData.TrialPeriod),
-			}
-			product.PriceData = gqlPriceData
+			PriceData:        priceData,
 		}
 		products = append(products, product)
 	}
 	return products, nil
-}
-
-func parseMerchantSubscriptions(subs []models.Subscription) ([]*model.Sub, error) {
-	var subscriptions []*model.Sub
-
-	for _, sub := range subs {
-		subscription := &model.Sub{
-			Chain:         int(sub.Chain),
-			Token:         sub.Token,
-			Amount:        int(sub.Amount),
-			Active:        sub.Active,
-			Interval:      fmt.Sprintf("%v days", sub.Interval),
-			WalletAddress: sub.WalletAddress,
-		}
-		subscriptions = append(subscriptions, subscription)
-	}
-
-	return subscriptions, nil
 }
 
 func (m *MerchantService) FetchProduct(pid string) (*model.Product, error) {
@@ -164,11 +128,9 @@ func (m *MerchantService) FetchProduct(pid string) (*model.Product, error) {
 		Name:             v.Name,
 		Mode:             model.Mode(v.Mode),
 		Owner:            v.Owner,
-		Chain:            int(v.Chain),
-		// Token:            v.Token,
-		// Interval:         int(interval),
 		ProductID:        pid,
 		MerchantID:       v.MerchantID.String(),
+		DefaultPrice:     v.DefaultPriceID.String(),
 		ReceivingAddress: v.DepositAddress,
 		CreatedAt:        &createdAt,
 		Subscriptions:    subscriptions,
@@ -250,8 +212,7 @@ func parseUUID(mid string) (uuid.UUID, error) {
 
 func ParseGraphqlInput(gqlInput model.NewProduct) *Product {
 	p := &Product{
-		Name:  gqlInput.Name,
-		Chain: int64(gqlInput.Chain),
+		Name: gqlInput.Name,
 		// Mode:  gqlInput.Mode.String(),
 		// Price: ,
 		Owner:          gqlInput.Owner,
@@ -262,4 +223,45 @@ func ParseGraphqlInput(gqlInput model.NewProduct) *Product {
 		PaymentType:   gqlInput.PaymentType.String(),
 	}
 	return p
+}
+
+func parseMerchantSubscriptions(subs []models.Subscription) ([]*model.Sub, error) {
+	var subscriptions []*model.Sub
+
+	for _, sub := range subs {
+		subscription := &model.Sub{
+			Chain:         int(sub.Chain),
+			Token:         sub.Token,
+			Amount:        int(sub.Amount),
+			Active:        sub.Active,
+			Interval:      fmt.Sprintf("%v days", sub.Interval),
+			WalletAddress: sub.WalletAddress,
+		}
+		subscriptions = append(subscriptions, subscription)
+	}
+
+	return subscriptions, nil
+}
+
+func ParsePriceObjects(prices []models.Price) ([]*model.PriceData, error) {
+	var priceData []*model.PriceData
+
+	for _, price := range prices {
+		amount := conversions.ParseTransferAmountFloat(price.Token, price.Amount)
+
+		p := &model.PriceData{
+			ID:            price.ID.String(),
+			Type:          model.PaymentType(price.Type),
+			Active:        price.Active,
+			Amount:        amount,
+			Token:         price.Token,
+			Chain:         int(price.Chain),
+			Interval:      model.IntervalType(price.Interval),
+			IntervalCount: int(price.IntervalCount),
+			ProductID:     price.ProductID.String(),
+			TrialPeriod:   int(price.TrialPeriod),
+		}
+		priceData = append(priceData, p)
+	}
+	return priceData, nil
 }

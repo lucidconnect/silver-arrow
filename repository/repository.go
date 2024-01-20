@@ -42,6 +42,7 @@ type Database interface {
 	CreatePrice(*models.Price) error
 	FetchPrice(uuid.UUID) (*models.Price, error)
 	FetchAllPrices(merchantId uuid.UUID) ([]models.Price, error)
+	FetchAllPricesByProduct(productId uuid.UUID) ([]models.Price, error)
 	UpdatePrice(priceId uuid.UUID, update map[string]interface{}) error
 
 	// Merchant

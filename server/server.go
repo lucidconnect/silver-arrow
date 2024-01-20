@@ -114,6 +114,11 @@ func (s *Server) Routes() {
 	paymentLink.Use(s.PaymentLinkMiddleware())
 	paymentLink.Handle("/query", s.paymentLinksGraphqlHandler())
 	paymentLink.Handle("/graphiql", playground.Handler("/api/Graphql plaground", "/pay/query"))
+
+	// api
+	apiRoute := s.router.PathPrefix("/api/v1").Subrouter()
+	apiRoute.Use(s.AuthMiddleWare())
+	apiRoute.HandleFunc("/products", s.CreateNewProduct()).Methods(http.MethodPost)
 }
 
 func (s *Server) checkoutGraphqlHandler() *handler.Server {

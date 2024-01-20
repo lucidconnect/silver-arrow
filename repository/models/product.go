@@ -23,7 +23,7 @@ type Product struct {
 	Mode             string
 	// Amount           int64
 	// Interval         int64
-	// InstantCharge    bool
+	InstantCharge bool
 	// PaymentType      string
 	DefaultPriceID uuid.UUID
 	CreatedAt      time.Time

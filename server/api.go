@@ -9,8 +9,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/lucidconnect/silver-arrow/conversions"
 	"github.com/lucidconnect/silver-arrow/repository/models"
 	"github.com/lucidconnect/silver-arrow/server/api"
+	"github.com/lucidconnect/silver-arrow/server/graphql/wallet/graph/model"
 	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 )
@@ -115,6 +117,105 @@ func (s *Server) CreateCheckoutSession() http.HandlerFunc {
 		response = &httpResponse{
 			Status: http.StatusOK,
 			Data:   checkoutSession,
+		}
+		writeJsonResponse(w, response)
+	}
+}
+
+func (s *Server) CreateNewProduct() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		request := &api.NewProduct{}
+		response := &httpResponse{}
+
+		auth := strings.Split(r.Header.Get("Authorization"), " ")[1]
+		merchant, err := s.database.FetchMerchantByPublicKey(auth)
+
+		if err != nil {
+			log.Err(err).Msg("decoding request failed")
+			response = &httpResponse{
+				Status: http.StatusBadRequest,
+				Error:  "merchant id is invalid",
+			}
+			writeJsonResponse(w, response)
+			return
+		}
+
+		if err := json.NewDecoder(r.Body).Decode(request); err != nil {
+			log.Err(err).Caller().Msg("decoding request failed")
+			response = &httpResponse{
+				Status: http.StatusBadRequest,
+			}
+			writeJsonResponse(w, response)
+			return
+		}
+		productID := uuid.New()
+
+		newProduct := &models.Product{
+			ID:             productID,
+			Name:           request.Name,
+			Owner:          merchant.OwnerAddress,
+			DepositAddress: request.ReceivingAddress,
+			MerchantID:     merchant.ID,
+			CreatedAt:      time.Now(),
+			Mode:           model.ModeTest.String(),
+			InstantCharge:  request.FirstChargeNow,
+		}
+		if err = s.database.CreateProduct(newProduct); err != nil {
+			log.Err(err).Send()
+			response = &httpResponse{
+				Status: http.StatusInternalServerError,
+				Error:  err.Error(),
+			}
+			writeJsonResponse(w, response)
+			return
+		}
+		product := &api.ProductResponse{
+			ID:               productID.String(),
+			Name:             request.Name,
+			ReceivingAddress: request.ReceivingAddress,
+			FirstChargeNow:   true,
+		}
+		// create price
+		priceId := uuid.New()
+		amount := conversions.ParseFloatAmountToInt(request.PriceData.Token, request.PriceData.Amount)
+		newPrice := &models.Price{
+			ID:            priceId,
+			Active:        true,
+			Amount:        amount,
+			Token:         request.PriceData.Token,
+			Chain:         request.PriceData.Chain,
+			Type:          string(request.PriceData.Type),
+			Interval:      string(request.PriceData.Interval),
+			IntervalCount: int64(request.PriceData.IntervalCount),
+			ProductID:     productID,
+			MerchantID:    merchant.ID,
+			CreatedAt:     time.Now(),
+			// TrialPeriod: int64(*request.PriceData.TrialPeriod),
+		}
+		if err = s.database.CreatePrice(newPrice); err != nil {
+			log.Err(err).Send()
+			response = &httpResponse{
+				Status: http.StatusInternalServerError,
+				Data:   product,
+				Error:  err.Error(),
+			}
+			writeJsonResponse(w, response)
+			return
+		}
+		product.DefaultPriceData = api.PriceDataResponse{
+			ID:            priceId.String(),
+			Active:        true,
+			Amount:        amount,
+			Token:         request.PriceData.Token,
+			Chain:         request.PriceData.Chain,
+			Type:          request.PriceData.Type,
+			Interval:      request.PriceData.Interval,
+			IntervalCount: request.PriceData.IntervalCount,
+			ProductID:     productID.String(),
+		}
+		response = &httpResponse{
+			Status: http.StatusInternalServerError,
+			Data:   product,
 		}
 		writeJsonResponse(w, response)
 	}

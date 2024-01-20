@@ -5,7 +5,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/lucidconnect/silver-arrow/conversions"
 	"github.com/lucidconnect/silver-arrow/repository/models"
+	"github.com/lucidconnect/silver-arrow/server/graphql/merchant/graph/model"
 	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 )
@@ -14,7 +16,7 @@ type PriceType string
 type RecuringInterval string
 
 const (
-	PriceTypeOneTime      PriceType        = "one-time"
+	PriceTypeSingle       PriceType        = "single"
 	PriceTypeRecurring    PriceType        = "recurring"
 	RecuringIntervalDay   RecuringInterval = "day"
 	RecuringIntervalWeek  RecuringInterval = "week"
@@ -27,6 +29,7 @@ type Price struct {
 	Active        bool
 	Amount        int64
 	Token         string
+	Chain         int64
 	Type          PriceType
 	Interval      RecuringInterval
 	IntervalCount int64
@@ -63,7 +66,7 @@ func (m *MerchantService) CreatePrice(price *Price, productId string) (*Price, e
 	return price, nil
 }
 
-func (m *MerchantService) RetrievePriceData(priceId string) (*Price, error) {
+func (m *MerchantService) RetrievePriceData(priceId string) (*model.PriceData, error) {
 	pid, err := uuid.Parse(priceId)
 	if err != nil {
 		errMsg := fmt.Errorf("invalid uuid [%v] supplied", priceId)
@@ -82,17 +85,48 @@ func (m *MerchantService) RetrievePriceData(priceId string) (*Price, error) {
 			return nil, errMsg
 		}
 	}
-	priceData := &Price{
-		ID:            price.ID,
+	// priceData := &Price{
+	// 	ID:            price.ID,
+	// 	Active:        price.Active,
+	// 	Token:         price.Token,
+	// 	Amount:        price.Amount,
+	// 	Type:          PriceType(price.Type),
+	// 	Interval:      RecuringInterval(price.Interval),
+	// 	IntervalCount: price.IntervalCount,
+	// 	TrialPeriod:   price.TrialPeriod,
+	// 	ProductId:     price.ProductID.String(),
+	// 	CreatedAt:     price.CreatedAt.Unix(),
+	// }
+	amount := conversions.ParseTransferAmountFloat(price.Token, price.Amount)
+
+	priceData := &model.PriceData{
+		ID:            price.ID.String(),
+		Type:          model.PaymentType(price.Type),
 		Active:        price.Active,
+		Amount:        amount,
 		Token:         price.Token,
-		Amount:        price.Amount,
-		Type:          PriceType(price.Type),
-		Interval:      RecuringInterval(price.Interval),
-		IntervalCount: price.IntervalCount,
-		TrialPeriod:   price.TrialPeriod,
-		ProductId:     price.ProductID.String(),
-		CreatedAt:     price.CreatedAt.Unix(),
+		Chain:         int(price.Chain),
+		Interval:      model.IntervalType(price.Interval),
+		IntervalCount: int(price.IntervalCount),
+		ProductID:     price.ProductID.String(),
+		TrialPeriod:   int(price.TrialPeriod),
 	}
 	return priceData, nil
+}
+
+func (m *MerchantService) RetrieveProductPriceData(productId string) ([]*model.PriceData, error) {
+	pid, err := uuid.Parse(productId)
+	if err != nil {
+		errMsg := fmt.Errorf("invalid uuid [%v] supplied", pid)
+		log.Err(err).Caller().Msg(errMsg.Error())
+		return nil, errMsg
+	}
+
+	priceObjects, err := m.repository.FetchAllPricesByProduct(pid)
+	if err != nil {
+		log.Err(err).Send()
+		return nil, err
+	}
+
+	return ParsePriceObjects(priceObjects)
 }

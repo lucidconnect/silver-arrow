@@ -9,6 +9,9 @@ import (
 type Price struct {
 	ID            uuid.UUID `gorm:"primaryKey"`
 	Active        bool
+	Amount        int64
+	Token         string
+	Chain         int64
 	Type          string
 	Interval      string
 	IntervalCount int64
@@ -16,8 +19,6 @@ type Price struct {
 	ProductID     uuid.UUID
 	MerchantID    uuid.UUID
 	Product       Product
-	Amount        int64
-	Token         string
-	CreatedAt     time.Time
-	UpdatedAt     time.Time
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }

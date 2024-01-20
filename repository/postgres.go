@@ -416,6 +416,15 @@ func (p *PostgresDB) FetchAllPrices(merchantId uuid.UUID) ([]models.Price, error
 	}
 	return prices, nil
 }
+
+func (p *PostgresDB) FetchAllPricesByProduct(productId uuid.UUID) ([]models.Price, error) {
+	var prices []models.Price
+	if err := p.Db.Where("product_id = ?", productId).Find(&prices).Error; err != nil {
+		return nil, err
+	}
+	return prices, nil
+}
+
 func (p *PostgresDB) UpdatePrice(priceId uuid.UUID, update map[string]interface{}) error {
 	var price *models.Price
 
