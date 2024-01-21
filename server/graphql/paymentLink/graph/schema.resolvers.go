@@ -181,7 +181,7 @@ func (r *queryResolver) GetPaymentLinkBySession(ctx context.Context, id string) 
 		ProductName:  pd.ProductName,
 		MerchantName: pd.MerchantName,
 		Interval:     pd.Interval,
-		CallbackURL:  pd.CallbackURL,
+		CallbackURL:  checkoutSession.CallbackURL,
 	}
 	return paymentLinkDetails, nil
 }

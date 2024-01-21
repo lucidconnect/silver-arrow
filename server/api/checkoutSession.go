@@ -1,13 +1,14 @@
 package api
 
 type NewCheckoutSession struct {
-	Customer          string `json:"customer"`
-	ProductId         string `json:"product_id"`
-	CallbackUrl       string `json:"callback_url"`
+	Customer    string `json:"customer"`
+	ProductId   string `json:"product_id"`
+	CallbackUrl string `json:"callback_url"`
 }
 
 type CheckoutSessionResponse struct {
-	SessionId   string `json:"session_id"`
+	SessionId string `json:"session_id"`
+	Url       string `json:"url"`
 }
 
 type Mode string
