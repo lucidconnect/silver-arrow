@@ -101,12 +101,13 @@ func parseMerchantSubscriptions(subs []models.Subscription) ([]*model.Sub, error
 	var subscriptions []*model.Sub
 
 	for _, sub := range subs {
+		interval := conversions.ParseNanoSecondsToDay(sub.Interval)
 		subscription := &model.Sub{
 			Chain:         int(sub.Chain),
 			Token:         sub.Token,
 			Amount:        int(sub.Amount),
 			Active:        sub.Active,
-			Interval:      fmt.Sprintf("%v days", sub.Interval),
+			Interval:      fmt.Sprintf("%v days", interval),
 			WalletAddress: sub.WalletAddress,
 		}
 		subscriptions = append(subscriptions, subscription)
