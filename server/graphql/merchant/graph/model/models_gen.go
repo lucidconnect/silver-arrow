@@ -119,8 +119,6 @@ type PriceUpdate struct {
 	TrialPeriod   *int         `json:"trialPeriod,omitempty"`
 }
 
-
-
 type Product struct {
 	Name             string       `json:"name"`
 	Mode             Mode         `json:"mode"`
