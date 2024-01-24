@@ -22,10 +22,10 @@ import (
 )
 
 type AlchemyService struct {
-	EntryPoint string
-
-	ctx     context.Context
-	backend *ethclient.Client
+	EntryPoint      string
+	PaymasterPolicy string
+	ctx             context.Context
+	backend         *ethclient.Client
 }
 
 func NewAlchemyService(chain int64) (*AlchemyService, error) {
@@ -42,12 +42,12 @@ func initialiseAlchemyService(chain int64) (*AlchemyService, error) {
 
 	rpc := os.Getenv(fmt.Sprintf("%s_NODE_URL", network))
 	entryPoint := os.Getenv("ENTRY_POINT")
-
+	policyId := os.Getenv(fmt.Sprintf("%s_POLICY_ID", network))
 	node, err := ethclient.Dial(rpc)
 	if err != nil {
 		return nil, err
 	}
-	return &AlchemyService{entryPoint, ctx, node}, nil
+	return &AlchemyService{entryPoint, policyId, ctx, node}, nil
 }
 
 func (bs *AlchemyService) GetEthBackend() *ethclient.Client {
@@ -142,7 +142,7 @@ func (a *AlchemyService) CreateUnsignedUserOperation(sender string, initCode, ca
 	o["maxPriorityFeePerGas"] = maxPriorityFeePerGas
 
 	if sponsored {
-		policyId := os.Getenv("POLICY_ID")
+		policyId := a.PaymasterPolicy
 
 		paymaster, err = a.RequestPaymasterAndData(policyId, a.EntryPoint, dummySignature, o)
 		if err != nil {
