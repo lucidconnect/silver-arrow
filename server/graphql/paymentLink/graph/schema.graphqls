@@ -14,8 +14,8 @@ type PaymentLinkDetails {
   mode: String!
   productId: ID!
   productName: String!
-  interval: String!
-  intervalCount: Int!
+  intervalUnit: String!
+  interval: Int!
   merchantId: ID!
   merchantName: String!
   callbackUrl: String!
@@ -37,9 +37,10 @@ input PaymentIntent {# attach the checkout session id
   chain: Int!
   token: String!
   amount: Float!
-  interval: Int!
+  # interval: Int!
   checkoutSessionId: String
   productId: String!
+  priceId: String!
   ownerAddress: String!
   walletAddress: String!
   firstChargeNow: Boolean! # should be decided upon creating a product

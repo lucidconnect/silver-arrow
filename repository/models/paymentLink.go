@@ -16,6 +16,7 @@ type PaymentLink struct {
 	PriceID      uuid.UUID
 	Product      Product
 	Price        Price
+	Url          string
 	CreatedAt    time.Time
 	DeletedAt    time.Time
 }

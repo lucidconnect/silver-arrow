@@ -15,18 +15,6 @@ type Account struct {
 	Signer  *string `json:"signer,omitempty"`
 }
 
-type CheckoutSession struct {
-	ID          string      `json:"id"`
-	Chain       int         `json:"chain"`
-	Token       string      `json:"token"`
-	Amount      int         `json:"amount"`
-	Interval    int         `json:"interval"`
-	ProductID   string      `json:"productId"`
-	MerchantID  string      `json:"merchantId"`
-	PaymentType PaymentType `json:"paymentType"`
-	ChargeLater bool        `json:"chargeLater"`
-}
-
 type NewTransferRequest struct {
 	Chain  int     `json:"chain"`
 	Token  string  `json:"token"`
@@ -46,17 +34,18 @@ type Payment struct {
 }
 
 type PaymentIntent struct {
-	Mode           Mode        `json:"mode"`
-	Type           PaymentType `json:"type"`
-	Email          *string     `json:"email,omitempty"`
-	Chain          int         `json:"chain"`
-	Token          string      `json:"token"`
-	Amount         float64     `json:"amount"`
-	Interval       int         `json:"interval"`
-	ProductID      string      `json:"productId"`
-	OwnerAddress   string      `json:"ownerAddress"`
-	WalletAddress  string      `json:"walletAddress"`
-	FirstChargeNow bool        `json:"firstChargeNow"`
+	Mode           Mode         `json:"mode"`
+	Type           PaymentType  `json:"type"`
+	Email          *string      `json:"email,omitempty"`
+	Chain          int          `json:"chain"`
+	Token          string       `json:"token"`
+	Amount         float64      `json:"amount"`
+	Interval       IntervalType `json:"interval"`
+	IntervalCount  int          `json:"intervalCount"`
+	ProductID      string       `json:"productId"`
+	OwnerAddress   string       `json:"ownerAddress"`
+	WalletAddress  string       `json:"walletAddress"`
+	FirstChargeNow bool         `json:"firstChargeNow"`
 }
 
 type RequestValidation struct {
@@ -66,20 +55,21 @@ type RequestValidation struct {
 }
 
 type SubscriptionData struct {
-	ID                  string     `json:"id"`
-	Token               string     `json:"token"`
-	Amount              int        `json:"amount"`
-	Interval            int        `json:"interval"`
-	ProductID           string     `json:"productId"`
-	MerchantID          string     `json:"merchantId"`
-	ProductName         string     `json:"productName"`
-	WalletAddress       string     `json:"walletAddress"`
-	SubscriptionKey     string     `json:"subscriptionKey"`
-	CreatedAt           string     `json:"createdAt"`
-	NextChargeDate      time.Time  `json:"nextChargeDate"`
-	TransactionHash     string     `json:"transactionHash"`
-	TransactionExplorer string     `json:"transactionExplorer"`
-	Payments            []*Payment `json:"payments,omitempty"`
+	ID                  string       `json:"id"`
+	Token               string       `json:"token"`
+	Amount              int          `json:"amount"`
+	Interval            IntervalType `json:"interval"`
+	IntervalCount       int          `json:"intervalCount"`
+	ProductID           string       `json:"productId"`
+	MerchantID          string       `json:"merchantId"`
+	ProductName         string       `json:"productName"`
+	WalletAddress       string       `json:"walletAddress"`
+	SubscriptionKey     string       `json:"subscriptionKey"`
+	CreatedAt           string       `json:"createdAt"`
+	NextChargeDate      time.Time    `json:"nextChargeDate"`
+	TransactionHash     string       `json:"transactionHash"`
+	TransactionExplorer string       `json:"transactionExplorer"`
+	Payments            []*Payment   `json:"payments,omitempty"`
 }
 
 type SubscriptionMod struct {
@@ -88,23 +78,69 @@ type SubscriptionMod struct {
 }
 
 type TransactionData struct {
-	ID                  *string     `json:"id,omitempty"`
-	Type                PaymentType `json:"type"`
-	Chain               int         `json:"chain"`
-	Token               string      `json:"token"`
-	Amount              int         `json:"amount"`
-	Interval            int         `json:"interval"`
-	Reference           string      `json:"reference"`
-	ProductID           string      `json:"productId"`
-	WalletAddress       string      `json:"walletAddress"`
-	SubscriptionKey     string      `json:"subscriptionKey"`
-	CreatedAt           string      `json:"createdAt"`
-	TransactionHash     string      `json:"transactionHash"`
-	TransactionExplorer string      `json:"transactionExplorer"`
+	ID                  *string      `json:"id,omitempty"`
+	Type                PaymentType  `json:"type"`
+	Chain               int          `json:"chain"`
+	Token               string       `json:"token"`
+	Amount              int          `json:"amount"`
+	Interval            IntervalType `json:"interval"`
+	IntervalCount       int          `json:"intervalCount"`
+	Reference           string       `json:"reference"`
+	ProductID           string       `json:"productId"`
+	WalletAddress       string       `json:"walletAddress"`
+	SubscriptionKey     string       `json:"subscriptionKey"`
+	CreatedAt           string       `json:"createdAt"`
+	TransactionHash     string       `json:"transactionHash"`
+	TransactionExplorer string       `json:"transactionExplorer"`
 }
 
 type ValidationData struct {
 	UserOpHash string `json:"userOpHash"`
+}
+
+type IntervalType string
+
+const (
+	IntervalTypeDay   IntervalType = "day"
+	IntervalTypeWeek  IntervalType = "week"
+	IntervalTypeMonth IntervalType = "month"
+	IntervalTypeYear  IntervalType = "year"
+)
+
+var AllIntervalType = []IntervalType{
+	IntervalTypeDay,
+	IntervalTypeWeek,
+	IntervalTypeMonth,
+	IntervalTypeYear,
+}
+
+func (e IntervalType) IsValid() bool {
+	switch e {
+	case IntervalTypeDay, IntervalTypeWeek, IntervalTypeMonth, IntervalTypeYear:
+		return true
+	}
+	return false
+}
+
+func (e IntervalType) String() string {
+	return string(e)
+}
+
+func (e *IntervalType) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = IntervalType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid IntervalType", str)
+	}
+	return nil
+}
+
+func (e IntervalType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 type Mode string

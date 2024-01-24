@@ -11,6 +11,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/lucidconnect/silver-arrow/conversions"
+	"github.com/lucidconnect/silver-arrow/core"
 	"github.com/lucidconnect/silver-arrow/core/merchant"
 	"github.com/lucidconnect/silver-arrow/gqlerror"
 	"github.com/lucidconnect/silver-arrow/server/graphql/merchant/graph/generated"
@@ -42,16 +43,16 @@ func (r *mutationResolver) AddProduct(ctx context.Context, input model.NewProduc
 		return nil, err
 	}
 	// create price data
-	amount := conversions.ParseFloatAmountToInt(input.PriceData.Token, input.PriceData.Amount)
+	amount := conversions.ParseFloatAmountToIntDenomination(input.PriceData.Token, input.PriceData.Amount)
 	newPrice := &merchant.Price{
-		Active:        true,
-		Amount:        amount,
-		Chain:         int64(input.PriceData.Chain),
-		Token:         input.PriceData.Token,
-		Interval:      merchant.RecuringInterval(input.PriceData.Interval),
-		IntervalCount: int64(input.PriceData.IntervalCount),
-		Type:          merchant.PriceType(input.PriceData.Type),
-		TrialPeriod:   int64(*input.PriceData.TrialPeriod),
+		Active:       true,
+		Amount:       amount,
+		Chain:        int64(input.PriceData.Chain),
+		Token:        input.PriceData.Token,
+		IntervalUnit: core.RecuringInterval(input.PriceData.IntervalUnit),
+		Interval:     int64(input.PriceData.Interval),
+		// Type:          merchant.PriceType(input.PriceData.Type),
+		TrialPeriod: int64(*input.PriceData.TrialPeriod),
 	}
 	price, err := merchantService.CreatePrice(newPrice, product.ID.String())
 	if err != nil {
@@ -201,16 +202,16 @@ func (r *mutationResolver) CreatePrice(ctx context.Context, input model.NewPrice
 	}
 	merchantService := merchant.NewMerchantService(r.Database, activeMerchant.ID)
 
-	amount := conversions.ParseFloatAmountToInt(input.Token, input.Amount)
+	amount := conversions.ParseFloatAmountToIntDenomination(input.Token, input.Amount)
 	newPrice := &merchant.Price{
-		Active:        true,
-		Amount:        amount,
-		Chain:         int64(input.Chain),
-		Token:         input.Token,
-		Interval:      merchant.RecuringInterval(input.Interval),
-		IntervalCount: int64(input.IntervalCount),
-		Type:          merchant.PriceType(input.Type),
-		TrialPeriod:   int64(*input.TrialPeriod),
+		Active:       true,
+		Amount:       amount,
+		Chain:        int64(input.Chain),
+		Token:        input.Token,
+		IntervalUnit: core.RecuringInterval(input.IntervalUnit),
+		Interval:     int64(input.Interval),
+		Type:         core.PriceType(input.Type),
+		TrialPeriod:  int64(*input.TrialPeriod),
 	}
 	price, err := merchantService.CreatePrice(newPrice, input.ProductID)
 	if err != nil {
@@ -219,16 +220,16 @@ func (r *mutationResolver) CreatePrice(ctx context.Context, input model.NewPrice
 	}
 
 	priceData := &model.PriceData{
-		ID:            price.ID.String(),
-		Type:          model.PaymentType(price.Type),
-		Active:        price.Active,
-		Amount:        input.Amount,
-		Token:         price.Token,
-		Chain:         int(price.Chain),
-		Interval:      model.IntervalType(price.Interval),
-		IntervalCount: int(price.IntervalCount),
-		ProductID:     price.ProductId,
-		TrialPeriod:   int(price.TrialPeriod),
+		ID:           price.ID.String(),
+		Type:         model.PaymentType(price.Type),
+		Active:       price.Active,
+		Amount:       input.Amount,
+		Token:        price.Token,
+		Chain:        int(price.Chain),
+		IntervalUnit: model.IntervalType(price.IntervalUnit),
+		Interval:     int(price.Interval),
+		ProductID:    price.ProductId,
+		TrialPeriod:  int(price.TrialPeriod),
 	}
 
 	return priceData, nil
@@ -339,22 +340,22 @@ func (r *queryResolver) GetMerchantPaymentLinks(ctx context.Context, merchantID 
 	}
 
 	for _, paymentLink := range paymentLinks {
-		interval := conversions.ParseNanoSecondsToDay(paymentLink.Price.IntervalCount)
+		// interval := conversions.ParseNanoSecondsToDay(paymentLink.Price.IntervalCount)
 		amount := conversions.ParseTransferAmountFloat(paymentLink.Price.Token, paymentLink.Price.Amount)
 
 		paymentLinkDetail := &model.PaymentLinkDetails{
-			ID:            paymentLink.ID.String(),
-			Mode:          paymentLink.Product.Mode,
-			ProductID:     paymentLink.ProductID.String(),
-			MerchantID:    paymentLink.MerchantID.String(),
-			MerchantName:  paymentLink.MerchantName,
-			ProductName:   paymentLink.Product.Name,
-			IntervalCount: int(interval),
-			Interval:      paymentLink.Price.Interval,
-			CallbackURL:   paymentLink.CallbackURL,
-			Amount:        amount,
-			Token:         paymentLink.Price.Token,
-			Chain:         int(paymentLink.Product.Chain),
+			ID:           paymentLink.ID.String(),
+			Mode:         paymentLink.Product.Mode,
+			ProductID:    paymentLink.ProductID.String(),
+			MerchantID:   paymentLink.MerchantID.String(),
+			MerchantName: paymentLink.MerchantName,
+			ProductName:  paymentLink.Product.Name,
+			Interval:     int(paymentLink.Price.Interval),
+			IntervalUnit: model.IntervalType(paymentLink.Price.IntervalUnit),
+			CallbackURL:  paymentLink.CallbackURL,
+			Amount:       amount,
+			Token:        paymentLink.Price.Token,
+			Chain:        int(paymentLink.Product.Chain),
 		}
 		paymentLinkDetails = append(paymentLinkDetails, paymentLinkDetail)
 	}

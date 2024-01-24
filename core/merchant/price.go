@@ -6,37 +6,26 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/lucidconnect/silver-arrow/conversions"
+	"github.com/lucidconnect/silver-arrow/core"
 	"github.com/lucidconnect/silver-arrow/repository/models"
 	"github.com/lucidconnect/silver-arrow/server/graphql/merchant/graph/model"
 	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 )
 
-type PriceType string
-type RecuringInterval string
-
-const (
-	PriceTypeSingle       PriceType        = "single"
-	PriceTypeRecurring    PriceType        = "recurring"
-	RecuringIntervalDay   RecuringInterval = "day"
-	RecuringIntervalWeek  RecuringInterval = "week"
-	RecuringIntervalMonth RecuringInterval = "month"
-	RecuringIntervalYear  RecuringInterval = "year"
-)
-
 type Price struct {
-	ID            uuid.UUID
-	Active        bool
-	Amount        int64
-	Token         string
-	Chain         int64
-	Type          PriceType
-	Interval      RecuringInterval
-	IntervalCount int64
-	TrialPeriod   int64
-	ProductId     string
-	MerchantId    string
-	CreatedAt     int64
+	ID           uuid.UUID
+	Active       bool
+	Amount       int64
+	Token        string
+	Chain        int64
+	Type         core.PriceType
+	IntervalUnit core.RecuringInterval
+	Interval     int64
+	TrialPeriod  int64
+	ProductId    string
+	MerchantId   string
+	CreatedAt    int64
 }
 
 func (m *MerchantService) CreatePrice(price *Price, productId string) (*Price, error) {
@@ -47,16 +36,16 @@ func (m *MerchantService) CreatePrice(price *Price, productId string) (*Price, e
 		return nil, err
 	}
 	priceObject := &models.Price{
-		ID:            id,
-		Active:        price.Active,
-		Type:          string(price.Type),
-		Interval:      string(price.Interval),
-		IntervalCount: price.IntervalCount,
-		TrialPeriod:   price.TrialPeriod,
-		ProductID:     pid,
-		MerchantID:    m.merchant,
-		Amount:        price.Amount,
-		CreatedAt:     time.Now(),
+		ID:           id,
+		Active:       price.Active,
+		Type:         string(price.Type),
+		Interval:     price.Interval,
+		IntervalUnit: string(price.IntervalUnit),
+		TrialPeriod:  price.TrialPeriod,
+		ProductID:    pid,
+		MerchantID:   m.merchant,
+		Amount:       price.Amount,
+		CreatedAt:    time.Now(),
 	}
 	if err = m.repository.CreatePrice(priceObject); err != nil {
 		log.Err(err).Caller().Send()
@@ -100,16 +89,16 @@ func (m *MerchantService) RetrievePriceData(priceId string) (*model.PriceData, e
 	amount := conversions.ParseTransferAmountFloat(price.Token, price.Amount)
 
 	priceData := &model.PriceData{
-		ID:            price.ID.String(),
-		Type:          model.PaymentType(price.Type),
-		Active:        price.Active,
-		Amount:        amount,
-		Token:         price.Token,
-		Chain:         int(price.Chain),
-		Interval:      model.IntervalType(price.Interval),
-		IntervalCount: int(price.IntervalCount),
-		ProductID:     price.ProductID.String(),
-		TrialPeriod:   int(price.TrialPeriod),
+		ID:           price.ID.String(),
+		Type:         model.PaymentType(price.Type),
+		Active:       price.Active,
+		Amount:       amount,
+		Token:        price.Token,
+		Chain:        int(price.Chain),
+		IntervalUnit: model.IntervalType(price.IntervalUnit),
+		Interval:     int(price.Interval),
+		ProductID:    price.ProductID.String(),
+		TrialPeriod:  int(price.TrialPeriod),
 	}
 	return priceData, nil
 }

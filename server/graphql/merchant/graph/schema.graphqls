@@ -69,8 +69,8 @@ type PriceData {
   amount: Float!
   token: String!
   chain: Int!
-  interval: IntervalType!
-  intervalCount: Int!
+  intervalUnit: IntervalType!
+  interval: Int!
   productId: String!
   trialPeriod: Int!
 }
@@ -80,8 +80,8 @@ input NewPrice {
   token: String!
   chain: Int!
   amount: Float!
-  interval: IntervalType!
-  intervalCount: Int!
+  intervalUnit: IntervalType!
+  interval: Int!
   productId: String!
   trialPeriod: Int
 }
@@ -90,8 +90,8 @@ input PriceUpdate {
   token: String!
   chain: Int!
   amount: Float!
-  interval: IntervalType!
-  intervalCount: Int!
+  intervalUnit: IntervalType!
+  interval: Int!
   trialPeriod: Int
 }
 
@@ -111,9 +111,10 @@ type PaymentLinkDetails {
   id: ID!
   mode: String!
   productId: ID!
+  priceId: ID!
   productName: String!
-  interval: String!
-  intervalCount: Int!
+  intervalUnit: IntervalType!
+  interval: Int!
   merchantId: ID!
   merchantName: String!
   callbackUrl: String!

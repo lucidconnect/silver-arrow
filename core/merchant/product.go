@@ -250,16 +250,16 @@ func ParsePriceObjects(prices []models.Price) ([]*model.PriceData, error) {
 		amount := conversions.ParseTransferAmountFloat(price.Token, price.Amount)
 
 		p := &model.PriceData{
-			ID:            price.ID.String(),
-			Type:          model.PaymentType(price.Type),
-			Active:        price.Active,
-			Amount:        amount,
-			Token:         price.Token,
-			Chain:         int(price.Chain),
-			Interval:      model.IntervalType(price.Interval),
-			IntervalCount: int(price.IntervalCount),
-			ProductID:     price.ProductID.String(),
-			TrialPeriod:   int(price.TrialPeriod),
+			ID:           price.ID.String(),
+			Type:         model.PaymentType(price.Type),
+			Active:       price.Active,
+			Amount:       amount,
+			Token:        price.Token,
+			Chain:        int(price.Chain),
+			IntervalUnit: model.IntervalType(price.IntervalUnit),
+			Interval:     int(price.Interval),
+			ProductID:    price.ProductID.String(),
+			TrialPeriod:  int(price.TrialPeriod),
 		}
 		priceData = append(priceData, p)
 	}

@@ -14,7 +14,7 @@ import (
 	"github.com/lucidconnect/silver-arrow/repository/models"
 	"github.com/pkg/errors"
 )
-
+// TODO: intervals are broken, needs urgent attention!!!!!!!!!!!
 // create a valid the user op and add it to a queue
 func (s *Server) SubscriptionJob() {
 	log.Info().Msg("running subscription job")
@@ -130,16 +130,16 @@ func (s *Server) initialisePayment(sub models.Subscription) {
 		log.Err(err).Send()
 	}
 
-	nextChargeAt := time.Now().Add((time.Duration(sub.Interval)))
+	// nextChargeAt := time.Now().Add((time.Duration(sub.Interval)))
 
-	update := map[string]interface{}{
-		"expires_at":     nextChargeAt,
-		"next_charge_at": nextChargeAt,
-	}
-	err = s.database.UpdateSubscription(sub.ID, update)
-	if err != nil {
-		log.Err(err).Send()
-	}
+	// update := map[string]interface{}{
+	// 	"expires_at":     nextChargeAt,
+	// 	"next_charge_at": nextChargeAt,
+	// }
+	// err = s.database.UpdateSubscription(sub.ID, update)
+	// if err != nil {
+	// 	log.Err(err).Send()
+	// }
 
 	s.TriggerWebhook(*merchant, reference.String())
 }

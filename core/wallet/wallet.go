@@ -136,271 +136,276 @@ func (ws *WalletService) AddAccount(input Account) error {
 	return nil
 }
 
-func (ws *WalletService) ValidateSubscription(userop map[string]any, chain int64) (*model.TransactionData, error) {
-	opHash, err := ws.bundlerService.SendUserOperation(userop)
-	if err != nil {
-		log.Err(err).Msg("failed to send user op")
-		return nil, err
-	}
-	fmt.Println("validating subscription with userop hash -", opHash)
-	result, err := ws.database.FindSubscriptionByHash(opHash)
-	if err != nil {
-		log.Err(err).Msgf("failed to find subscription with hash %v", opHash)
-		return nil, err
-	}
+// func (ws *WalletService) ValidateSubscription(userop map[string]any, chain int64) (*model.TransactionData, error) {
+// 	opHash, err := ws.bundlerService.SendUserOperation(userop)
+// 	if err != nil {
+// 		log.Err(err).Msg("failed to send user op")
+// 		return nil, err
+// 	}
+// 	fmt.Println("validating subscription with userop hash -", opHash)
+// 	result, err := ws.database.FindSubscriptionByHash(opHash)
+// 	if err != nil {
+// 		log.Err(err).Msgf("failed to find subscription with hash %v", opHash)
+// 		return nil, err
+// 	}
 
-	session, err := ws.database.FetchCheckoutSession(result.CheckoutSessionID)
-	if err != nil {
-		log.Err(err).Caller().Send()
-		return nil, err
-	}
+// 	session, err := ws.database.FetchCheckoutSession(result.CheckoutSessionID)
+// 	if err != nil {
+// 		log.Err(err).Caller().Send()
+// 		return nil, err
+// 	}
 
-	productId := result.ProductID.String()
-	if err != nil {
-		log.Err(err).Msg("encoding product id failed")
-		return nil, err
-	}
-	token := result.Token
-	createdAt := result.CreatedAt.Format(time.RFC3339)
-	amount := int(result.Amount)
-	interval := int(result.Interval)
-	subData := &model.TransactionData{
-		Token:         token,
-		Amount:        amount,
-		Interval:      interval,
-		ProductID:     productId,
-		WalletAddress: result.WalletAddress,
-		CreatedAt:     createdAt,
-	}
-	fmt.Println("subscription result - ", result)
+// 	productId := result.ProductID.String()
+// 	if err != nil {
+// 		log.Err(err).Msg("encoding product id failed")
+// 		return nil, err
+// 	}
+// 	token := result.Token
+// 	createdAt := result.CreatedAt.Format(time.RFC3339)
+// 	amount := int(result.Amount)
+// 	// interval := int(result.Interval)
+// 	subData := &model.TransactionData{
+// 		Token:         token,
+// 		Amount:        amount,
+// 		Interval:      model.IntervalType(result.Interval),
+// 		IntervalCount: int(result.IntervalCount),
+// 		ProductID:     productId,
+// 		WalletAddress: result.WalletAddress,
+// 		CreatedAt:     createdAt,
+// 	}
+// 	fmt.Println("subscription result - ", result)
 
-	transactionHash, err := ws.getTransactionHash(opHash)
-	if err != nil {
-		log.Err(err).Caller().Send()
-		return nil, err
-	}
-	explorerUrl, err := erc20.GetChainExplorer(chain)
-	if err != nil {
-		log.Err(err).Msg("failed to get chain explorer url")
-	}
-	blockExplorerTx := fmt.Sprintf("%v/tx/%v", explorerUrl, transactionHash)
+// 	transactionHash, err := ws.getTransactionHash(opHash)
+// 	if err != nil {
+// 		log.Err(err).Caller().Send()
+// 		return nil, err
+// 	}
+// 	explorerUrl, err := erc20.GetChainExplorer(chain)
+// 	if err != nil {
+// 		log.Err(err).Msg("failed to get chain explorer url")
+// 	}
+// 	blockExplorerTx := fmt.Sprintf("%v/tx/%v", explorerUrl, transactionHash)
 
-	update := map[string]interface{}{
-		"active":           true,
-		"updated_at":       time.Now(),
-		"transaction_hash": transactionHash,
-		"status":           model.SubscriptionStatusActive,
-	}
-	err = ws.database.UpdateSubscription(result.ID, update)
-	if err != nil {
-		log.Err(err).Caller().Send()
-		return nil, err
-	}
+// 	update := map[string]interface{}{
+// 		"active":           true,
+// 		"updated_at":       time.Now(),
+// 		"transaction_hash": transactionHash,
+// 		"status":           model.SubscriptionStatusActive,
+// 	}
+// 	err = ws.database.UpdateSubscription(result.ID, update)
+// 	if err != nil {
+// 		log.Err(err).Caller().Send()
+// 		return nil, err
+// 	}
 
-	// if payment is due now, create a payment
-	if isPaymentDue(result.NextChargeAt) {
-		// create payment
-		var sponsored bool
-		switch os.Getenv("USE_PAYMASTER") {
-		case "TRUE":
-			sponsored = true
-		default:
-			sponsored = false
-		}
-		reference := uuid.New()
-		payment := &models.Payment{
-			Type:                  models.PaymentTypeRecurring,
-			Chain:                 result.Chain,
-			Token:                 result.Token,
-			Amount:                result.Amount,
-			Source:                result.WalletAddress,
-			WalletID:              result.WalletID,
-			ProductID:             result.ProductID,
-			Sponsored:             sponsored,
-			Reference:             reference,
-			Destination:           result.MerchantDepositAddress,
-			SubscriptionID:        result.ID,
-			SubscriptionPublicKey: result.Key.PublicKey,
-			TokenAddress:          result.TokenAddress,
-			Customer:              session.Customer,
-			CheckoutSessionID:     session.ID,
-			MerchantID:            session.MerchantID,
-		}
+// 	// if payment is due now, create a payment
+// 	if isPaymentDue(result.NextChargeAt) {
+// 		// create payment
+// 		var sponsored bool
+// 		switch os.Getenv("USE_PAYMASTER") {
+// 		case "TRUE":
+// 			sponsored = true
+// 		default:
+// 			sponsored = false
+// 		}
+// 		reference := uuid.New()
+// 		payment := &models.Payment{
+// 			Type:                  models.PaymentTypeRecurring,
+// 			Chain:                 result.Chain,
+// 			Token:                 result.Token,
+// 			Amount:                result.Amount,
+// 			Source:                result.WalletAddress,
+// 			WalletID:              result.WalletID,
+// 			ProductID:             result.ProductID,
+// 			Sponsored:             sponsored,
+// 			Reference:             reference,
+// 			Destination:           result.MerchantDepositAddress,
+// 			SubscriptionID:        result.ID,
+// 			SubscriptionPublicKey: result.Key.PublicKey,
+// 			TokenAddress:          result.TokenAddress,
+// 			Customer:              session.Customer,
+// 			CheckoutSessionID:     session.ID,
+// 			MerchantID:            session.MerchantID,
+// 		}
 
-		userop, useropHash, err := ws.CreatePayment(payment)
-		if err != nil {
-			err = errors.Wrap(err, "creating payment operation failed")
-			log.Err(err).Caller().Send()
-			return nil, err
-		}
+// 		userop, useropHash, err := ws.CreatePayment(payment)
+// 		if err != nil {
+// 			err = errors.Wrap(err, "creating payment operation failed")
+// 			log.Err(err).Caller().Send()
+// 			return nil, err
+// 		}
 
-		signature, err := ws.SignPaymentOperation(userop, useropHash)
-		if err != nil {
-			err = errors.Wrap(err, "signing payment operation failed")
-			log.Err(err).Caller().Send()
-			return nil, err
-		}
-		userop["signature"] = signature
+// 		signature, err := ws.SignPaymentOperation(userop, useropHash)
+// 		if err != nil {
+// 			err = errors.Wrap(err, "signing payment operation failed")
+// 			log.Err(err).Caller().Send()
+// 			return nil, err
+// 		}
+// 		userop["signature"] = signature
 
-		onchainTx, err := ws.ExecutePaymentOperation(userop, payment.Chain)
-		if err != nil {
-			log.Err(err).Send()
-			return subData, err
-		}
-		nextChargeAt := time.Now().Add((time.Duration(result.Interval)))
+// 		onchainTx, err := ws.ExecutePaymentOperation(userop, payment.Chain)
+// 		if err != nil {
+// 			log.Err(err).Send()
+// 			return subData, err
+// 		}
+// 		interval := result.Interval
+// 		intervalCount := result.IntervalCount
+// 		nextChargeAt := time.Now().Add((time.Duration(result.Interval)))
 
-		update := map[string]interface{}{
-			"expires_at":     nextChargeAt,
-			"next_charge_at": nextChargeAt,
-		}
-		err = ws.database.UpdateSubscription(result.ID, update)
-		if err != nil {
-			log.Err(err).Send()
-		}
-		subData.TransactionExplorer = onchainTx
-	} else {
-		subData.TransactionExplorer = blockExplorerTx
-	}
-	// I should trigger a webhook somewhere here
-	return subData, nil
-}
+// 		update := map[string]interface{}{
+// 			"expires_at":     nextChargeAt,
+// 			"next_charge_at": nextChargeAt,
+// 		}
+// 		err = ws.database.UpdateSubscription(result.ID, update)
+// 		if err != nil {
+// 			log.Err(err).Send()
+// 		}
+// 		subData.TransactionExplorer = onchainTx
+// 	} else {
+// 		subData.TransactionExplorer = blockExplorerTx
+// 	}
+// 	// I should trigger a webhook somewhere here
+// 	return subData, nil
+// }
 
-func (ws *WalletService) AddSubscription(merchantId uuid.UUID, input NewSubscription, usePaymaster bool, index *big.Int, chain int64) (*model.ValidationData, map[string]any, error) {
-	var nextChargeAt time.Time
-	var initCode []byte
-	var nonce, amount *big.Int
+// func (ws *WalletService) AddSubscription(merchantId uuid.UUID, input NewSubscription, usePaymaster bool, index *big.Int, chain int64) (*model.ValidationData, map[string]any, error) {
+// 	var nextChargeAt time.Time
+// 	var initCode []byte
+// 	var nonce, amount *big.Int
 
-	_, err := ws.database.FetchCheckoutSession(input.CheckoutSessionID)
-	if err != nil {
-		log.Err(err).Caller().Msg("invalid session id")
-		return nil, nil, errors.New("invalid sesison id")
-	}
+// 	_, err := ws.database.FetchCheckoutSession(input.CheckoutSessionID)
+// 	if err != nil {
+// 		log.Err(err).Caller().Msg("invalid session id")
+// 		return nil, nil, errors.New("invalid sesison id")
+// 	}
 
-	// check if a subscription already exists for this product
-	pid := input.ProductID
-	existingSub, _ := ws.database.FindSubscriptionByProductId(pid, input.WalletAddress)
-	if existingSub != nil {
-		log.Info().Msg("an active subscription exists for this product")
-		return nil, nil, errors.New("an active subscription exists for this product cancel subscription before creating a new one")
-	}
+// 	// check if a subscription already exists for this product
+// 	pid := input.ProductID
+// 	existingSub, _ := ws.database.FindSubscriptionByProductId(pid, input.WalletAddress)
+// 	if existingSub != nil {
+// 		log.Info().Msg("an active subscription exists for this product")
+// 		return nil, nil, errors.New("an active subscription exists for this product cancel subscription before creating a new one")
+// 	}
 
-	// NB: figure out a way to check if the subscription exist without having to do the above operation
-	// fetch the product by id, use the details in the product to create a subscription
-	product, err := ws.database.FetchProduct(pid)
-	if err != nil {
-		log.Err(err).Msgf("failed to fetch product with id [%v]", pid)
-		return nil, nil, errors.New("product not found")
-	}
+// 	// NB: figure out a way to check if the subscription exist without having to do the above operation
+// 	// fetch the product by id, use the details in the product to create a subscription
+// 	product, err := ws.database.FetchProduct(pid)
+// 	if err != nil {
+// 		log.Err(err).Msgf("failed to fetch product with id [%v]", pid)
+// 		return nil, nil, errors.New("product not found")
+// 	}
 
-	tagId, orgId, walletID, err := ws.database.GetWalletMetadata(input.WalletAddress)
-	if err != nil {
-		log.Err(err).Msgf("failed to fetch private key tag for wallet - %v", input.WalletAddress)
-		return nil, nil, errors.New("failed to fetch wallet metadata")
-	}
+// 	tagId, orgId, walletID, err := ws.database.GetWalletMetadata(input.WalletAddress)
+// 	if err != nil {
+// 		log.Err(err).Msgf("failed to fetch private key tag for wallet - %v", input.WalletAddress)
+// 		return nil, nil, errors.New("failed to fetch wallet metadata")
+// 	}
 
-	randomSalt := randKey(4)
-	keyName := fmt.Sprintf("sub-%v-%v", randomSalt, input.ProductID)
-	activityId, err := ws.turnkey.CreatePrivateKey(orgId, keyName, tagId)
-	if err != nil {
-		log.Err(err).Msg("failed to create subscription private key")
-		return nil, nil, err
-	}
+// 	randomSalt := randKey(4)
+// 	keyName := fmt.Sprintf("sub-%v-%v", randomSalt, input.ProductID)
+// 	activityId, err := ws.turnkey.CreatePrivateKey(orgId, keyName, tagId)
+// 	if err != nil {
+// 		log.Err(err).Msg("failed to create subscription private key")
+// 		return nil, nil, err
+// 	}
 
-	result, err := ws.turnkey.GetActivity(orgId, activityId)
-	if err != nil {
-		log.Err(err).Caller().Send()
-		return nil, nil, err
-	}
-	privateKeyID, sessionKey, err := turnkey.GetPrivateKeyIdFromResult(result)
-	// sessionKey, signingKey, err := CreateAccessKey()
-	if err != nil {
-		log.Err(err).Caller().Send()
-		return nil, nil, err
-	}
+// 	result, err := ws.turnkey.GetActivity(orgId, activityId)
+// 	if err != nil {
+// 		log.Err(err).Caller().Send()
+// 		return nil, nil, err
+// 	}
+// 	privateKeyID, sessionKey, err := turnkey.GetPrivateKeyIdFromResult(result)
+// 	// sessionKey, signingKey, err := CreateAccessKey()
+// 	if err != nil {
+// 		log.Err(err).Caller().Send()
+// 		return nil, nil, err
+// 	}
 
-	interval := daysToNanoSeconds(int64(input.Interval))
-	amount = conversions.ParseTransferAmount(input.Token, input.Amount)
+// 	// interval := daysToNanoSeconds(int64(input.Interval))
+// 	intervalCount := input.Interval
+// 	amount = conversions.ParseTransferAmount(input.Token, input.Amount)
 
-	if input.NextChargeDate != nil {
-		nextChargeAt = *input.NextChargeDate
-	} else {
-		nextChargeAt = time.Now().Add(interval)
-	}
+// 	if input.NextChargeDate != nil {
+// 		nextChargeAt = *input.NextChargeDate
+// 	} else {
+// 		nextChargeAt = time.Now().Add(interval)
+// 	}
 
-	isAccountDeployed := ws.isAccountDeployed(input.WalletAddress, chain)
-	if !isAccountDeployed {
-		initCode, err = GetContractInitCode(common.HexToAddress(input.OwnerAddress), index)
-		if err != nil {
-			log.Err(err).Caller().Send()
-			return nil, nil, err
-		}
-		nonce = common.Big0
-	} else {
-		nonce, err = ws.bundlerService.GetAccountNonce(common.HexToAddress(input.WalletAddress))
-		if err != nil {
-			log.Err(err).Caller().Send()
-			return nil, nil, err
-		}
-	}
+// 	isAccountDeployed := ws.isAccountDeployed(input.WalletAddress, chain)
+// 	if !isAccountDeployed {
+// 		initCode, err = GetContractInitCode(common.HexToAddress(input.OwnerAddress), index)
+// 		if err != nil {
+// 			log.Err(err).Caller().Send()
+// 			return nil, nil, err
+// 		}
+// 		nonce = common.Big0
+// 	} else {
+// 		nonce, err = ws.bundlerService.GetAccountNonce(common.HexToAddress(input.WalletAddress))
+// 		if err != nil {
+// 			log.Err(err).Caller().Send()
+// 			return nil, nil, err
+// 		}
+// 	}
 
-	callData, err := setValidatorExecutor(sessionKey, ws.validatorAddress, ws.executorAddress, input.WalletAddress, int64(input.Chain))
-	if err != nil {
-		log.Err(err).Msg("failed to set a validator")
-		return nil, nil, err
-	}
+// 	callData, err := setValidatorExecutor(sessionKey, ws.validatorAddress, ws.executorAddress, input.WalletAddress, int64(input.Chain))
+// 	if err != nil {
+// 		log.Err(err).Msg("failed to set a validator")
+// 		return nil, nil, err
+// 	}
 
-	op, err := ws.bundlerService.CreateUnsignedUserOperation(input.WalletAddress, initCode, callData, nonce, usePaymaster, int64(input.Chain))
-	if err != nil {
-		log.Err(err).Msg("failed to create user operation")
-		return nil, nil, err
-	}
+// 	op, err := ws.bundlerService.CreateUnsignedUserOperation(input.WalletAddress, initCode, callData, nonce, usePaymaster, int64(input.Chain))
+// 	if err != nil {
+// 		log.Err(err).Msg("failed to create user operation")
+// 		return nil, nil, err
+// 	}
 
-	entrypoint := erc4337.GetEntryPointAddress()
-	operation, err := userop.New(op)
-	if err != nil {
-		log.Err(err).Caller().Send()
-		return nil, nil, err
-	}
-	opHash := operation.GetUserOpHash(entrypoint, big.NewInt(int64(input.Chain)))
+// 	entrypoint := erc4337.GetEntryPointAddress()
+// 	operation, err := userop.New(op)
+// 	if err != nil {
+// 		log.Err(err).Caller().Send()
+// 		return nil, nil, err
+// 	}
+// 	opHash := operation.GetUserOpHash(entrypoint, big.NewInt(int64(input.Chain)))
 
-	key := &models.Key{
-		WalletID:     walletID,
-		PublicKey:    sessionKey,
-		PrivateKeyId: privateKeyID,
-	}
+// 	key := &models.Key{
+// 		WalletID:     walletID,
+// 		PublicKey:    sessionKey,
+// 		PrivateKeyId: privateKeyID,
+// 	}
 
-	tokenAddress := erc20.GetTokenAddress(input.Token, chain)
-	sub := &models.Subscription{
-		Token:                  input.Token,
-		Amount:                 amount.Int64(),
-		Active:                 false,
-		Interval:               interval.Nanoseconds(),
-		UserOpHash:             opHash.Hex(),
-		MerchantId:             merchantId.String(),
-		ProductID:              input.ProductID,
-		ProductName:            product.Name,
-		CheckoutSessionID:      input.CheckoutSessionID,
-		MerchantDepositAddress: product.DepositAddress,
-		NextChargeAt:           nextChargeAt,
-		ExpiresAt:              nextChargeAt,
-		WalletID:               walletID,
-		WalletAddress:          input.WalletAddress,
-		Chain:                  chain,
-		Key:                    *key,
-		TokenAddress:           tokenAddress,
-	}
+// 	tokenAddress := erc20.GetTokenAddress(input.Token, chain)
+// 	sub := &models.Subscription{
+// 		Token:                  input.Token,
+// 		Amount:                 amount.Int64(),
+// 		Active:                 false,
+// 		Interval:               interval.Nanoseconds(),
+// 		IntervalCount:          int64(interval),
+// 		UserOpHash:             opHash.Hex(),
+// 		MerchantId:             merchantId.String(),
+// 		ProductID:              input.ProductID,
+// 		ProductName:            product.Name,
+// 		CheckoutSessionID:      input.CheckoutSessionID,
+// 		MerchantDepositAddress: product.DepositAddress,
+// 		NextChargeAt:           nextChargeAt,
+// 		ExpiresAt:              nextChargeAt,
+// 		WalletID:               walletID,
+// 		WalletAddress:          input.WalletAddress,
+// 		Chain:                  chain,
+// 		Key:                    *key,
+// 		TokenAddress:           tokenAddress,
+// 	}
 
-	err = ws.database.AddSubscription(sub, key)
-	if err != nil {
-		log.Err(err).Caller().Send()
-		return nil, nil, err
-	}
+// 	err = ws.database.AddSubscription(sub, key)
+// 	if err != nil {
+// 		log.Err(err).Caller().Send()
+// 		return nil, nil, err
+// 	}
 
-	// fmt.Println("New Subscription added", opHash.Hex())
-	return &model.ValidationData{
-		UserOpHash: opHash.Hex(),
-	}, op, nil
-}
+// 	// fmt.Println("New Subscription added", opHash.Hex())
+// 	return &model.ValidationData{
+// 		UserOpHash: opHash.Hex(),
+// 	}, op, nil
+// }
 
 func (w *WalletService) FetchSubscriptions(walletAddress string, status *string) ([]*model.SubscriptionData, error) {
 	var subData []*model.SubscriptionData
@@ -421,13 +426,13 @@ func (w *WalletService) FetchSubscriptions(walletAddress string, status *string)
 				Reference: p.Reference.String(),
 			})
 		}
-		interval := conversions.ParseNanoSecondsToDay(v.Interval)
+		// interval := conversions.ParseNanoSecondsToDay(v.Interval)
 		createdAt := v.CreatedAt.Format("dd:mm:yyyy")
 		sd := &model.SubscriptionData{
-			ID:             v.ID.String(),
-			Token:          v.Token,
-			Amount:         int(v.Amount),
-			Interval:       int(interval),
+			ID:     v.ID.String(),
+			Token:  v.Token,
+			Amount: int(v.Amount),
+			// Interval:       int(interval),
 			MerchantID:     v.MerchantId,
 			ProductID:      v.ProductID.String(),
 			ProductName:    v.ProductName,

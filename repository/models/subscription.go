@@ -16,6 +16,7 @@ type Subscription struct {
 	Active                 bool      `gorm:"not null"`
 	Status                 string
 	Interval               int64     `gorm:"not null"`
+	IntervalUnit           string    `gorm:"not null"`
 	UserOpHash             string    `gorm:"index"`
 	MerchantId             string    `gorm:"index"`
 	ProductID              uuid.UUID `gorm:"index"`

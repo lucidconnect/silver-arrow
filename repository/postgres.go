@@ -403,7 +403,7 @@ func (p *PostgresDB) CreatePrice(price *models.Price) error {
 
 func (p *PostgresDB) FetchPrice(id uuid.UUID) (*models.Price, error) {
 	var price *models.Price
-	if err := p.Db.Where("id = ?", id).First(&price).Error; err != nil {
+	if err := p.Db.Where("id = ?", id).Preload("Product").First(&price).Error; err != nil {
 		return nil, err
 	}
 	return price, nil

@@ -21,27 +21,27 @@ type PaymentIntent struct {
 	Chain             int         `json:"chain"`
 	Token             string      `json:"token"`
 	Amount            float64     `json:"amount"`
-	Interval          int         `json:"interval"`
 	CheckoutSessionID *string     `json:"checkoutSessionId,omitempty"`
 	ProductID         string      `json:"productId"`
+	PriceID           string      `json:"priceId"`
 	OwnerAddress      string      `json:"ownerAddress"`
 	WalletAddress     string      `json:"walletAddress"`
 	FirstChargeNow    bool        `json:"firstChargeNow"`
 }
 
 type PaymentLinkDetails struct {
-	ID            string  `json:"id"`
-	Mode          string  `json:"mode"`
-	ProductID     string  `json:"productId"`
-	ProductName   string  `json:"productName"`
-	Interval      string  `json:"interval"`
-	IntervalCount int     `json:"intervalCount"`
-	MerchantID    string  `json:"merchantId"`
-	MerchantName  string  `json:"merchantName"`
-	CallbackURL   string  `json:"callbackUrl"`
-	Amount        float64 `json:"amount"`
-	Token         string  `json:"token"`
-	Chain         int     `json:"chain"`
+	ID           string  `json:"id"`
+	Mode         string  `json:"mode"`
+	ProductID    string  `json:"productId"`
+	ProductName  string  `json:"productName"`
+	IntervalUnit string  `json:"intervalUnit"`
+	Interval     int     `json:"interval"`
+	MerchantID   string  `json:"merchantId"`
+	MerchantName string  `json:"merchantName"`
+	CallbackURL  string  `json:"callbackUrl"`
+	Amount       float64 `json:"amount"`
+	Token        string  `json:"token"`
+	Chain        int     `json:"chain"`
 }
 
 type RequestValidation struct {

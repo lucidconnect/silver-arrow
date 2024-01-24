@@ -17,90 +17,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// func (s *Server) CreateCheckoutSession() http.HandlerFunc {
-// 	return func(w http.ResponseWriter, r *http.Request) {
-// 		request := &api.NewCheckoutSession{}
-// 		response := &httpResponse{}
-// 		if err := json.NewDecoder(r.Body).Decode(request); err != nil {
-// 			log.Err(err).Caller().Msg("decoding request failed")
-// 			response = &httpResponse{
-// 				Status: http.StatusBadRequest,
-// 			}
-// 			writeJsonResponse(w, response)
-// 			return
-// 		}
-
-// 		sessionId := uuid.New()
-// 		productId, err := uuid.Parse(request.ProductId)
-// 		if err != nil {
-// 			log.Err(err).Caller().Msg("decoding request failed")
-// 			response = &httpResponse{
-// 				Status: http.StatusBadRequest,
-// 				Error:  "product id is invalid",
-// 			}
-// 			writeJsonResponse(w, response)
-// 			return
-// 		}
-// 		auth := strings.Split(r.Header.Get("Authorization"), " ")[1]
-// 		merchant, err := s.database.FetchMerchantByPublicKey(auth)
-// 		// merchantID, err := uuid.Parse("merchantId")
-// 		if err != nil {
-// 			log.Err(err).Msg("decoding request failed")
-// 			response = &httpResponse{
-// 				Status: http.StatusBadRequest,
-// 				Error:  "merchant id is invalid",
-// 			}
-// 			writeJsonResponse(w, response)
-// 			return
-// 		}
-// 		merchantID := merchant.ID
-
-// 		paymentLink, err := s.database.FetchPaymentLinkByProduct(productId)
-// 		if err != nil {
-// 			if err == gorm.ErrRecordNotFound {
-// 				response = &httpResponse{
-// 					Status: http.StatusNotFound,
-// 					Error:  "product does not exist",
-// 				}
-// 			} else {
-// 				log.Err(err).Caller().Send()
-// 				response = &httpResponse{
-// 					Status: http.StatusInternalServerError,
-// 				}
-// 			}
-// 			writeJsonResponse(w, response)
-// 			return
-// 		}
-// 		newSession := &models.CheckoutSession{
-// 			ID:            sessionId,
-// 			Customer:      request.Customer,
-// 			ProductID:     productId,
-// 			MerchantID:    merchantID,
-// 			PaymentLinkID: paymentLink.ID,
-// 			PaymentLink:   *paymentLink,
-// 		}
-
-// 		if err = s.database.CreateCheckoutSession(newSession); err != nil {
-// 			log.Err(err).Send()
-// 			response = &httpResponse{
-// 				Status: http.StatusInternalServerError,
-// 				Error:  "failed to create checkout session, please contact support.",
-// 			}
-// 			writeJsonResponse(w, response)
-// 			return
-// 		}
-
-// 		checkoutSession := &api.CheckoutSessionResponse{
-// 			SessionId: sessionId.String(),
-// 		}
-// 		response = &httpResponse{
-// 			Status: http.StatusOK,
-// 			Data:   checkoutSession,
-// 		}
-// 		writeJsonResponse(w, response)
-// 	}
-// }
-
 func (s *Server) CreateCheckoutSession() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		request := &api.NewCheckoutSession{}
@@ -115,7 +31,7 @@ func (s *Server) CreateCheckoutSession() http.HandlerFunc {
 		}
 
 		sessionId := uuid.New()
-		productId, err := uuid.Parse(request.ProductId)
+		priceId, err := uuid.Parse(request.PriceId)
 		if err != nil {
 			log.Err(err).Caller().Msg("decoding request failed")
 			response = &httpResponse{
@@ -129,7 +45,7 @@ func (s *Server) CreateCheckoutSession() http.HandlerFunc {
 		merchant, err := s.database.FetchMerchantByPublicKey(auth)
 		// merchantID, err := uuid.Parse("merchantId")
 		if err != nil {
-			log.Err(err).Msg("decoding request failed")
+			log.Err(err).Caller().Send()
 			response = &httpResponse{
 				Status: http.StatusBadRequest,
 				Error:  "merchant id is invalid",
@@ -138,8 +54,18 @@ func (s *Server) CreateCheckoutSession() http.HandlerFunc {
 			return
 		}
 		merchantID := merchant.ID
+		price, err := s.database.FetchPrice(priceId)
+		if err != nil {
+			log.Err(err).Caller().Send()
+			response = &httpResponse{
+				Status: http.StatusBadRequest,
+				Error:  "failed to load price object",
+			}
+			writeJsonResponse(w, response)
+			return
+		}
 
-		paymentLink, err := s.database.FetchPaymentLinkByProduct(productId)
+		paymentLink, err := s.database.FetchPaymentLinkByProduct(price.ProductID)
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
 				// create a payment link
@@ -147,12 +73,12 @@ func (s *Server) CreateCheckoutSession() http.HandlerFunc {
 					ID:          uuid.New(),
 					MerchantID:  merchant.ID,
 					CallbackURL: request.CallbackUrl,
-					ProductID:   productId,
+					ProductID:   price.ProductID,
 					CreatedAt:   time.Now(),
 				}
 				err = s.database.CreatePaymentLink(paymentLink)
 				if err != nil {
-					log.Err(err).Msgf("could not create payment link for product [%v]", productId)
+					log.Err(err).Msgf("could not create payment link for product [%v]", price.ProductID)
 					response = &httpResponse{
 						Status: http.StatusInternalServerError,
 					}
@@ -171,7 +97,7 @@ func (s *Server) CreateCheckoutSession() http.HandlerFunc {
 		newSession := &models.CheckoutSession{
 			ID:            sessionId,
 			Customer:      request.Customer,
-			ProductID:     productId,
+			ProductID:     price.ProductID,
 			MerchantID:    merchantID,
 			PaymentLinkID: paymentLink.ID,
 			CallbackURL:   request.CallbackUrl,
@@ -261,19 +187,19 @@ func (s *Server) CreateNewProduct() http.HandlerFunc {
 		}
 		// create price
 		priceId := uuid.New()
-		amount := conversions.ParseFloatAmountToInt(request.PriceData.Token, request.PriceData.Amount)
+		amount := conversions.ParseFloatAmountToIntDenomination(request.PriceData.Token, request.PriceData.Amount)
 		newPrice := &models.Price{
-			ID:            priceId,
-			Active:        true,
-			Amount:        amount,
-			Token:         request.PriceData.Token,
-			Chain:         request.PriceData.Chain,
-			Type:          string(request.PriceData.Type),
-			Interval:      string(request.PriceData.Interval),
-			IntervalCount: int64(request.PriceData.IntervalCount),
-			ProductID:     productID,
-			MerchantID:    merchant.ID,
-			CreatedAt:     time.Now(),
+			ID:           priceId,
+			Active:       true,
+			Amount:       amount,
+			Token:        request.PriceData.Token,
+			Chain:        request.PriceData.Chain,
+			Type:         string(request.PriceData.Type),
+			IntervalUnit: string(request.PriceData.Interval),
+			Interval:     int64(request.PriceData.IntervalCount),
+			ProductID:    productID,
+			MerchantID:   merchant.ID,
+			CreatedAt:    time.Now(),
 			// TrialPeriod: int64(*request.PriceData.TrialPeriod),
 		}
 		if err = s.database.CreatePrice(newPrice); err != nil {

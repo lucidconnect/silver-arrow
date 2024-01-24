@@ -76,22 +76,22 @@ func (m *MerchantService) FetchPaymentLink(queryParam PaymentLinkQueryParams) (*
 		}
 	}
 
-	interval := conversions.ParseNanoSecondsToDay(paymentLink.Price.IntervalCount)
+	interval := conversions.ParseNanoSecondsToDay(paymentLink.Price.Interval)
 	amount := conversions.ParseTransferAmountFloat(paymentLink.Price.Token, paymentLink.Price.Amount)
 
 	paymentLinkDetalais := &model.PaymentLinkDetails{
-		ID:            paymentLink.ID.String(),
-		Mode:          paymentLink.Product.Mode,
-		ProductID:     paymentLink.ProductID.String(),
-		MerchantID:    paymentLink.MerchantID.String(),
-		MerchantName:  paymentLink.MerchantName,
-		ProductName:   paymentLink.Product.Name,
-		IntervalCount: int(interval),
-		Interval:      paymentLink.Price.Interval,
-		CallbackURL:   paymentLink.CallbackURL,
-		Amount:        amount,
-		Token:         paymentLink.Price.Token,
-		Chain:         int(paymentLink.Product.Chain),
+		ID:           paymentLink.ID.String(),
+		Mode:         paymentLink.Product.Mode,
+		ProductID:    paymentLink.ProductID.String(),
+		MerchantID:   paymentLink.MerchantID.String(),
+		MerchantName: paymentLink.MerchantName,
+		ProductName:  paymentLink.Product.Name,
+		Interval:     int(interval),
+		IntervalUnit: model.IntervalType(paymentLink.Price.IntervalUnit),
+		CallbackURL:  paymentLink.CallbackURL,
+		Amount:       amount,
+		Token:        paymentLink.Price.Token,
+		Chain:        int(paymentLink.Product.Chain),
 	}
 
 	return paymentLinkDetalais, nil

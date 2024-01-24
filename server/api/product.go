@@ -1,6 +1,8 @@
 package api
 
-import "github.com/lucidconnect/silver-arrow/core/merchant"
+import (
+	"github.com/lucidconnect/silver-arrow/core"
+)
 
 /*
 * NewProduct example object
@@ -28,27 +30,27 @@ type NewProduct struct {
 }
 
 type NewPrice struct {
-	Type          merchant.PriceType        `json:"type"`
-	Token         string                    `json:"token"`
-	Chain         int64                     `json:"chain"`
-	Amount        float64                   `json:"amount"`
-	Interval      merchant.RecuringInterval `json:"interval"`
-	IntervalCount int64                     `json:"intervalCount"`
-	ProductID     string                    `json:"productId,omitempty"`
-	TrialPeriod   int                       `json:"trialPeriod,omitempty"`
+	Type          core.PriceType        `json:"type"`
+	Token         string                `json:"token"`
+	Chain         int64                 `json:"chain"`
+	Amount        float64               `json:"amount"`
+	Interval      core.RecuringInterval `json:"interval"`
+	IntervalCount int64                 `json:"intervalCount"`
+	ProductID     string                `json:"productId,omitempty"`
+	TrialPeriod   int                   `json:"trialPeriod,omitempty"`
 }
 
 type PriceDataResponse struct {
-	ID            string                    `json:"id"`
-	Active        bool                      `json:"active"`
-	Type          merchant.PriceType        `json:"type"`
-	Token         string                    `json:"token"`
-	Chain         int64                     `json:"chain"`
-	Amount        int64                     `json:"amount"`
-	Interval      merchant.RecuringInterval `json:"interval"`
-	IntervalCount int64                     `json:"intervalCount"`
-	ProductID     string                    `json:"productId,omitempty"`
-	TrialPeriod   int                       `json:"trialPeriod,omitempty"`
+	ID            string                `json:"id"`
+	Active        bool                  `json:"active"`
+	Type          core.PriceType        `json:"type"`
+	Token         string                `json:"token"`
+	Chain         int64                 `json:"chain"`
+	Amount        int64                 `json:"amount"`
+	Interval      core.RecuringInterval `json:"interval"`
+	IntervalCount int64                 `json:"intervalCount"`
+	ProductID     string                `json:"productId,omitempty"`
+	TrialPeriod   int                   `json:"trialPeriod,omitempty"`
 }
 
 type ProductResponse struct {
