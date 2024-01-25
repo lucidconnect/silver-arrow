@@ -35,7 +35,8 @@ type NewSubscription struct {
 	Email             string
 	Token             string
 	Amount            float64
-	Interval          int
+	Interval          string
+	IntervalCount     int
 	ProductID         uuid.UUID
 	CheckoutSessionID uuid.UUID
 	ProductName       string

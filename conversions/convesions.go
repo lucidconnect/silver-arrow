@@ -33,8 +33,9 @@ func ParseTransferAmountFloat(token string, amount int64) float64 {
 	return parsedAmount
 }
 
-
-func ParseFloatAmountToInt(token string, amount float64) int64 {
+// ParseFloatAmountToIntDenomination converts the float64 value to the token's denominational  integer value
+// USDC, USDT are denominated in MWei
+func ParseFloatAmountToIntDenomination(token string, amount float64) int64 {
 	var divisor int
 	if token == "USDC" || token == "USDT" {
 		divisor = 6

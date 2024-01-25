@@ -11,27 +11,70 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/lucidconnect/silver-arrow/conversions"
+	"github.com/lucidconnect/silver-arrow/core"
+	"github.com/lucidconnect/silver-arrow/core/merchant"
 	"github.com/lucidconnect/silver-arrow/gqlerror"
 	"github.com/lucidconnect/silver-arrow/server/graphql/merchant/graph/generated"
 	"github.com/lucidconnect/silver-arrow/server/graphql/merchant/graph/model"
-	"github.com/lucidconnect/silver-arrow/service/merchant"
 	"github.com/rs/zerolog/log"
 )
 
 // AddProduct is the resolver for the addProduct field.
 func (r *mutationResolver) AddProduct(ctx context.Context, input model.NewProduct) (*model.Product, error) {
-	merchantService := merchant.NewMerchantService(r.Database)
-
-	merchant, err := getAuthenticatedAndActiveMerchant(ctx)
+	var product *merchant.Product
+	activeMerchant, err := getAuthenticatedAndActiveMerchant(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if merchant == nil {
+	if activeMerchant == nil {
 		return nil, errors.New("merchant does not exist")
 	}
-	result, err := merchantService.CreateProduct(input)
+
+	merchantService := merchant.NewMerchantService(r.Database, activeMerchant.ID)
+
+	if input.PriceData == nil {
+		return nil, errors.New("price information not supplied")
+	}
+
+	newProduct := merchant.ParseGraphqlInput(input)
+
+	product, err = merchantService.CreateProduct(newProduct)
 	if err != nil {
 		return nil, err
+	}
+	// create price data
+	amount := conversions.ParseFloatAmountToIntDenomination(input.PriceData.Token, input.PriceData.Amount)
+	newPrice := &merchant.Price{
+		Active:       true,
+		Amount:       amount,
+		Chain:        int64(input.PriceData.Chain),
+		Token:        input.PriceData.Token,
+		IntervalUnit: core.RecuringInterval(input.PriceData.IntervalUnit),
+		Interval:     int64(input.PriceData.Interval),
+		// Type:          merchant.PriceType(input.PriceData.Type),
+		TrialPeriod: int64(*input.PriceData.TrialPeriod),
+	}
+	price, err := merchantService.CreatePrice(newPrice, product.ID.String())
+	if err != nil {
+		log.Err(err).Caller().Send()
+		return nil, err
+	}
+	productUpdate := map[string]interface{}{
+		"default_price_id": price.ID,
+	}
+	if err = r.Database.UpdateProduct(product.ID, activeMerchant.ID, productUpdate); err != nil {
+		log.Err(err).Caller().Send()
+		return nil, err
+	}
+	// }
+
+	result := &model.Product{
+		Name:  product.Name,
+		Owner: product.Owner,
+		// Interval:         int(interval),
+		// Amount:           input.Amount,
+		ProductID:        product.ID.String(),
+		ReceivingAddress: product.DepositAddress,
 	}
 
 	return result, nil
@@ -44,17 +87,17 @@ func (r *mutationResolver) UpdateProduct(ctx context.Context, input model.Produc
 
 // CreateAccessKey is the resolver for the createAccessKey field.
 func (r *mutationResolver) CreateAccessKey(ctx context.Context, input model.NewMerchantKey) (*model.MerchantAccessKey, error) {
-	merchantService := merchant.NewMerchantService(r.Database)
-
-	merchant, err := getAuthenticatedAndActiveMerchant(ctx)
+	activeMerchant, err := getAuthenticatedAndActiveMerchant(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if merchant == nil {
+	if activeMerchant == nil {
 		return nil, errors.New("merchant does not exist")
 	}
 
-	accessKeys, err := merchantService.CreateAccessKeys(merchant.OwnerAddress, input.Mode.String())
+	merchantService := merchant.NewMerchantService(r.Database, activeMerchant.ID)
+
+	accessKeys, err := merchantService.CreateAccessKeys(activeMerchant.OwnerAddress, input.Mode.String())
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +106,7 @@ func (r *mutationResolver) CreateAccessKey(ctx context.Context, input model.NewM
 
 // CreateMerchant is the resolver for the createMerchant field.
 func (r *mutationResolver) CreateMerchant(ctx context.Context, input model.NewMerchant) (*model.Merchant, error) {
-	merchantService := merchant.NewMerchantService(r.Database)
+	merchantService := merchant.NewMerchantService(r.Database, uuid.Nil)
 	result, err := merchantService.CreateMerchant(input)
 	if err != nil {
 		return nil, gqlerror.ErrToGraphQLError(gqlerror.InternalError, err.Error(), ctx)
@@ -73,13 +116,14 @@ func (r *mutationResolver) CreateMerchant(ctx context.Context, input model.NewMe
 
 // UpdateMerchantwebHookURL is the resolver for the updateMerchantwebHookUrl field.
 func (r *mutationResolver) UpdateMerchantwebHookURL(ctx context.Context, webhookURL string) (*model.Merchant, error) {
-	merchantService := merchant.NewMerchantService(r.Database)
-	merchant, err := getAuthenticatedAndActiveMerchant(ctx)
+	activeMerchant, err := getAuthenticatedAndActiveMerchant(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	result, err := merchantService.UpdateMerchantWebhook(*merchant, webhookURL)
+	merchantService := merchant.NewMerchantService(r.Database, activeMerchant.ID)
+
+	result, err := merchantService.UpdateMerchantWebhook(*activeMerchant, webhookURL)
 	if err != nil {
 		return nil, gqlerror.ErrToGraphQLError(gqlerror.InternalError, err.Error(), ctx)
 	}
@@ -88,13 +132,13 @@ func (r *mutationResolver) UpdateMerchantwebHookURL(ctx context.Context, webhook
 
 // ToggleProductMode is the resolver for the toggleProductMode field.
 func (r *mutationResolver) ToggleProductMode(ctx context.Context, input model.ProductModeUpdate) (model.Mode, error) {
-	merchantService := merchant.NewMerchantService(r.Database)
-	merchant, err := getAuthenticatedAndActiveMerchant(ctx)
+	activeMerchant, err := getAuthenticatedAndActiveMerchant(ctx)
 	if err != nil {
 		return "nil", err
 	}
+	merchantService := merchant.NewMerchantService(r.Database, activeMerchant.ID)
 
-	err = merchantService.UpdateProductMode(merchant.ID, input.ProductID, input.Mode.String())
+	err = merchantService.UpdateProductMode(activeMerchant.ID, input.ProductID, input.Mode.String())
 	if err != nil {
 		return "", gqlerror.ErrToGraphQLError(gqlerror.InternalError, err.Error(), ctx)
 	}
@@ -104,12 +148,12 @@ func (r *mutationResolver) ToggleProductMode(ctx context.Context, input model.Pr
 
 // CreatePaymentLink is the resolver for the createPaymentLink field.
 func (r *mutationResolver) CreatePaymentLink(ctx context.Context, input model.NewPaymentLink) (string, error) {
-	merchantService := merchant.NewMerchantService(r.Database)
-	merchant, err := getAuthenticatedAndActiveMerchant(ctx)
+	activeMerchant, err := getAuthenticatedAndActiveMerchant(ctx)
 	if err != nil {
 		log.Err(err).Send()
 		return "", gqlerror.ErrToGraphQLError(gqlerror.MerchantAuthorisationFailed, err.Error(), ctx)
 	}
+	merchantService := merchant.NewMerchantService(r.Database, activeMerchant.ID)
 
 	productId, err := uuid.Parse(input.ProductID)
 	if err != nil {
@@ -123,7 +167,7 @@ func (r *mutationResolver) CreatePaymentLink(ctx context.Context, input model.Ne
 		return "", gqlerror.ErrToGraphQLError(gqlerror.InternalError, err.Error(), ctx)
 	}
 
-	if merchant.ID != product.MerchantID {
+	if activeMerchant.ID != product.MerchantID {
 		return "", gqlerror.ErrToGraphQLError(gqlerror.MerchantDataInvalid, err.Error(), ctx)
 	}
 
@@ -149,19 +193,80 @@ func (r *mutationResolver) DeletePaymentLink(ctx context.Context, id string) (st
 	return id, nil
 }
 
+// CreatePrice is the resolver for the createPrice field.
+func (r *mutationResolver) CreatePrice(ctx context.Context, input model.NewPrice) (*model.PriceData, error) {
+	activeMerchant, err := getAuthenticatedAndActiveMerchant(ctx)
+	if err != nil {
+		log.Err(err).Send()
+		return nil, gqlerror.ErrToGraphQLError(gqlerror.MerchantAuthorisationFailed, err.Error(), ctx)
+	}
+	merchantService := merchant.NewMerchantService(r.Database, activeMerchant.ID)
+
+	amount := conversions.ParseFloatAmountToIntDenomination(input.Token, input.Amount)
+	newPrice := &merchant.Price{
+		Active:       true,
+		Amount:       amount,
+		Chain:        int64(input.Chain),
+		Token:        input.Token,
+		IntervalUnit: core.RecuringInterval(input.IntervalUnit),
+		Interval:     int64(input.Interval),
+		Type:         core.PriceType(input.Type),
+		TrialPeriod:  int64(*input.TrialPeriod),
+	}
+	price, err := merchantService.CreatePrice(newPrice, input.ProductID)
+	if err != nil {
+		log.Err(err).Caller().Send()
+		return nil, err
+	}
+
+	priceData := &model.PriceData{
+		ID:           price.ID.String(),
+		Type:         model.PaymentType(price.Type),
+		Active:       price.Active,
+		Amount:       input.Amount,
+		Token:        price.Token,
+		Chain:        int(price.Chain),
+		IntervalUnit: model.IntervalType(price.IntervalUnit),
+		Interval:     int(price.Interval),
+		ProductID:    price.ProductId,
+		TrialPeriod:  int(price.TrialPeriod),
+	}
+
+	return priceData, nil
+}
+
+// UpdatePrice is the resolver for the updatePrice field.
+func (r *mutationResolver) UpdatePrice(ctx context.Context, input *model.PriceUpdate) (*model.PriceData, error) {
+	panic(fmt.Errorf("not implemented: UpdatePrice - updatePrice"))
+}
+
 // FetchOneProduct is the resolver for the fetchOneProduct field.
-func (r *queryResolver) FetchOneProduct(ctx context.Context, id string) (*model.Product, error) {
-	merchantService := merchant.NewMerchantService(r.Database)
+func (r *queryResolver) FetchOneProduct(ctx context.Context, id string, price *string) (*model.Product, error) {
+	merchantService := merchant.NewMerchantService(r.Database, uuid.Nil)
 	result, err := merchantService.FetchProduct(id)
 	if err != nil {
-		return result, nil
+		return nil, err
+	}
+	if price != nil {
+		priceData, err := merchantService.RetrievePriceData(*price)
+		if err != nil {
+			return nil, err
+		}
+		result.PriceData = append(result.PriceData, priceData)
+	} else {
+		// return all prices
+		priceData, err := merchantService.RetrieveProductPriceData(id)
+		if err != nil {
+			return nil, err
+		}
+		result.PriceData = priceData
 	}
 	return result, nil
 }
 
 // FetchProducts is the resolver for the fetchProducts field.
 func (r *queryResolver) FetchProducts(ctx context.Context, owner string) ([]*model.Product, error) {
-	merchantService := merchant.NewMerchantService(r.Database)
+	merchantService := merchant.NewMerchantService(r.Database, uuid.Nil)
 	result, err := merchantService.FetchProductsByOwner(owner)
 	if err != nil {
 		return nil, err
@@ -172,7 +277,7 @@ func (r *queryResolver) FetchProducts(ctx context.Context, owner string) ([]*mod
 
 // FetchMerchantKey is the resolver for the fetchMerchantKey field.
 func (r *queryResolver) FetchMerchantKey(ctx context.Context, input model.MerchantAccessKeyQuery) (string, error) {
-	merchantService := merchant.NewMerchantService(r.Database)
+	merchantService := merchant.NewMerchantService(r.Database, uuid.Nil)
 	result, err := merchantService.FetchMerchantKey(input.MerchantAddress, input.Mode.String())
 	if err != nil {
 		return "", err
@@ -182,7 +287,7 @@ func (r *queryResolver) FetchMerchantKey(ctx context.Context, input model.Mercha
 
 // FetchMerchantStats is the resolver for the fetchMerchantStats field.
 func (r *queryResolver) FetchMerchantStats(ctx context.Context, owner string) (*model.MerchantStats, error) {
-	merchantService := merchant.NewMerchantService(r.Database)
+	merchantService := merchant.NewMerchantService(r.Database, uuid.Nil)
 	stats, err := merchantService.SummarizeMerchant(owner)
 	if err != nil {
 		return nil, err
@@ -208,7 +313,7 @@ func (r *queryResolver) FetchMerchantInfo(ctx context.Context, owner string) (*m
 
 // GetPaymentLink is the resolver for the getPaymentLink field.
 func (r *queryResolver) GetPaymentLink(ctx context.Context, id string) (*model.PaymentLinkDetails, error) {
-	merchantService := merchant.NewMerchantService(r.Database)
+	merchantService := merchant.NewMerchantService(r.Database, uuid.Nil)
 
 	paymentLinkQuery := merchant.PaymentLinkQueryParams{
 		PaymentLinkId: &id,
@@ -235,8 +340,8 @@ func (r *queryResolver) GetMerchantPaymentLinks(ctx context.Context, merchantID 
 	}
 
 	for _, paymentLink := range paymentLinks {
-		interval := conversions.ParseNanoSecondsToDay(paymentLink.Product.Interval)
-		amount := conversions.ParseTransferAmountFloat(paymentLink.Product.Token, paymentLink.Product.Amount)
+		// interval := conversions.ParseNanoSecondsToDay(paymentLink.Price.IntervalCount)
+		amount := conversions.ParseTransferAmountFloat(paymentLink.Price.Token, paymentLink.Price.Amount)
 
 		paymentLinkDetail := &model.PaymentLinkDetails{
 			ID:           paymentLink.ID.String(),
@@ -245,10 +350,11 @@ func (r *queryResolver) GetMerchantPaymentLinks(ctx context.Context, merchantID 
 			MerchantID:   paymentLink.MerchantID.String(),
 			MerchantName: paymentLink.MerchantName,
 			ProductName:  paymentLink.Product.Name,
-			Interval:     int(interval),
+			Interval:     int(paymentLink.Price.Interval),
+			IntervalUnit: model.IntervalType(paymentLink.Price.IntervalUnit),
 			CallbackURL:  paymentLink.CallbackURL,
 			Amount:       amount,
-			Token:        paymentLink.Product.Token,
+			Token:        paymentLink.Price.Token,
 			Chain:        int(paymentLink.Product.Chain),
 		}
 		paymentLinkDetails = append(paymentLinkDetails, paymentLinkDetail)

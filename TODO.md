@@ -14,3 +14,4 @@
 ## Less Priority
 
 [] Create a simulated bundler for testing
+[] Improve merchant initialization with an options method

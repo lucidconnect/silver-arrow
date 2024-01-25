@@ -38,6 +38,13 @@ type Database interface {
 	FetchAllPaymentsByProduct(productId uuid.UUID) ([]models.Payment, error)
 	UpdateProduct(productId uuid.UUID, merchantId uuid.UUID, update map[string]interface{}) error
 
+	// Price
+	CreatePrice(*models.Price) error
+	FetchPrice(uuid.UUID) (*models.Price, error)
+	FetchAllPrices(merchantId uuid.UUID) ([]models.Price, error)
+	FetchAllPricesByProduct(productId uuid.UUID) ([]models.Price, error)
+	UpdatePrice(priceId uuid.UUID, update map[string]interface{}) error
+
 	// Merchant
 	AddMerchant(*models.Merchant) error
 	FetchMerchantById(uuid.UUID) (*models.Merchant, error)

@@ -15,10 +15,10 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/joho/godotenv"
 	"github.com/lucidconnect/silver-arrow/auth"
+	"github.com/lucidconnect/silver-arrow/core/service/erc4337"
 	"github.com/lucidconnect/silver-arrow/erc20"
 	"github.com/lucidconnect/silver-arrow/repository"
 	"github.com/lucidconnect/silver-arrow/repository/models"
-	"github.com/lucidconnect/silver-arrow/service/erc4337"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
 )

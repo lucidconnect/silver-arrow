@@ -150,7 +150,7 @@ func (s *Server) CheckoutMiddleware() func(http.Handler) http.Handler {
 			// attach the mode to the context
 			// attach the merchant to the context
 			// attach the public key to the context
-			
+
 			merchant, err := s.database.FetchMerchantByPublicKey(authorizationValue)
 			if err != nil {
 				log.Err(err).Send()
@@ -240,6 +240,45 @@ func (s *Server) BasicAuthMiddleware() func(http.Handler) http.Handler {
 				writeJsonResponse(w, response)
 				return
 			}
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+func (s *Server) AuthMiddleWare() func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			authorizationValue := r.Header.Get("Authorization")
+			// log.Info().Msgf("merchant public key - %v", authorizationValue)
+			if authorizationValue == "" {
+				response := &httpResponse{Status: http.StatusUnauthorized}
+				writeJsonResponse(w, response)
+				return
+			}
+			if strings.HasPrefix(authorizationValue, "Bearer ") {
+				authorizationValue = authorizationValue[7:]
+			} else {
+				response := &httpResponse{Status: http.StatusUnauthorized}
+				writeJsonResponse(w, response)
+				return
+			}
+			// use the public key to fetch the key,
+			// determine it's mode (test or live?)
+			// fetch the merchant with the merchantID,
+			// attach the mode to the context
+			// attach the merchant to the context
+			// attach the public key to the context
+
+			merchant, err := s.database.FetchMerchantByPublicKey(authorizationValue)
+			if err != nil {
+				log.Err(err).Send()
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			// key := merchant.MerchantAccessKeys[0]
+			merchantCtx := context.WithValue(r.Context(), auth.MerchantCtxKey, merchant)
+			r = r.WithContext(merchantCtx)
 			next.ServeHTTP(w, r)
 		})
 	}

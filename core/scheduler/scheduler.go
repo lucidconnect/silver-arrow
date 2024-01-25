@@ -12,10 +12,10 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	LucidMerchant "github.com/lucidconnect/silver-arrow/abi/LucidMerchant"
+	"github.com/lucidconnect/silver-arrow/core/gateway"
+	"github.com/lucidconnect/silver-arrow/core/service/erc4337"
 	"github.com/lucidconnect/silver-arrow/repository"
 	"github.com/lucidconnect/silver-arrow/repository/models"
-	"github.com/lucidconnect/silver-arrow/service/erc4337"
-	"github.com/lucidconnect/silver-arrow/service/wallet"
 	"github.com/pkg/errors"
 )
 
@@ -102,7 +102,7 @@ func (s *Scheduler) SubscriptionJob() {
 			// initiate user operation
 			time.Sleep(15 * time.Second)
 			// get the account
-			// ws := wallet.NewWalletService(s.datastore)
+			// ws := wallet.NewpaymentGateway(s.datastore)
 			s.initialisePayment(sub)
 		}
 	}
@@ -117,7 +117,7 @@ func (s *Scheduler) initialisePayment(sub models.Subscription) {
 		sponsored = false
 	}
 
-	walletService := wallet.NewWalletService(s.datastore, sub.Chain)
+	paymentGateway := gateway.NewPaymentGateway(s.datastore, sub.Chain)
 	reference := uuid.New()
 
 	payment := &models.Payment{
@@ -135,25 +135,25 @@ func (s *Scheduler) initialisePayment(sub models.Subscription) {
 		SubscriptionPublicKey: sub.Key.PublicKey,
 	}
 
-	userop, useropHash, err := walletService.CreatePayment(payment)
+	userop, useropHash, err := paymentGateway.CreatePayment(payment)
 	if err != nil {
 		err = errors.Wrap(err, "creating payment operation failed")
 		log.Err(err).Caller().Send()
 	}
 
-	signature, err := walletService.SignPaymentOperation(userop, useropHash)
+	signature, err := paymentGateway.SignPaymentOperation(userop, useropHash)
 	if err != nil {
 		err = errors.Wrap(err, "signing payment operation failed")
 		log.Err(err).Caller().Send()
 	}
 	userop["signature"] = signature
 
-	_, err = walletService.ExecutePaymentOperation(userop, payment.Chain)
+	_, err = paymentGateway.ExecutePaymentOperation(userop, payment.Chain)
 	if err != nil {
 		log.Err(err).Send()
 	}
 
-	nextChargeAt := time.Now().Add((time.Duration(sub.Interval)))
+	nextChargeAt :=gateway.CalculateNextChargeDate(sub.IntervalUnit, sub.Interval)
 
 	update := map[string]interface{}{
 		"expires_at":     nextChargeAt,

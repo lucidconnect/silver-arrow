@@ -6,12 +6,19 @@ import (
 	"fmt"
 	"io"
 	"strconv"
+	"time"
 )
 
 type Account struct {
 	Email   *string `json:"email,omitempty"`
 	Address string  `json:"address"`
 	Signer  *string `json:"signer,omitempty"`
+}
+
+type BillingHistory struct {
+	Date        time.Time `json:"date"`
+	Amount      float64   `json:"amount"`
+	ExplorerURL string    `json:"explorerUrl"`
 }
 
 type Payment struct {
@@ -25,16 +32,17 @@ type Payment struct {
 }
 
 type PaymentIntent struct {
-	Type           PaymentType `json:"type"`
-	Email          *string     `json:"email,omitempty"`
-	Chain          int         `json:"chain"`
-	Token          string      `json:"token"`
-	Amount         float64     `json:"amount"`
-	Interval       int         `json:"interval"`
-	ProductID      string      `json:"productId"`
-	OwnerAddress   string      `json:"ownerAddress"`
-	WalletAddress  string      `json:"walletAddress"`
-	FirstChargeNow bool        `json:"firstChargeNow"`
+	Type              PaymentType `json:"type"`
+	Email             *string     `json:"email,omitempty"`
+	Chain             int         `json:"chain"`
+	Token             string      `json:"token"`
+	Amount            float64     `json:"amount"`
+	CheckoutSessionID *string     `json:"checkoutSessionId,omitempty"`
+	ProductID         string      `json:"productId"`
+	PriceID           string      `json:"priceId"`
+	OwnerAddress      string      `json:"ownerAddress"`
+	WalletAddress     string      `json:"walletAddress"`
+	FirstChargeNow    bool        `json:"firstChargeNow"`
 }
 
 type RequestValidation struct {

@@ -12,6 +12,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
+	"github.com/lucidconnect/silver-arrow/core/service/erc4337"
 	"github.com/lucidconnect/silver-arrow/repository"
 	checkout_graph "github.com/lucidconnect/silver-arrow/server/graphql/checkout/graph"
 	checkout_generated "github.com/lucidconnect/silver-arrow/server/graphql/checkout/graph/generated"
@@ -21,7 +22,6 @@ import (
 	payment_link_generated "github.com/lucidconnect/silver-arrow/server/graphql/paymentLink/graph/generated"
 	wallet_graph "github.com/lucidconnect/silver-arrow/server/graphql/wallet/graph"
 	wallet_generated "github.com/lucidconnect/silver-arrow/server/graphql/wallet/graph/generated"
-	"github.com/lucidconnect/silver-arrow/service/erc4337"
 	"github.com/rs/cors"
 	"github.com/rs/zerolog/log"
 	"github.com/wader/gormstore/v2"
@@ -99,7 +99,7 @@ func (s *Server) Routes() {
 
 	// checkout
 	checkout := s.router.PathPrefix("/checkout").Subrouter()
-	checkout.Use(s.CheckoutMiddleware())
+	checkout.Use(s.PaymentLinkMiddleware())
 	checkout.Handle("/query", s.checkoutGraphqlHandler())
 	checkout.Handle("/graphiql", playground.Handler("/api/Graphql playground", "/checkout/query"))
 	checkout.HandleFunc("/sessions", s.CreateCheckoutSession()).Methods(http.MethodPost)
@@ -111,9 +111,14 @@ func (s *Server) Routes() {
 
 	// payment page
 	paymentLink := s.router.PathPrefix("/pay").Subrouter()
-	paymentLink.Use(s.PaymentLinkMiddleware())
+	paymentLink.Use(s.BasicAuthMiddleware())
 	paymentLink.Handle("/query", s.paymentLinksGraphqlHandler())
 	paymentLink.Handle("/graphiql", playground.Handler("/api/Graphql plaground", "/pay/query"))
+
+	// api
+	apiRoute := s.router.PathPrefix("/api/v1").Subrouter()
+	apiRoute.Use(s.AuthMiddleWare())
+	apiRoute.HandleFunc("/products", s.CreateNewProduct()).Methods(http.MethodPost)
 }
 
 func (s *Server) checkoutGraphqlHandler() *handler.Server {

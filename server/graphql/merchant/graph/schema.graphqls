@@ -3,7 +3,7 @@
 # https://gqlgen.com/getting-started/
 
 type Query {
-  fetchOneProduct(id: String!): Product!
+  fetchOneProduct(id: String!, price: String ): Product!
   fetchProducts(owner: String!): [Product!]!
   fetchMerchantKey(input: MerchantAccessKeyQuery!): String!
   fetchMerchantStats(owner: String!): MerchantStats!
@@ -21,6 +21,8 @@ type Mutation {
   toggleProductMode(input: ProductModeUpdate!): Mode!
   createPaymentLink(input: NewPaymentLink!): String!
   deletePaymentLink(id: String!): String!
+  createPrice(input: NewPrice!): PriceData!
+  updatePrice(input: PriceUpdate): PriceData!
 }
 
 input NewMerchant {
@@ -54,17 +56,54 @@ type Merchant {
 input NewProduct {
   name: String!
   owner: String!
-  chain: Int!
-  token: String!
-  amount: Float!
-  interval: Int!
   paymentType: PaymentType!
   receivingAddress: String!
   firstChargeNow: Boolean!
+  priceData: NewPrice!
 }
 
+type PriceData {
+  id: ID!
+  type: PaymentType!
+  active: Boolean!
+  amount: Float!
+  token: String!
+  chain: Int!
+  intervalUnit: IntervalType!
+  interval: Int!
+  productId: String!
+  trialPeriod: Int!
+}
+
+input NewPrice {
+  type: PaymentType!
+  token: String!
+  chain: Int!
+  amount: Float!
+  intervalUnit: IntervalType!
+  interval: Int!
+  productId: String!
+  trialPeriod: Int
+}
+
+input PriceUpdate {
+  token: String!
+  chain: Int!
+  amount: Float!
+  intervalUnit: IntervalType!
+  interval: Int!
+  trialPeriod: Int
+}
+
+enum IntervalType {
+  day
+  week
+  month
+  year
+}
 input NewPaymentLink {
   productId: String!
+  priceId: String!
   callbackUrl: String!
 }
 
@@ -72,7 +111,9 @@ type PaymentLinkDetails {
   id: ID!
   mode: String!
   productId: ID!
+  priceId: ID!
   productName: String!
+  intervalUnit: IntervalType!
   interval: Int!
   merchantId: ID!
   merchantName: String!
@@ -113,10 +154,8 @@ type Product {
   name: String!
   mode: Mode!
   owner: String!
-  chain: Int!
-  token: String!
-  amount: Float!
-  interval: Int!
+  defaultPrice: String!
+  priceData: [PriceData!]!
   productId: String!
   merchantId: String!
   receivingAddress: String!

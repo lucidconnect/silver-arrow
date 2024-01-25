@@ -7,8 +7,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/lucidconnect/silver-arrow/service/erc4337"
-	"github.com/lucidconnect/silver-arrow/service/wallet"
+	"github.com/lucidconnect/silver-arrow/core/service/erc4337"
+	"github.com/lucidconnect/silver-arrow/core/wallet"
 	"github.com/stretchr/testify/assert"
 )
 

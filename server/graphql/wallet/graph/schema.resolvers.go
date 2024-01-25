@@ -11,11 +11,11 @@ import (
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/google/uuid"
+	"github.com/lucidconnect/silver-arrow/core/service/erc4337"
+	"github.com/lucidconnect/silver-arrow/core/wallet"
 	"github.com/lucidconnect/silver-arrow/gqlerror"
 	"github.com/lucidconnect/silver-arrow/server/graphql/wallet/graph/generated"
 	"github.com/lucidconnect/silver-arrow/server/graphql/wallet/graph/model"
-	"github.com/lucidconnect/silver-arrow/service/erc4337"
-	"github.com/lucidconnect/silver-arrow/service/wallet"
 	"github.com/rs/zerolog/log"
 )
 

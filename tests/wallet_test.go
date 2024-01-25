@@ -6,21 +6,24 @@ import (
 	"math/big"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/google/uuid"
+	"github.com/lucidconnect/silver-arrow/core"
+	"github.com/lucidconnect/silver-arrow/core/gateway"
+	"github.com/lucidconnect/silver-arrow/core/service/erc4337"
+	"github.com/lucidconnect/silver-arrow/core/wallet"
 	"github.com/lucidconnect/silver-arrow/repository"
-	"github.com/lucidconnect/silver-arrow/service/erc4337"
-	"github.com/lucidconnect/silver-arrow/service/wallet"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestAddSubscription(t *testing.T) {
 	r := repository.NewPostgresDB(db)
 	// ms := merchant.NewMerchantService(r)
-	ws := wallet.NewWalletService(r, defaultChain)
+	ws := gateway.NewPaymentGateway(r, defaultChain)
 	// mId := randKey()
 	// newProduct := merchant_model.NewProduct{
 	// 	Name:             "test xyz",
@@ -35,15 +38,18 @@ func TestAddSubscription(t *testing.T) {
 	p, _ := crypto.HexToECDSA(key[2:])
 	owner := crypto.PubkeyToAddress(p.PublicKey).Hex()
 	fmt.Println("owner", owner)
-	newSub := wallet.NewSubscription{
-		Chain:     int(defaultChain),
-		Token:     "USDC",
-		Amount:    1,
-		Interval:  30,
+	newSub := core.NewSubscription{
+		Chain:         defaultChain,
+		Token:         "USDC",
+		Amount:        1,
+		IntervalUnit:      "days",
+		Interval: 30,
+
 		ProductID: uuid.MustParse("aad69be2-8513-4fe1-b5df-63720630ae6b"),
 		// WalletAddress: "0x14De44b6100dE479655D752ECD2230D10F8fA061",
-		WalletAddress: "0xb96442F14ac82E21c333A8bB9b03274Ae26eb79D",
-		OwnerAddress:  "0x85fc2E4425d0DAba7426F50091a384ee05D37Cd2",
+		WalletAddress:  "0xb96442F14ac82E21c333A8bB9b03274Ae26eb79D",
+		OwnerAddress:   "0x85fc2E4425d0DAba7426F50091a384ee05D37Cd2",
+		NextChargeDate: time.Now(),
 	}
 
 	var usePaymaster bool
@@ -82,14 +88,15 @@ func TestAddSubscription(t *testing.T) {
 
 func TestSubscriptionIsUnique(t *testing.T) {
 	r := repository.NewPostgresDB(db)
-	ws := wallet.NewWalletService(r, defaultChain)
+	ws := gateway.NewPaymentGateway(r, defaultChain)
 
-	newSub := wallet.NewSubscription{
-		Chain:     int(defaultChain),
-		Token:     "USDC",
-		Amount:    1,
-		Interval:  30,
-		ProductID: uuid.MustParse("aad69be2-8513-4fe1-b5df-63720630ae6b"),
+	newSub := core.NewSubscription{
+		Chain:         defaultChain,
+		Token:         "USDC",
+		Amount:        1,
+		IntervalUnit:      "days",
+		Interval: 30,
+		ProductID:     uuid.MustParse("aad69be2-8513-4fe1-b5df-63720630ae6b"),
 		// WalletAddress: "0x14De44b6100dE479655D752ECD2230D10F8fA061",
 		WalletAddress: "0xb96442F14ac82E21c333A8bB9b03274Ae26eb79D",
 		OwnerAddress:  "0x85fc2E4425d0DAba7426F50091a384ee05D37Cd2",

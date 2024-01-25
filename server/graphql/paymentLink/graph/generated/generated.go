@@ -62,6 +62,7 @@ type ComplexityRoot struct {
 		Chain        func(childComplexity int) int
 		ID           func(childComplexity int) int
 		Interval     func(childComplexity int) int
+		IntervalUnit func(childComplexity int) int
 		MerchantID   func(childComplexity int) int
 		MerchantName func(childComplexity int) int
 		Mode         func(childComplexity int) int
@@ -71,9 +72,9 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		GetBillingHistory       func(childComplexity int, walletAddress string, productID string) int
-		GetPaymentLink          func(childComplexity int, id string) int
-		GetPaymentLinkBySession func(childComplexity int, id string) int
+		GetBillingHistory           func(childComplexity int, walletAddress string, productID string) int
+		ResolvePaymentLink          func(childComplexity int, id string) int
+		ResolvePaymentLinkBySession func(childComplexity int, id string) int
 	}
 
 	TransactionData struct {
@@ -98,8 +99,8 @@ type MutationResolver interface {
 	ValidatePaymentIntent(ctx context.Context, input model.RequestValidation) (*model.TransactionData, error)
 }
 type QueryResolver interface {
-	GetPaymentLinkBySession(ctx context.Context, id string) (*model.PaymentLinkDetails, error)
-	GetPaymentLink(ctx context.Context, id string) (*model.PaymentLinkDetails, error)
+	ResolvePaymentLinkBySession(ctx context.Context, id string) (*model.PaymentLinkDetails, error)
+	ResolvePaymentLink(ctx context.Context, id string) (*model.PaymentLinkDetails, error)
 	GetBillingHistory(ctx context.Context, walletAddress string, productID string) ([]*model.BillingHistory, error)
 }
 
@@ -198,6 +199,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.PaymentLinkDetails.Interval(childComplexity), true
 
+	case "PaymentLinkDetails.intervalUnit":
+		if e.complexity.PaymentLinkDetails.IntervalUnit == nil {
+			break
+		}
+
+		return e.complexity.PaymentLinkDetails.IntervalUnit(childComplexity), true
+
 	case "PaymentLinkDetails.merchantId":
 		if e.complexity.PaymentLinkDetails.MerchantID == nil {
 			break
@@ -252,29 +260,29 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.GetBillingHistory(childComplexity, args["walletAddress"].(string), args["productId"].(string)), true
 
-	case "Query.getPaymentLink":
-		if e.complexity.Query.GetPaymentLink == nil {
+	case "Query.resolvePaymentLink":
+		if e.complexity.Query.ResolvePaymentLink == nil {
 			break
 		}
 
-		args, err := ec.field_Query_getPaymentLink_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_resolvePaymentLink_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Query.GetPaymentLink(childComplexity, args["id"].(string)), true
+		return e.complexity.Query.ResolvePaymentLink(childComplexity, args["id"].(string)), true
 
-	case "Query.getPaymentLinkBySession":
-		if e.complexity.Query.GetPaymentLinkBySession == nil {
+	case "Query.resolvePaymentLinkBySession":
+		if e.complexity.Query.ResolvePaymentLinkBySession == nil {
 			break
 		}
 
-		args, err := ec.field_Query_getPaymentLinkBySession_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_resolvePaymentLinkBySession_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Query.GetPaymentLinkBySession(childComplexity, args["id"].(string)), true
+		return e.complexity.Query.ResolvePaymentLinkBySession(childComplexity, args["id"].(string)), true
 
 	case "TransactionData.amount":
 		if e.complexity.TransactionData.Amount == nil {
@@ -480,8 +488,8 @@ var sources = []*ast.Source{
 }
 
 type Query {
-  getPaymentLinkBySession(id: String!): PaymentLinkDetails!
-  getPaymentLink(id: String!): PaymentLinkDetails!
+  resolvePaymentLinkBySession(id: String!): PaymentLinkDetails!
+  resolvePaymentLink(id: String!): PaymentLinkDetails!
   getBillingHistory(walletAddress: String!, productId: String!): [BillingHistory!]
 }
 
@@ -490,6 +498,7 @@ type PaymentLinkDetails {
   mode: String!
   productId: ID!
   productName: String!
+  intervalUnit: String!
   interval: Int!
   merchantId: ID!
   merchantName: String!
@@ -512,9 +521,10 @@ input PaymentIntent {# attach the checkout session id
   chain: Int!
   token: String!
   amount: Float!
-  interval: Int!
+  # interval: Int!
   checkoutSessionId: String
   productId: String!
+  priceId: String!
   ownerAddress: String!
   walletAddress: String!
   firstChargeNow: Boolean! # should be decided upon creating a product
@@ -624,7 +634,7 @@ func (ec *executionContext) field_Query_getBillingHistory_args(ctx context.Conte
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_getPaymentLinkBySession_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Query_resolvePaymentLinkBySession_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
@@ -639,7 +649,7 @@ func (ec *executionContext) field_Query_getPaymentLinkBySession_args(ctx context
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_getPaymentLink_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Query_resolvePaymentLink_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
@@ -1138,6 +1148,50 @@ func (ec *executionContext) fieldContext_PaymentLinkDetails_productName(ctx cont
 	return fc, nil
 }
 
+func (ec *executionContext) _PaymentLinkDetails_intervalUnit(ctx context.Context, field graphql.CollectedField, obj *model.PaymentLinkDetails) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PaymentLinkDetails_intervalUnit(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IntervalUnit, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PaymentLinkDetails_intervalUnit(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PaymentLinkDetails",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _PaymentLinkDetails_interval(ctx context.Context, field graphql.CollectedField, obj *model.PaymentLinkDetails) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_PaymentLinkDetails_interval(ctx, field)
 	if err != nil {
@@ -1446,8 +1500,8 @@ func (ec *executionContext) fieldContext_PaymentLinkDetails_chain(ctx context.Co
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_getPaymentLinkBySession(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_getPaymentLinkBySession(ctx, field)
+func (ec *executionContext) _Query_resolvePaymentLinkBySession(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_resolvePaymentLinkBySession(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1460,7 +1514,7 @@ func (ec *executionContext) _Query_getPaymentLinkBySession(ctx context.Context, 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetPaymentLinkBySession(rctx, fc.Args["id"].(string))
+		return ec.resolvers.Query().ResolvePaymentLinkBySession(rctx, fc.Args["id"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1477,7 +1531,7 @@ func (ec *executionContext) _Query_getPaymentLinkBySession(ctx context.Context, 
 	return ec.marshalNPaymentLinkDetails2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋpaymentLinkᚋgraphᚋmodelᚐPaymentLinkDetails(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_getPaymentLinkBySession(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_resolvePaymentLinkBySession(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -1493,6 +1547,8 @@ func (ec *executionContext) fieldContext_Query_getPaymentLinkBySession(ctx conte
 				return ec.fieldContext_PaymentLinkDetails_productId(ctx, field)
 			case "productName":
 				return ec.fieldContext_PaymentLinkDetails_productName(ctx, field)
+			case "intervalUnit":
+				return ec.fieldContext_PaymentLinkDetails_intervalUnit(ctx, field)
 			case "interval":
 				return ec.fieldContext_PaymentLinkDetails_interval(ctx, field)
 			case "merchantId":
@@ -1518,15 +1574,15 @@ func (ec *executionContext) fieldContext_Query_getPaymentLinkBySession(ctx conte
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_getPaymentLinkBySession_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Query_resolvePaymentLinkBySession_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_getPaymentLink(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_getPaymentLink(ctx, field)
+func (ec *executionContext) _Query_resolvePaymentLink(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_resolvePaymentLink(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1539,7 +1595,7 @@ func (ec *executionContext) _Query_getPaymentLink(ctx context.Context, field gra
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetPaymentLink(rctx, fc.Args["id"].(string))
+		return ec.resolvers.Query().ResolvePaymentLink(rctx, fc.Args["id"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1556,7 +1612,7 @@ func (ec *executionContext) _Query_getPaymentLink(ctx context.Context, field gra
 	return ec.marshalNPaymentLinkDetails2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋpaymentLinkᚋgraphᚋmodelᚐPaymentLinkDetails(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_getPaymentLink(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_resolvePaymentLink(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -1572,6 +1628,8 @@ func (ec *executionContext) fieldContext_Query_getPaymentLink(ctx context.Contex
 				return ec.fieldContext_PaymentLinkDetails_productId(ctx, field)
 			case "productName":
 				return ec.fieldContext_PaymentLinkDetails_productName(ctx, field)
+			case "intervalUnit":
+				return ec.fieldContext_PaymentLinkDetails_intervalUnit(ctx, field)
 			case "interval":
 				return ec.fieldContext_PaymentLinkDetails_interval(ctx, field)
 			case "merchantId":
@@ -1597,7 +1655,7 @@ func (ec *executionContext) fieldContext_Query_getPaymentLink(ctx context.Contex
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_getPaymentLink_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Query_resolvePaymentLink_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -4142,7 +4200,7 @@ func (ec *executionContext) unmarshalInputPaymentIntent(ctx context.Context, obj
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"type", "email", "chain", "token", "amount", "interval", "checkoutSessionId", "productId", "ownerAddress", "walletAddress", "firstChargeNow"}
+	fieldsInOrder := [...]string{"type", "email", "chain", "token", "amount", "checkoutSessionId", "productId", "priceId", "ownerAddress", "walletAddress", "firstChargeNow"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -4194,15 +4252,6 @@ func (ec *executionContext) unmarshalInputPaymentIntent(ctx context.Context, obj
 				return it, err
 			}
 			it.Amount = data
-		case "interval":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("interval"))
-			data, err := ec.unmarshalNInt2int(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Interval = data
 		case "checkoutSessionId":
 			var err error
 
@@ -4221,6 +4270,15 @@ func (ec *executionContext) unmarshalInputPaymentIntent(ctx context.Context, obj
 				return it, err
 			}
 			it.ProductID = data
+		case "priceId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("priceId"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PriceID = data
 		case "ownerAddress":
 			var err error
 
@@ -4445,6 +4503,11 @@ func (ec *executionContext) _PaymentLinkDetails(ctx context.Context, sel ast.Sel
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "intervalUnit":
+			out.Values[i] = ec._PaymentLinkDetails_intervalUnit(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "interval":
 			out.Values[i] = ec._PaymentLinkDetails_interval(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -4522,7 +4585,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Query")
-		case "getPaymentLinkBySession":
+		case "resolvePaymentLinkBySession":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
@@ -4531,7 +4594,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_getPaymentLinkBySession(ctx, field)
+				res = ec._Query_resolvePaymentLinkBySession(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -4544,7 +4607,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "getPaymentLink":
+		case "resolvePaymentLink":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
@@ -4553,7 +4616,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_getPaymentLink(ctx, field)
+				res = ec._Query_resolvePaymentLink(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}

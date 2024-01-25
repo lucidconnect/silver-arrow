@@ -15,7 +15,8 @@ type Subscription struct {
 	Amount                 int64     `gorm:"not null"` // amount in decimal precision
 	Active                 bool      `gorm:"not null"`
 	Status                 string
-	Interval               int64     `gorm:"not null"`
+	Interval               int64
+	IntervalUnit           string
 	UserOpHash             string    `gorm:"index"`
 	MerchantId             string    `gorm:"index"`
 	ProductID              uuid.UUID `gorm:"index"`

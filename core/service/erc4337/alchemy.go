@@ -358,3 +358,36 @@ func parseRpcError(err error) error {
 	}
 	return err
 }
+
+func (bs *AlchemyService) IsAccountDeployed(address string, chain int64) bool {
+	// bundler, err := erc4337.NewAlchemyService(chain)
+	// if err != nil {
+	// 	err = errors.Wrap(err, "failed to initialise bundler")
+	// 	log.Panic().Err(err).Send()
+	// 	return false
+	// }
+
+	code, err := bs.GetAccountCode(common.HexToAddress(address))
+	if err != nil {
+		log.Err(err).Caller().Send()
+		return false
+	}
+	fmt.Println("Code ", code)
+	if len(code) == 0 {
+		log.Info().Msg("account not deployed, should be deployed first!")
+		return false
+	}
+	return true
+}
+
+func (bs *AlchemyService) GetTransactionHash(useropHash string) (string, error) {
+	useropResult, err := bs.GetUserOperationByHash(useropHash)
+	if err != nil {
+		err = errors.Wrap(err, "fetching the transction hash failed")
+		log.Err(err).Caller().Send()
+		return "", err
+	}
+
+	transactionHash := useropResult["transactionHash"].(string)
+	return transactionHash, nil
+}

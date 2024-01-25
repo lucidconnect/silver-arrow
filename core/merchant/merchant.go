@@ -20,11 +20,13 @@ import (
 
 type MerchantService struct {
 	repository repository.Database
+	merchant   uuid.UUID // id of the active merchant
 }
 
-func NewMerchantService(r repository.Database) *MerchantService {
+func NewMerchantService(r repository.Database, merchant uuid.UUID) *MerchantService {
 	return &MerchantService{
 		repository: r,
+		merchant:   merchant,
 	}
 }
 

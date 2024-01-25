@@ -7,23 +7,24 @@ package graph
 import (
 	"context"
 	"fmt"
-	"os"
-	"time"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/google/uuid"
+	"github.com/lucidconnect/silver-arrow/core"
+	"github.com/lucidconnect/silver-arrow/core/gateway"
+	"github.com/lucidconnect/silver-arrow/core/merchant"
+	"github.com/lucidconnect/silver-arrow/core/service/erc4337"
+	"github.com/lucidconnect/silver-arrow/core/wallet"
 	"github.com/lucidconnect/silver-arrow/gqlerror"
+	"github.com/lucidconnect/silver-arrow/repository/models"
 	"github.com/lucidconnect/silver-arrow/server/graphql/paymentLink/graph/generated"
 	"github.com/lucidconnect/silver-arrow/server/graphql/paymentLink/graph/model"
-	"github.com/lucidconnect/silver-arrow/service/erc4337"
-	"github.com/lucidconnect/silver-arrow/service/merchant"
-	"github.com/lucidconnect/silver-arrow/service/wallet"
 	"github.com/rs/zerolog/log"
 )
 
 // CreatePaymentIntent is the resolver for the createPaymentIntent field.
 func (r *mutationResolver) CreatePaymentIntent(ctx context.Context, input model.PaymentIntent) (string, error) {
+	var sessionId uuid.UUID
 	merchant, err := getActiveMerchant(ctx)
 	if err != nil {
 		return "", err
@@ -33,6 +34,11 @@ func (r *mutationResolver) CreatePaymentIntent(ctx context.Context, input model.
 		return "", err
 	}
 
+	paymentLink, err := r.Database.FetchPaymentLinkByProduct(product.ID)
+	if err != nil {
+		log.Err(err).Caller().Send()
+		return "", gqlerror.ErrToGraphQLError(gqlerror.InternalError, "", ctx)
+	}
 	merchantId := merchant.ID
 
 	log.Info().Msgf("Authenticated Merchant: %v", merchantId)
@@ -44,61 +50,48 @@ func (r *mutationResolver) CreatePaymentIntent(ctx context.Context, input model.
 		return "", gqlerror.ErrToGraphQLError(gqlerror.MerchantDataInvalid, "product not found", ctx)
 	}
 
-	walletService := wallet.NewWalletService(r.Database, int64(input.Chain))
-	var usePaymaster bool
-	switch os.Getenv("USE_PAYMASTER") {
-	case "TRUE":
-		usePaymaster = true
-	default:
-		usePaymaster = false
-	}
-	var useropHash string
-
-	switch input.Type {
-	case model.PaymentTypeRecurring:
-		var nextCharge time.Time
-
-		if input.FirstChargeNow {
-			nextCharge = time.Now()
-		}
-
-		var email string
-		if input.Email != nil {
-			email = *input.Email
-		}
-		sessionId, err := uuid.Parse(*input.CheckoutSessionID)
+	if input.CheckoutSessionID != nil {
+		sessionId, err = uuid.Parse(*input.CheckoutSessionID)
 		if err != nil {
 			log.Err(err).Caller().Send()
-			return "", gqlerror.ErrToGraphQLError(gqlerror.MerchantDataInvalid, "invalid session id", ctx)
+			return "", gqlerror.ErrToGraphQLError(gqlerror.MerchantDataInvalid, "malformed session id", ctx)
 		}
-		newSubscription := wallet.NewSubscription{
-			Chain:             input.Chain,
-			Token:             input.Token,
-			Email:             email,
-			Amount:            input.Amount,
-			Interval:          input.Interval,
-			ProductID:         product.ID,
-			CheckoutSessionID: sessionId,
-			ProductName:       product.Name,
-			OwnerAddress:      input.OwnerAddress,
-			WalletAddress:     input.WalletAddress,
-			DepositAddress:    product.DepositAddress,
-			NextChargeDate:    &nextCharge,
+	} else {
+		// Create a new session
+		sessionId = uuid.New()
+		newSession := &models.CheckoutSession{
+			ID:            sessionId,
+			Customer:      input.WalletAddress,
+			ProductID:     product.ID,
+			MerchantID:    merchant.ID,
+			PaymentLinkID: paymentLink.ID,
 		}
-
-		validationData, userOp, err := walletService.AddSubscription(merchantId, newSubscription, usePaymaster, common.Big0, int64(input.Chain))
-		if err != nil {
-			return "", gqlerror.ErrToGraphQLError(gqlerror.InternalError, "Couldn't add subscription to user's wallet", ctx)
-		}
-		fmt.Println("Userop hash", validationData.UserOpHash)
-		err = r.Cache.Set(validationData.UserOpHash, userOp)
-		if err != nil {
+		if err = r.Database.CreateCheckoutSession(newSession); err != nil {
 			log.Err(err).Send()
-			return "", gqlerror.ErrToGraphQLError(gqlerror.InternalError, "Couldn't add subscription to user's wallet", ctx)
+			return "", gqlerror.ErrToGraphQLError(gqlerror.InternalError, "", ctx)
 		}
-		useropHash = validationData.UserOpHash
-	default:
-		return "", gqlerror.ErrToGraphQLError(gqlerror.NilError, "unsupported payment type", ctx)
+	}
+	pg := gateway.NewPaymentGateway(r.Database, int64(input.Chain))
+
+	paymentIntent := core.PaymentIntent{
+		Type:              core.PaymentType(input.Type),
+		ProductId:         input.ProductID,
+		PriceId:           input.PriceID,
+		WalletAddress:     input.WalletAddress,
+		FirstChargeNow:    input.FirstChargeNow,
+		OwnerAddress:      input.OwnerAddress,
+		Email:             *input.Email,
+		Source:            input.WalletAddress,
+		CheckoutSessionId: sessionId,
+	}
+	userop, useropHash, err := pg.CreatePaymentIntent(paymentIntent)
+	if err != nil {
+		return "", gqlerror.ErrToGraphQLError(gqlerror.InternalError, "creating payment intent failed", ctx)
+	}
+	err = r.Cache.Set(useropHash, userop)
+	if err != nil {
+		log.Err(err).Send()
+		return "", gqlerror.ErrToGraphQLError(gqlerror.InternalError, "", ctx)
 	}
 
 	return useropHash, nil
@@ -106,7 +99,7 @@ func (r *mutationResolver) CreatePaymentIntent(ctx context.Context, input model.
 
 // ValidatePaymentIntent is the resolver for the validatePaymentIntent field.
 func (r *mutationResolver) ValidatePaymentIntent(ctx context.Context, input model.RequestValidation) (*model.TransactionData, error) {
-	walletService := wallet.NewWalletService(r.Database, int64(input.Chain))
+	gatewayService := gateway.NewPaymentGateway(r.Database, int64(input.Chain))
 	// merchantService := merchant.NewMerchantService(r.Database)
 
 	// time.Sleep(time.Second)
@@ -131,16 +124,16 @@ func (r *mutationResolver) ValidatePaymentIntent(ctx context.Context, input mode
 	op["signature"] = hexutil.Encode(sig)
 
 	chain := int64(input.Chain)
-	subData, err := walletService.ValidateSubscription(op, chain)
+	subData, err := gatewayService.ValidateSubscription(op, chain)
 	if err != nil {
 		return nil, gqlerror.ErrToGraphQLError(gqlerror.InternalError, "Subscription validation failed", ctx)
 	}
 
 	result := &model.TransactionData{
-		ID:                  subData.ID,
-		Token:               subData.Token,
-		Amount:              subData.Amount,
-		Interval:            subData.Interval,
+		ID:     subData.ID,
+		Token:  subData.Token,
+		Amount: subData.Amount,
+		// Interval:            subData.Interval,
 		ProductID:           subData.ProductID,
 		WalletAddress:       subData.WalletAddress,
 		CreatedAt:           subData.CreatedAt,
@@ -149,9 +142,9 @@ func (r *mutationResolver) ValidatePaymentIntent(ctx context.Context, input mode
 	return result, nil
 }
 
-// GetPaymentLinkBySession is the resolver for the getPaymentLinkBySession field.
-func (r *queryResolver) GetPaymentLinkBySession(ctx context.Context, id string) (*model.PaymentLinkDetails, error) {
-	merchantService := merchant.NewMerchantService(r.Database)
+// ResolvePaymentLinkBySession is the resolver for the resolvePaymentLinkBySession field.
+func (r *queryResolver) ResolvePaymentLinkBySession(ctx context.Context, id string) (*model.PaymentLinkDetails, error) {
+	merchantService := merchant.NewMerchantService(r.Database, uuid.Nil)
 
 	sid, err := uuid.Parse(id)
 	if err != nil {
@@ -186,9 +179,9 @@ func (r *queryResolver) GetPaymentLinkBySession(ctx context.Context, id string) 
 	return paymentLinkDetails, nil
 }
 
-// GetPaymentLink is the resolver for the getPaymentLink field.
-func (r *queryResolver) GetPaymentLink(ctx context.Context, id string) (*model.PaymentLinkDetails, error) {
-	merchantService := merchant.NewMerchantService(r.Database)
+// ResolvePaymentLink is the resolver for the resolvePaymentLink field.
+func (r *queryResolver) ResolvePaymentLink(ctx context.Context, id string) (*model.PaymentLinkDetails, error) {
+	merchantService := merchant.NewMerchantService(r.Database, uuid.Nil)
 
 	paymentLinkQuery := merchant.PaymentLinkQueryParams{
 		PaymentLinkId: &id,
@@ -208,6 +201,7 @@ func (r *queryResolver) GetPaymentLink(ctx context.Context, id string) (*model.P
 		ProductName:  pd.ProductName,
 		MerchantName: pd.MerchantName,
 		Interval:     pd.Interval,
+		IntervalUnit: pd.IntervalUnit.String(),
 		CallbackURL:  pd.CallbackURL,
 	}
 	return paymentLinkDetails, nil
@@ -245,3 +239,70 @@ func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//     it when you're done.
+//   - You have helper methods in this file. Move them out to keep these resolver files clean.
+func (r *queryResolver) GetPaymentLinkBySession(ctx context.Context, id string) (*model.PaymentLinkDetails, error) {
+	merchantService := merchant.NewMerchantService(r.Database, uuid.Nil)
+
+	sid, err := uuid.Parse(id)
+	if err != nil {
+		return nil, gqlerror.ErrToGraphQLError(gqlerror.InternalError, err.Error(), ctx)
+	}
+	checkoutSession, err := r.Database.FetchCheckoutSession(sid)
+	if err != nil {
+		return nil, gqlerror.ErrToGraphQLError(gqlerror.InternalError, err.Error(), ctx)
+	}
+
+	paymentLinkId := checkoutSession.PaymentLinkID.String()
+	paymentLinkQuery := merchant.PaymentLinkQueryParams{
+		PaymentLinkId: &paymentLinkId,
+	}
+	pd, err := merchantService.FetchPaymentLink(paymentLinkQuery)
+	if err != nil {
+		return nil, gqlerror.ErrToGraphQLError(gqlerror.InternalError, err.Error(), ctx)
+	}
+	paymentLinkDetails := &model.PaymentLinkDetails{
+		ID:           pd.ID,
+		Mode:         pd.Mode,
+		ProductID:    pd.ProductID,
+		MerchantID:   pd.MerchantID,
+		Amount:       pd.Amount,
+		Token:        pd.Token,
+		Chain:        pd.Chain,
+		ProductName:  pd.ProductName,
+		MerchantName: pd.MerchantName,
+		Interval:     pd.Interval,
+		CallbackURL:  pd.CallbackURL,
+	}
+	return paymentLinkDetails, nil
+}
+func (r *queryResolver) GetPaymentLink(ctx context.Context, id string) (*model.PaymentLinkDetails, error) {
+	merchantService := merchant.NewMerchantService(r.Database, uuid.Nil)
+
+	paymentLinkQuery := merchant.PaymentLinkQueryParams{
+		PaymentLinkId: &id,
+	}
+	pd, err := merchantService.FetchPaymentLink(paymentLinkQuery)
+	if err != nil {
+		return nil, gqlerror.ErrToGraphQLError(gqlerror.InternalError, err.Error(), ctx)
+	}
+	paymentLinkDetails := &model.PaymentLinkDetails{
+		ID:           pd.ID,
+		Mode:         pd.Mode,
+		ProductID:    pd.ProductID,
+		MerchantID:   pd.MerchantID,
+		Amount:       pd.Amount,
+		Token:        pd.Token,
+		Chain:        pd.Chain,
+		ProductName:  pd.ProductName,
+		MerchantName: pd.MerchantName,
+		Interval:     pd.Interval,
+		CallbackURL:  pd.CallbackURL,
+	}
+	return paymentLinkDetails, nil
+}

@@ -3,6 +3,7 @@ package api
 type NewCheckoutSession struct {
 	Customer    string `json:"customer"`
 	ProductId   string `json:"product_id"`
+	PriceId     string `json:"price_id"`
 	CallbackUrl string `json:"callback_url"`
 }
 

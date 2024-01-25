@@ -36,7 +36,8 @@ input PaymentIntent {
   chain: Int!
   token: String!
   amount: Float!
-  interval: Int!
+	interval: IntervalType!
+  intervalCount: Int!
   productId: String!
   ownerAddress: String!
   walletAddress: String!
@@ -67,7 +68,8 @@ type SubscriptionData {
   id: ID!
 	token: String!
   amount: Int!
-	interval: Int!
+	interval: IntervalType!
+  intervalCount: Int!
   productId: String!
   merchantId: String!
   productName: String!
@@ -80,13 +82,21 @@ type SubscriptionData {
   payments: [Payment!]
 }
 
+enum IntervalType {
+  day
+  week
+  month
+  year
+}
+
 type TransactionData {
   id: ID
   type: PaymentType!
   chain: Int!
 	token: String!
   amount: Int!
-	interval: Int!
+	interval: IntervalType!
+  intervalCount: Int!
   reference: String!
   productId: String!
 	walletAddress: String!
