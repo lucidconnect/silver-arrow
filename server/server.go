@@ -99,7 +99,7 @@ func (s *Server) Routes() {
 
 	// checkout
 	checkout := s.router.PathPrefix("/checkout").Subrouter()
-	checkout.Use(s.CheckoutMiddleware())
+	checkout.Use(s.PaymentLinkMiddleware())
 	checkout.Handle("/query", s.checkoutGraphqlHandler())
 	checkout.Handle("/graphiql", playground.Handler("/api/Graphql playground", "/checkout/query"))
 	checkout.HandleFunc("/sessions", s.CreateCheckoutSession()).Methods(http.MethodPost)
@@ -111,7 +111,7 @@ func (s *Server) Routes() {
 
 	// payment page
 	paymentLink := s.router.PathPrefix("/pay").Subrouter()
-	paymentLink.Use(s.PaymentLinkMiddleware())
+	paymentLink.Use(s.BasicAuthMiddleware())
 	paymentLink.Handle("/query", s.paymentLinksGraphqlHandler())
 	paymentLink.Handle("/graphiql", playground.Handler("/api/Graphql plaground", "/pay/query"))
 
