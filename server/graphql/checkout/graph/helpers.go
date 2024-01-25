@@ -55,3 +55,24 @@ func validateSignature(rawString, signature, pk string) error {
 // 	id, _ := uuid.FromBytes(b)
 // 	return id
 // }
+
+func getActiveMerchant(ctx context.Context) (*models.Merchant, error) {
+	merchant, err := auth.ForContext(ctx)
+	if err != nil {
+		err = errors.Wrapf(err, "merchant authorization failed %v", ctx)
+		log.Err(err).Send()
+		return nil, err
+	}
+
+	return merchant, nil
+}
+
+func getActiveProduct(ctx context.Context) (*models.Product, error) {
+	product, err := auth.ProductContext(ctx)
+	if err != nil {
+		err = errors.Wrapf(err, "no product found in context %v", ctx)
+		log.Err(err).Send()
+		return nil, err
+	}
+	return product, nil
+}
