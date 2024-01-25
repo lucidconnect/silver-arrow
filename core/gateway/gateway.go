@@ -314,7 +314,7 @@ func (p *PaymentGateway) AddSubscription(merchantId uuid.UUID, newSub core.NewSu
 		}
 	}
 
-	callData, err := setValidatorExecutor(sessionKey, p.validatorAddress, p.executorAddress, newSub.WalletAddress, int64(newSub.Chain))
+	callData, err := SetValidatorExecutor(sessionKey, p.validatorAddress, p.executorAddress, newSub.WalletAddress, int64(newSub.Chain))
 	if err != nil {
 		log.Err(err).Msg("failed to set a validator")
 		return nil, nil, err

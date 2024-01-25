@@ -6,7 +6,7 @@ import (
 )
 
 // creats the calldata that scopes a kernel executor to a validator
-func setValidatorExecutor(sessionKey, validatorAddress, executorAddress, ownerAddress string, chain int64) ([]byte, error) {
+func SetValidatorExecutor(sessionKey, validatorAddress, executorAddress, ownerAddress string, chain int64) ([]byte, error) {
 	mode := erc4337.ENABLE_MODE
 	validator, err := erc4337.InitialiseValidator(validatorAddress, executorAddress, sessionKey, mode, chain)
 	if err != nil {
