@@ -200,7 +200,7 @@ func (s *Server) CreateNewProduct() http.HandlerFunc {
 			ProductID:    productID,
 			MerchantID:   merchant.ID,
 			CreatedAt:    time.Now(),
-			// TrialPeriod: int64(*request.PriceData.TrialPeriod),
+			TrialPeriod: int64(request.PriceData.TrialPeriod),
 		}
 		if err = s.database.CreatePrice(newPrice); err != nil {
 			log.Err(err).Send()

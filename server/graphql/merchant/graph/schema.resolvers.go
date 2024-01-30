@@ -44,6 +44,10 @@ func (r *mutationResolver) AddProduct(ctx context.Context, input model.NewProduc
 	}
 	// create price data
 	amount := conversions.ParseFloatAmountToIntDenomination(input.PriceData.Token, input.PriceData.Amount)
+	var trialPeriod int64
+	if input.PriceData.TrialPeriod != nil {
+		trialPeriod = int64(*input.PriceData.TrialPeriod)
+	}
 	newPrice := &merchant.Price{
 		Active:       true,
 		Amount:       amount,
@@ -51,8 +55,8 @@ func (r *mutationResolver) AddProduct(ctx context.Context, input model.NewProduc
 		Token:        input.PriceData.Token,
 		IntervalUnit: core.RecuringInterval(input.PriceData.IntervalUnit),
 		Interval:     int64(input.PriceData.Interval),
-		// Type:          merchant.PriceType(input.PriceData.Type),
-		TrialPeriod: int64(*input.PriceData.TrialPeriod),
+		Type:         core.PriceType(input.PriceData.Type),
+		TrialPeriod:  trialPeriod,
 	}
 	price, err := merchantService.CreatePrice(newPrice, product.ID.String())
 	if err != nil {
@@ -203,6 +207,10 @@ func (r *mutationResolver) CreatePrice(ctx context.Context, input model.NewPrice
 	merchantService := merchant.NewMerchantService(r.Database, activeMerchant.ID)
 
 	amount := conversions.ParseFloatAmountToIntDenomination(input.Token, input.Amount)
+	var trialPeriod int64
+	if input.TrialPeriod != nil {
+		trialPeriod = int64(*input.TrialPeriod)
+	}
 	newPrice := &merchant.Price{
 		Active:       true,
 		Amount:       amount,
@@ -211,7 +219,7 @@ func (r *mutationResolver) CreatePrice(ctx context.Context, input model.NewPrice
 		IntervalUnit: core.RecuringInterval(input.IntervalUnit),
 		Interval:     int64(input.Interval),
 		Type:         core.PriceType(input.Type),
-		TrialPeriod:  int64(*input.TrialPeriod),
+		TrialPeriod:  trialPeriod,
 	}
 	price, err := merchantService.CreatePrice(newPrice, input.ProductID)
 	if err != nil {

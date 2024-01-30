@@ -20,6 +20,18 @@ import (
 			"intervalCount": 1,
 			"productId": "1234-abc-xyz",
 		}
+		"depositAddressData": [{
+			"productId": "1234-abc-xyz",
+			"merchantId": "1234-abc-xyz",
+			"walletAddress": "0xabc123",
+			"active": true
+		},
+		{
+			"productId": "1234-abc-xyz",
+			"merchantId": "1234-abc-xyz",
+			"walletAddress": "0xabc123",
+			"active": true
+		}]
 	}
 */
 type NewProduct struct {
