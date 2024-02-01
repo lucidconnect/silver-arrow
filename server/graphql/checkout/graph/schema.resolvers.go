@@ -121,7 +121,7 @@ func (r *mutationResolver) CreatePaymentIntent(ctx context.Context, input model.
 func (r *mutationResolver) ValidatePaymentIntent(ctx context.Context, input model.RequestValidation) (*model.TransactionData, error) {
 	gatewayService := gateway.NewPaymentGateway(r.Database, int64(input.Chain))
 	// merchantService := merchant.NewMerchantService(r.Database)
-
+	var result *model.TransactionData
 	// time.Sleep(time.Second)
 
 	opInterface, err := r.Cache.Get(input.UserOpHash)
@@ -144,21 +144,22 @@ func (r *mutationResolver) ValidatePaymentIntent(ctx context.Context, input mode
 	op["signature"] = hexutil.Encode(sig)
 
 	chain := int64(input.Chain)
-	subData, err := gatewayService.ValidateSubscription(op, chain)
+	data, err := gatewayService.ValidatePaymentIntent(op, chain, input.Type.String())
 	if err != nil {
-		return nil, gqlerror.ErrToGraphQLError(gqlerror.InternalError, "Subscription validation failed", ctx)
+		return nil, gqlerror.ErrToGraphQLError(gqlerror.InternalError, "payment intent validation failed", ctx)
 	}
 
-	result := &model.TransactionData{
-		ID:     subData.ID,
-		Token:  subData.Token,
-		Amount: subData.Amount,
+	result = &model.TransactionData{
+		ID:     data.ID,
+		Token:  data.Token,
+		Amount: data.Amount,
 		// Interval:            subData.Interval,
-		ProductID:           subData.ProductID,
-		WalletAddress:       subData.WalletAddress,
-		CreatedAt:           subData.CreatedAt,
-		TransactionExplorer: subData.TransactionExplorer,
+		ProductID:           data.ProductID,
+		WalletAddress:       data.WalletAddress,
+		CreatedAt:           data.CreatedAt,
+		TransactionExplorer: data.TransactionExplorer,
 	}
+
 	return result, nil
 }
 

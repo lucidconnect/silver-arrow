@@ -186,6 +186,7 @@ func (p *PaymentGateway) CreatePaymentIntent(intent core.PaymentIntent) (map[str
 		return nil, "", err
 	}
 
+	sessionId := intent.CheckoutSessionId
 	switch intent.Type {
 	case core.PaymentTypeRecurring:
 		var nextCharge time.Time
@@ -202,7 +203,6 @@ func (p *PaymentGateway) CreatePaymentIntent(intent core.PaymentIntent) (map[str
 		if intent.Email != "" {
 			email = intent.Email
 		}
-		sessionId := intent.CheckoutSessionId
 
 		newSubscription := core.NewSubscription{
 			Chain:             price.Chain,
@@ -227,6 +227,59 @@ func (p *PaymentGateway) CreatePaymentIntent(intent core.PaymentIntent) (map[str
 		userOp = op
 		fmt.Println("Userop hash", validationData.UserOpHash)
 		useropHash = validationData.UserOpHash
+	case core.PaymentTypeSingle:
+		// no need to create a subscription
+		// requires user validation
+		session, err := p.database.FetchCheckoutSession(sessionId)
+		if err != nil {
+			log.Err(err).Caller().Send()
+			return nil, "", err
+		}
+		var sponsored bool
+		switch os.Getenv("USE_PAYMASTER") {
+		case "TRUE":
+			sponsored = true
+		default:
+			sponsored = false
+		}
+		reference := uuid.New()
+		tokenAddress := erc20.GetTokenAddress(price.Token, price.Chain)
+
+		_, _, walletID, err := p.database.GetWalletMetadata(intent.WalletAddress)
+		if err != nil {
+			log.Err(err).Msgf("failed to fetch private key tag for wallet - %v", intent.WalletAddress)
+			return nil, "", errors.New("failed to fetch wallet metadata")
+		}
+
+		// fetch the deposit address for the product
+		destinationAddress := product.DepositWallets
+		// get deposit address
+		payment := &models.Payment{
+			Type:      models.PaymentTypeSingle,
+			Chain:     price.Chain,
+			Token:     price.Token,
+			Amount:    price.Amount,
+			Source:    intent.WalletAddress,
+			WalletID:  walletID,
+			ProductID: productId,
+			Sponsored: sponsored,
+			Reference: reference,
+			// Destination:       product.DepositAddress,
+			DestinationAddress: destinationAddress,
+			TokenAddress:       tokenAddress,
+			Customer:           session.Customer,
+			CheckoutSessionID:  session.ID,
+			MerchantID:         session.MerchantID,
+		}
+
+		userop, hash, err := p.CreatePayment(payment)
+		useropHash = hash.Hex()
+		userOp = userop
+		if err != nil {
+			err = errors.Wrap(err, "creating payment operation failed")
+			log.Err(err).Caller().Send()
+			return nil, "", err
+		}
 	default:
 		return nil, "", errors.New("unsupported payment type")
 	}
@@ -374,136 +427,171 @@ func (p *PaymentGateway) AddSubscription(merchantId uuid.UUID, newSub core.NewSu
 	}, op, nil
 }
 
-func (p *PaymentGateway) ValidateSubscription(userop map[string]any, chain int64) (*model.TransactionData, error) {
+func (p *PaymentGateway) ValidatePaymentIntent(userop map[string]any, chain int64, paymentType string) (*model.TransactionData, error) {
+	var transactionData *model.TransactionData
 	opHash, err := p.bundlerService.SendUserOperation(userop)
 	if err != nil {
 		log.Err(err).Msg("failed to send user op")
 		return nil, err
 	}
-	fmt.Println("validating subscription with userop hash -", opHash)
-	result, err := p.database.FindSubscriptionByHash(opHash)
-	if err != nil {
-		log.Err(err).Msgf("failed to find subscription with hash %v", opHash)
-		return nil, err
-	}
 
-	session, err := p.database.FetchCheckoutSession(result.CheckoutSessionID)
-	if err != nil {
-		log.Err(err).Caller().Send()
-		return nil, err
-	}
-
-	productId := result.ProductID.String()
-	if err != nil {
-		log.Err(err).Msg("encoding product id failed")
-		return nil, err
-	}
-	token := result.Token
-	createdAt := result.CreatedAt.Format(time.RFC3339)
-	amount := int(result.Amount)
-	// interval := int(result.Interval)
-	subData := &model.TransactionData{
-		Token:         token,
-		Amount:        amount,
-		Interval:      model.IntervalType(result.IntervalUnit),
-		IntervalCount: int(result.Interval),
-		ProductID:     productId,
-		WalletAddress: result.WalletAddress,
-		CreatedAt:     createdAt,
-	}
-	fmt.Println("subscription result - ", result)
-
-	transactionHash, err := p.bundlerService.GetTransactionHash(opHash)
-	if err != nil {
-		log.Err(err).Caller().Send()
-		return nil, err
-	}
-	explorerUrl, err := erc20.GetChainExplorer(chain)
-	if err != nil {
-		log.Err(err).Msg("failed to get chain explorer url")
-	}
-	blockExplorerTx := fmt.Sprintf("%v/tx/%v", explorerUrl, transactionHash)
-
-	update := map[string]interface{}{
-		"active":           true,
-		"updated_at":       time.Now(),
-		"transaction_hash": transactionHash,
-		"status":           model.SubscriptionStatusActive,
-	}
-	err = p.database.UpdateSubscription(result.ID, update)
-	if err != nil {
-		log.Err(err).Caller().Send()
-		return nil, err
-	}
-
-	// if payment is due now, create a payment
-	if isPaymentDue(result.NextChargeAt) {
-		// create payment
-		var sponsored bool
-		switch os.Getenv("USE_PAYMASTER") {
-		case "TRUE":
-			sponsored = true
-		default:
-			sponsored = false
-		}
-		reference := uuid.New()
-		payment := &models.Payment{
-			Type:                  models.PaymentTypeRecurring,
-			Chain:                 result.Chain,
-			Token:                 result.Token,
-			Amount:                result.Amount,
-			Source:                result.WalletAddress,
-			WalletID:              result.WalletID,
-			ProductID:             result.ProductID,
-			Sponsored:             sponsored,
-			Reference:             reference,
-			Destination:           result.MerchantDepositAddress,
-			SubscriptionID:        result.ID,
-			SubscriptionPublicKey: result.Key.PublicKey,
-			TokenAddress:          result.TokenAddress,
-			Customer:              session.Customer,
-			CheckoutSessionID:     session.ID,
-			MerchantID:            session.MerchantID,
-		}
-
-		userop, useropHash, err := p.CreatePayment(payment)
+	switch paymentType {
+	case "single":
+		result, err := p.database.FindPaymentByUseropHash(opHash)
 		if err != nil {
-			err = errors.Wrap(err, "creating payment operation failed")
-			log.Err(err).Caller().Send()
+			log.Err(err).Msgf("failed to find payment with hash %v", opHash)
 			return nil, err
 		}
 
-		signature, err := p.SignPaymentOperation(userop, useropHash)
+		session, err := p.database.FetchCheckoutSession(result.CheckoutSessionID)
 		if err != nil {
-			err = errors.Wrap(err, "signing payment operation failed")
 			log.Err(err).Caller().Send()
 			return nil, err
 		}
-		userop["signature"] = signature
+		// result.Status = 
+		createdAt := result.CreatedAt.Format(time.RFC3339)
+		amount := int(result.Amount)
+		// interval := int(result.Interval)
+		transactionData = &model.TransactionData{
+			Token:         result.Token,
+			Amount:        amount,
+			ProductID:     session.ProductID.String(),
+			WalletAddress: result.Source,
+			CreatedAt:     createdAt,
+		}
 
-		onchainTx, err := p.ExecutePaymentOperation(userop, payment.Chain)
+		onchainTx, err := p.ExecutePaymentOperation(userop, chain)
 		if err != nil {
 			log.Err(err).Send()
-			return subData, err
+			return transactionData, err
 		}
-		intervalUnit := result.IntervalUnit
-		intervalCount := result.Interval
-		nextChargeAt := CalculateNextChargeDate(intervalUnit, intervalCount)
+		transactionData.TransactionExplorer = onchainTx
+	case "recurring":
+		fmt.Println("validating subscription with userop hash -", opHash)
+		result, err := p.database.FindSubscriptionByHash(opHash)
+		if err != nil {
+			log.Err(err).Msgf("failed to find subscription with hash %v", opHash)
+			return nil, err
+		}
+
+		session, err := p.database.FetchCheckoutSession(result.CheckoutSessionID)
+		if err != nil {
+			log.Err(err).Caller().Send()
+			return nil, err
+		}
+
+		productId := result.ProductID.String()
+		if err != nil {
+			log.Err(err).Msg("encoding product id failed")
+			return nil, err
+		}
+		token := result.Token
+		createdAt := result.CreatedAt.Format(time.RFC3339)
+		amount := int(result.Amount)
+		// interval := int(result.Interval)
+		transactionData = &model.TransactionData{
+			Token:         token,
+			Amount:        amount,
+			Interval:      model.IntervalType(result.IntervalUnit),
+			IntervalCount: int(result.Interval),
+			ProductID:     productId,
+			WalletAddress: result.WalletAddress,
+			CreatedAt:     createdAt,
+		}
+		fmt.Println("subscription result - ", result)
+
+		transactionHash, err := p.bundlerService.GetTransactionHash(opHash)
+		if err != nil {
+			log.Err(err).Caller().Send()
+			return nil, err
+		}
+		explorerUrl, err := erc20.GetChainExplorer(chain)
+		if err != nil {
+			log.Err(err).Msg("failed to get chain explorer url")
+		}
+		blockExplorerTx := fmt.Sprintf("%v/tx/%v", explorerUrl, transactionHash)
 
 		update := map[string]interface{}{
-			"expires_at":     nextChargeAt,
-			"next_charge_at": nextChargeAt,
+			"active":           true,
+			"updated_at":       time.Now(),
+			"transaction_hash": transactionHash,
+			"status":           model.SubscriptionStatusActive,
 		}
 		err = p.database.UpdateSubscription(result.ID, update)
 		if err != nil {
-			log.Err(err).Send()
+			log.Err(err).Caller().Send()
+			return nil, err
 		}
-		subData.TransactionExplorer = onchainTx
-	} else {
-		subData.TransactionExplorer = blockExplorerTx
+
+		// if payment is due now, create a payment
+		if isPaymentDue(result.NextChargeAt) {
+			// create payment
+			var sponsored bool
+			switch os.Getenv("USE_PAYMASTER") {
+			case "TRUE":
+				sponsored = true
+			default:
+				sponsored = false
+			}
+			reference := uuid.New()
+			payment := &models.Payment{
+				Type:                  models.PaymentTypeRecurring,
+				Chain:                 result.Chain,
+				Token:                 result.Token,
+				Amount:                result.Amount,
+				Source:                result.WalletAddress,
+				WalletID:              result.WalletID,
+				ProductID:             result.ProductID,
+				Sponsored:             sponsored,
+				Reference:             reference,
+				Destination:           result.MerchantDepositAddress,
+				SubscriptionID:        result.ID,
+				SubscriptionPublicKey: result.Key.PublicKey,
+				TokenAddress:          result.TokenAddress,
+				Customer:              session.Customer,
+				CheckoutSessionID:     session.ID,
+				MerchantID:            session.MerchantID,
+			}
+
+			userop, useropHash, err := p.CreatePayment(payment)
+			if err != nil {
+				err = errors.Wrap(err, "creating payment operation failed")
+				log.Err(err).Caller().Send()
+				return nil, err
+			}
+
+			signature, err := p.SignPaymentOperation(userop, useropHash)
+			if err != nil {
+				err = errors.Wrap(err, "signing payment operation failed")
+				log.Err(err).Caller().Send()
+				return nil, err
+			}
+			userop["signature"] = signature
+
+			onchainTx, err := p.ExecutePaymentOperation(userop, payment.Chain)
+			if err != nil {
+				log.Err(err).Send()
+				return transactionData, err
+			}
+			intervalUnit := result.IntervalUnit
+			intervalCount := result.Interval
+			nextChargeAt := CalculateNextChargeDate(intervalUnit, intervalCount)
+
+			update := map[string]interface{}{
+				"expires_at":     nextChargeAt,
+				"next_charge_at": nextChargeAt,
+			}
+			err = p.database.UpdateSubscription(result.ID, update)
+			if err != nil {
+				log.Err(err).Send()
+			}
+			transactionData.TransactionExplorer = onchainTx
+		} else {
+			transactionData.TransactionExplorer = blockExplorerTx
+		}
 	}
 	// I should trigger a webhook somewhere here
-	return subData, nil
+	return transactionData, nil
 }
 
 // CreatePayment creates a userop for an initiated payment, amount is already in the minor factor form
@@ -513,6 +601,8 @@ func (p *PaymentGateway) CreatePayment(payment *models.Payment) (map[string]any,
 	tokenAddress := common.HexToAddress(payment.TokenAddress)
 
 	actualAmount := conversions.ParseAmountToMwei(payment.Amount)
+	// TODO: accomadate processing payments to multiple addresses
+	// calculate lucid fees and set destination for fees
 	data, err := erc4337.TransferErc20Action(tokenAddress, common.HexToAddress(payment.Destination), actualAmount)
 	if err != nil {
 		err = errors.Wrap(err, "creating TransferErc20Action call data failed")

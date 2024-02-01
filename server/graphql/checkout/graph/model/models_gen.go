@@ -46,9 +46,10 @@ type PaymentIntent struct {
 }
 
 type RequestValidation struct {
-	Chain         int    `json:"chain"`
-	UserOpHash    string `json:"userOpHash"`
-	SignedMessage string `json:"signedMessage"`
+	Type          PaymentType `json:"type"`
+	Chain         int         `json:"chain"`
+	UserOpHash    string      `json:"userOpHash"`
+	SignedMessage string      `json:"signedMessage"`
 }
 
 type TransactionData struct {

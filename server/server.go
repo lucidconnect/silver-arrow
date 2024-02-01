@@ -111,9 +111,9 @@ func (s *Server) Routes() {
 
 	// payment page
 	paymentLink := s.router.PathPrefix("/pay").Subrouter()
-	paymentLink.Use(s.BasicAuthMiddleware())
 	paymentLink.Handle("/query", s.paymentLinksGraphqlHandler())
-	paymentLink.Handle("/graphiql", playground.Handler("/api/Graphql plaground", "/pay/query"))
+	playgroundRoute := paymentLink.Handle("/graphiql", playground.Handler("/api/Graphql plaground", "/pay/query"))
+	paymentLink.Use(MiddlewareExcept(s.BasicAuthMiddleware(), playgroundRoute))
 
 	// api
 	apiRoute := s.router.PathPrefix("/api/v1").Subrouter()

@@ -60,6 +60,7 @@ type Payment {
 }
 
 input RequestValidation {
+  type: PaymentType!
   chain: Int!
   userOpHash: String!
   signedMessage: String!

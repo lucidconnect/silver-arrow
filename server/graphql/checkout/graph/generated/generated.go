@@ -505,6 +505,7 @@ type Payment {
 }
 
 input RequestValidation {
+  type: PaymentType!
   chain: Int!
   userOpHash: String!
   signedMessage: String!
@@ -4085,13 +4086,22 @@ func (ec *executionContext) unmarshalInputRequestValidation(ctx context.Context,
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"chain", "userOpHash", "signedMessage"}
+	fieldsInOrder := [...]string{"type", "chain", "userOpHash", "signedMessage"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
+		case "type":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
+			data, err := ec.unmarshalNPaymentType2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋcheckoutᚋgraphᚋmodelᚐPaymentType(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Type = data
 		case "chain":
 			var err error
 

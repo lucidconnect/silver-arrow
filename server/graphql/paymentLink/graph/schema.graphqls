@@ -1,8 +1,3 @@
-type Mutation {
-  createPaymentIntent(input: PaymentIntent!): String!
-  validatePaymentIntent(input: RequestValidation!): TransactionData!
-}
-
 type Query {
   resolvePaymentLinkBySession(id: String!): PaymentLinkDetails!
   resolvePaymentLink(id: String!): PaymentLinkDetails!

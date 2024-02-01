@@ -39,11 +39,11 @@ func TestAddSubscription(t *testing.T) {
 	owner := crypto.PubkeyToAddress(p.PublicKey).Hex()
 	fmt.Println("owner", owner)
 	newSub := core.NewSubscription{
-		Chain:         defaultChain,
-		Token:         "USDC",
-		Amount:        1,
-		IntervalUnit:      "days",
-		Interval: 30,
+		Chain:        defaultChain,
+		Token:        "USDC",
+		Amount:       1,
+		IntervalUnit: "days",
+		Interval:     30,
 
 		ProductID: uuid.MustParse("aad69be2-8513-4fe1-b5df-63720630ae6b"),
 		// WalletAddress: "0x14De44b6100dE479655D752ECD2230D10F8fA061",
@@ -73,7 +73,7 @@ func TestAddSubscription(t *testing.T) {
 	op["signature"] = hexutil.Encode(sig)
 	fmt.Println(op["signature"])
 
-	data, err := ws.ValidateSubscription(op, chain)
+	data, err := ws.ValidatePaymentIntent(op, chain, "recurring")
 	assert.NotEmpty(t, data)
 	assert.NoError(t, err)
 
@@ -91,12 +91,12 @@ func TestSubscriptionIsUnique(t *testing.T) {
 	ws := gateway.NewPaymentGateway(r, defaultChain)
 
 	newSub := core.NewSubscription{
-		Chain:         defaultChain,
-		Token:         "USDC",
-		Amount:        1,
-		IntervalUnit:      "days",
-		Interval: 30,
-		ProductID:     uuid.MustParse("aad69be2-8513-4fe1-b5df-63720630ae6b"),
+		Chain:        defaultChain,
+		Token:        "USDC",
+		Amount:       1,
+		IntervalUnit: "days",
+		Interval:     30,
+		ProductID:    uuid.MustParse("aad69be2-8513-4fe1-b5df-63720630ae6b"),
 		// WalletAddress: "0x14De44b6100dE479655D752ECD2230D10F8fA061",
 		WalletAddress: "0xb96442F14ac82E21c333A8bB9b03274Ae26eb79D",
 		OwnerAddress:  "0x85fc2E4425d0DAba7426F50091a384ee05D37Cd2",
