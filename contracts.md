@@ -26,10 +26,13 @@ These are the Zerodev kernel contracts (and more) used by lucid
 |
 | Executor (TransferErc20Action) | Polygon Mumbai | 80001 | 0x701d90246bbd60ED47134CD16Fdd14c570C1Ca51 |
 | Executor (TransferErc20Action) | Base Goerli | 84531 | 0x2087C7FfD0d0DAE80a00EE74325aBF3449e0eaf1 |
-| Executor (TransferErc20Action) | Base | 8453 | |
+| Executor (LucidTokenActions) | Base | 8453 | 0x2490883eD4cf525EBACB2346837971e547210378 |
 | Executor (TransferErc20Action) | Optimism | 10 | 0x2087C7FfD0d0DAE80a00EE74325aBF3449e0eaf1 |
 | Executor (TransferErc20Action) | Optimism Goerli | 420 | 0x2087C7FfD0d0DAE80a00EE74325aBF3449e0eaf1 |
 |
+
+
+0x2490883eD4cf525EBACB2346837971e547210378
 
 ## Undeployed contracts
 

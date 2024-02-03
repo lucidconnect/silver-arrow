@@ -26,6 +26,11 @@ import (
 	"gorm.io/gorm"
 )
 
+const (
+	rate    int64 = 5
+	divisor int64 = 1000
+)
+
 // PaymentGateway is the entrypoint for all things payment
 // initialises a checkout session, manages the lifecycle of the session
 // This gateway also manages the lifecycle of a payment, from when the charge is initiated to completion
@@ -448,10 +453,8 @@ func (p *PaymentGateway) ValidatePaymentIntent(userop map[string]any, chain int6
 			log.Err(err).Caller().Send()
 			return nil, err
 		}
-		// result.Status = 
 		createdAt := result.CreatedAt.Format(time.RFC3339)
 		amount := int(result.Amount)
-		// interval := int(result.Interval)
 		transactionData = &model.TransactionData{
 			Token:         result.Token,
 			Amount:        amount,
@@ -601,9 +604,8 @@ func (p *PaymentGateway) CreatePayment(payment *models.Payment) (map[string]any,
 	tokenAddress := common.HexToAddress(payment.TokenAddress)
 
 	actualAmount := conversions.ParseAmountToMwei(payment.Amount)
-	// TODO: accomadate processing payments to multiple addresses
-	// calculate lucid fees and set destination for fees
-	data, err := erc4337.TransferErc20Action(tokenAddress, common.HexToAddress(payment.Destination), actualAmount)
+	debitInstructions := getDebitInstructions(tokenAddress, payment.DestinationAddress, actualAmount)
+	data, err := erc4337.BatchTransferErc20Action(debitInstructions)
 	if err != nil {
 		err = errors.Wrap(err, "creating TransferErc20Action call data failed")
 		log.Err(err).Caller().Send()
@@ -789,4 +791,48 @@ func randKey(length int) string {
 
 func isPaymentDue(dueDate time.Time) bool {
 	return dueDate.Before(time.Now())
+}
+
+func calculateFees(transferAmount *big.Int) *big.Int {
+	x := transferAmount.Int64() * rate
+
+	fee := x / divisor
+	return big.NewInt(fee)
+}
+
+func calculateWalletTransferAmount(amount *big.Int, percentage float64) *big.Int {
+	// percent = 2.5 (2.5%) == 2.5/100 = 0.025
+	// ((percentage * 10) * amount) / 1000
+
+	normalisedPercent := percentage * 10
+	walletShare := (amount.Int64() * int64(normalisedPercent)) / divisor
+	return big.NewInt(walletShare)
+}
+
+func getDebitInstructions(token common.Address, depositAddress []*models.DepositWallet, amount *big.Int) []erc4337.DebitInstruction {
+	var debitInstructions []erc4337.DebitInstruction
+	fees := calculateFees(amount)
+	lucidFeeAddress := os.Getenv("LUCID_FEE_WALLET")
+
+	if lucidFeeAddress != "" {
+		feeInstruction := erc4337.DebitInstruction{
+			Token:       token,
+			Destination: common.HexToAddress(lucidFeeAddress),
+			Amount:      fees,
+		}
+
+		debitInstructions = append(debitInstructions, feeInstruction)
+	}
+
+	for _, address := range depositAddress {
+		amount := calculateWalletTransferAmount(amount, address.Percentage)
+		i := erc4337.DebitInstruction{
+			Token:       token,
+			Destination: common.HexToAddress(address.WalletAddress),
+			Amount:      amount,
+		}
+		debitInstructions = append(debitInstructions, i)
+	}
+
+	return debitInstructions
 }
