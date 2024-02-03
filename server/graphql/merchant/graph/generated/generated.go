@@ -44,6 +44,14 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	DepositWallet struct {
+		Address    func(childComplexity int) int
+		ID         func(childComplexity int) int
+		Merchant   func(childComplexity int) int
+		Note       func(childComplexity int) int
+		Percentage func(childComplexity int) int
+	}
+
 	Merchant struct {
 		AccessKey    func(childComplexity int) int
 		Email        func(childComplexity int) int
@@ -177,6 +185,41 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	ec := executionContext{nil, e, 0, 0, nil}
 	_ = ec
 	switch typeName + "." + field {
+
+	case "DepositWallet.address":
+		if e.complexity.DepositWallet.Address == nil {
+			break
+		}
+
+		return e.complexity.DepositWallet.Address(childComplexity), true
+
+	case "DepositWallet.id":
+		if e.complexity.DepositWallet.ID == nil {
+			break
+		}
+
+		return e.complexity.DepositWallet.ID(childComplexity), true
+
+	case "DepositWallet.merchant":
+		if e.complexity.DepositWallet.Merchant == nil {
+			break
+		}
+
+		return e.complexity.DepositWallet.Merchant(childComplexity), true
+
+	case "DepositWallet.note":
+		if e.complexity.DepositWallet.Note == nil {
+			break
+		}
+
+		return e.complexity.DepositWallet.Note(childComplexity), true
+
+	case "DepositWallet.percentage":
+		if e.complexity.DepositWallet.Percentage == nil {
+			break
+		}
+
+		return e.complexity.DepositWallet.Percentage(childComplexity), true
 
 	case "Merchant.accessKey":
 		if e.complexity.Merchant.AccessKey == nil {
@@ -756,6 +799,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
 		ec.unmarshalInputMerchantAccessKeyQuery,
 		ec.unmarshalInputMerchantUpdate,
+		ec.unmarshalInputNewDepositWallet,
 		ec.unmarshalInputNewMerchant,
 		ec.unmarshalInputNewMerchantKey,
 		ec.unmarshalInputNewPaymentLink,
@@ -886,6 +930,7 @@ type Mutation {
   deletePaymentLink(id: String!): String!
   createPrice(input: NewPrice!): PriceData!
   updatePrice(input: PriceUpdate): PriceData!
+
 }
 
 input NewMerchant {
@@ -920,7 +965,7 @@ input NewProduct {
   name: String!
   owner: String!
   paymentType: PaymentType!
-  receivingAddress: String!
+  receivingAddress: [NewDepositWallet!]!
   firstChargeNow: Boolean!
   priceData: NewPrice!
 }
@@ -1021,7 +1066,7 @@ type Product {
   priceData: [PriceData!]!
   productId: String!
   merchantId: String!
-  receivingAddress: String!
+  receivingAddress: [DepositWallet]!
   subscriptions: [Sub!]
   createdAt: String
 }
@@ -1036,6 +1081,20 @@ type MerchantStats {
   users: Int!
   products: Int!
   subscriptions: Int!
+}
+
+input NewDepositWallet {
+  address: String!
+  percentage: Float!
+  note: String!
+}
+
+type DepositWallet {
+  id: ID!
+  address: String!
+  percentage: Float!
+  merchant: String!
+  note: String
 }
 
 enum Mode {
@@ -1373,6 +1432,223 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
+
+func (ec *executionContext) _DepositWallet_id(ctx context.Context, field graphql.CollectedField, obj *model.DepositWallet) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DepositWallet_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DepositWallet_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DepositWallet",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DepositWallet_address(ctx context.Context, field graphql.CollectedField, obj *model.DepositWallet) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DepositWallet_address(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Address, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DepositWallet_address(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DepositWallet",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DepositWallet_percentage(ctx context.Context, field graphql.CollectedField, obj *model.DepositWallet) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DepositWallet_percentage(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Percentage, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(float64)
+	fc.Result = res
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DepositWallet_percentage(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DepositWallet",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DepositWallet_merchant(ctx context.Context, field graphql.CollectedField, obj *model.DepositWallet) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DepositWallet_merchant(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Merchant, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DepositWallet_merchant(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DepositWallet",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DepositWallet_note(ctx context.Context, field graphql.CollectedField, obj *model.DepositWallet) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DepositWallet_note(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Note, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DepositWallet_note(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DepositWallet",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
 
 func (ec *executionContext) _Merchant_id(ctx context.Context, field graphql.CollectedField, obj *model.Merchant) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Merchant_id(ctx, field)
@@ -4000,9 +4276,9 @@ func (ec *executionContext) _Product_receivingAddress(ctx context.Context, field
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.([]*model.DepositWallet)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNDepositWallet2ᚕᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐDepositWallet(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Product_receivingAddress(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4012,7 +4288,19 @@ func (ec *executionContext) fieldContext_Product_receivingAddress(ctx context.Co
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_DepositWallet_id(ctx, field)
+			case "address":
+				return ec.fieldContext_DepositWallet_address(ctx, field)
+			case "percentage":
+				return ec.fieldContext_DepositWallet_percentage(ctx, field)
+			case "merchant":
+				return ec.fieldContext_DepositWallet_merchant(ctx, field)
+			case "note":
+				return ec.fieldContext_DepositWallet_note(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DepositWallet", field.Name)
 		},
 	}
 	return fc, nil
@@ -6892,6 +7180,53 @@ func (ec *executionContext) unmarshalInputMerchantUpdate(ctx context.Context, ob
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputNewDepositWallet(ctx context.Context, obj interface{}) (model.NewDepositWallet, error) {
+	var it model.NewDepositWallet
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"address", "percentage", "note"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "address":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("address"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Address = data
+		case "percentage":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("percentage"))
+			data, err := ec.unmarshalNFloat2float64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Percentage = data
+		case "note":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("note"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Note = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputNewMerchant(ctx context.Context, obj interface{}) (model.NewMerchant, error) {
 	var it model.NewMerchant
 	asMap := map[string]interface{}{}
@@ -7170,7 +7505,7 @@ func (ec *executionContext) unmarshalInputNewProduct(ctx context.Context, obj in
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("receivingAddress"))
-			data, err := ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNNewDepositWallet2ᚕᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐNewDepositWalletᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -7356,6 +7691,62 @@ func (ec *executionContext) unmarshalInputProductUpdate(ctx context.Context, obj
 // endregion ************************** interface.gotpl ***************************
 
 // region    **************************** object.gotpl ****************************
+
+var depositWalletImplementors = []string{"DepositWallet"}
+
+func (ec *executionContext) _DepositWallet(ctx context.Context, sel ast.SelectionSet, obj *model.DepositWallet) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, depositWalletImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DepositWallet")
+		case "id":
+			out.Values[i] = ec._DepositWallet_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "address":
+			out.Values[i] = ec._DepositWallet_address(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "percentage":
+			out.Values[i] = ec._DepositWallet_percentage(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "merchant":
+			out.Values[i] = ec._DepositWallet_merchant(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "note":
+			out.Values[i] = ec._DepositWallet_note(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
 
 var merchantImplementors = []string{"Merchant"}
 
@@ -8506,6 +8897,44 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
+func (ec *executionContext) marshalNDepositWallet2ᚕᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐDepositWallet(ctx context.Context, sel ast.SelectionSet, v []*model.DepositWallet) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalODepositWallet2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐDepositWallet(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
+}
+
 func (ec *executionContext) unmarshalNFloat2float64(ctx context.Context, v interface{}) (float64, error) {
 	res, err := graphql.UnmarshalFloatContext(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -8616,6 +9045,28 @@ func (ec *executionContext) unmarshalNMode2githubᚗcomᚋlucidconnectᚋsilver�
 
 func (ec *executionContext) marshalNMode2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐMode(ctx context.Context, sel ast.SelectionSet, v model.Mode) graphql.Marshaler {
 	return v
+}
+
+func (ec *executionContext) unmarshalNNewDepositWallet2ᚕᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐNewDepositWalletᚄ(ctx context.Context, v interface{}) ([]*model.NewDepositWallet, error) {
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]*model.NewDepositWallet, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNNewDepositWallet2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐNewDepositWallet(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) unmarshalNNewDepositWallet2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐNewDepositWallet(ctx context.Context, v interface{}) (*model.NewDepositWallet, error) {
+	res, err := ec.unmarshalInputNewDepositWallet(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNNewMerchant2githubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐNewMerchant(ctx context.Context, v interface{}) (model.NewMerchant, error) {
@@ -9144,6 +9595,13 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	}
 	res := graphql.MarshalBoolean(*v)
 	return res
+}
+
+func (ec *executionContext) marshalODepositWallet2ᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐDepositWallet(ctx context.Context, sel ast.SelectionSet, v *model.DepositWallet) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._DepositWallet(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v interface{}) (*int, error) {

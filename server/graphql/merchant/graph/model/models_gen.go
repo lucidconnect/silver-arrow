@@ -8,6 +8,14 @@ import (
 	"strconv"
 )
 
+type DepositWallet struct {
+	ID         string  `json:"id"`
+	Address    string  `json:"address"`
+	Percentage float64 `json:"percentage"`
+	Merchant   string  `json:"merchant"`
+	Note       *string `json:"note,omitempty"`
+}
+
 type Merchant struct {
 	ID           string             `json:"id"`
 	Name         string             `json:"name"`
@@ -43,6 +51,12 @@ type MerchantUpdate struct {
 	WebHookURL *string `json:"webHookUrl,omitempty"`
 }
 
+type NewDepositWallet struct {
+	Address    string  `json:"address"`
+	Percentage float64 `json:"percentage"`
+	Note       string  `json:"note"`
+}
+
 type NewMerchant struct {
 	Name  string `json:"name"`
 	Email string `json:"email"`
@@ -74,12 +88,12 @@ type NewPrice struct {
 }
 
 type NewProduct struct {
-	Name             string      `json:"name"`
-	Owner            string      `json:"owner"`
-	PaymentType      PaymentType `json:"paymentType"`
-	ReceivingAddress string      `json:"receivingAddress"`
-	FirstChargeNow   bool        `json:"firstChargeNow"`
-	PriceData        *NewPrice   `json:"priceData"`
+	Name             string              `json:"name"`
+	Owner            string              `json:"owner"`
+	PaymentType      PaymentType         `json:"paymentType"`
+	ReceivingAddress []*NewDepositWallet `json:"receivingAddress"`
+	FirstChargeNow   bool                `json:"firstChargeNow"`
+	PriceData        *NewPrice           `json:"priceData"`
 }
 
 type PaymentLinkDetails struct {
@@ -121,16 +135,16 @@ type PriceUpdate struct {
 }
 
 type Product struct {
-	Name             string       `json:"name"`
-	Mode             Mode         `json:"mode"`
-	Owner            string       `json:"owner"`
-	DefaultPrice     string       `json:"defaultPrice"`
-	PriceData        []*PriceData `json:"priceData"`
-	ProductID        string       `json:"productId"`
-	MerchantID       string       `json:"merchantId"`
-	ReceivingAddress string       `json:"receivingAddress"`
-	Subscriptions    []*Sub       `json:"subscriptions,omitempty"`
-	CreatedAt        *string      `json:"createdAt,omitempty"`
+	Name             string           `json:"name"`
+	Mode             Mode             `json:"mode"`
+	Owner            string           `json:"owner"`
+	DefaultPrice     string           `json:"defaultPrice"`
+	PriceData        []*PriceData     `json:"priceData"`
+	ProductID        string           `json:"productId"`
+	MerchantID       string           `json:"merchantId"`
+	ReceivingAddress []*DepositWallet `json:"receivingAddress"`
+	Subscriptions    []*Sub           `json:"subscriptions,omitempty"`
+	CreatedAt        *string          `json:"createdAt,omitempty"`
 }
 
 type ProductModeUpdate struct {

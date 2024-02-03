@@ -58,6 +58,7 @@ type Payment struct {
 	Reference             uuid.UUID `gorm:"index;not null"`
 	UserOpHash            string
 	Destination           string
+	DestinationAddress    []*DepositWallet
 	Acknowledged          bool
 	SubscriptionID        uuid.UUID
 	TransactionHash       string

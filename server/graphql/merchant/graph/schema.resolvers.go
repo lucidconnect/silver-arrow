@@ -78,7 +78,7 @@ func (r *mutationResolver) AddProduct(ctx context.Context, input model.NewProduc
 		// Interval:         int(interval),
 		// Amount:           input.Amount,
 		ProductID:        product.ID.String(),
-		ReceivingAddress: product.DepositAddress,
+		// ReceivingAddress: product.DepositAddress,
 	}
 
 	return result, nil

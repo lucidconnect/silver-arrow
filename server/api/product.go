@@ -35,10 +35,11 @@ import (
 	}
 */
 type NewProduct struct {
-	Name             string   `json:"name"`
-	ReceivingAddress string   `json:"receivingAddress"`
-	FirstChargeNow   bool     `json:"firstChargeNow"`
-	PriceData        NewPrice `json:"priceData"`
+	Name             string             `json:"name"`
+	FirstChargeNow   bool               `json:"firstChargeNow"`
+	PriceData        NewPrice           `json:"priceData"`
+	ReceivingAddress []NewDepositWallet `json:"receivingAddress"`
+	Owner            string
 }
 
 type NewPrice struct {
@@ -68,7 +69,20 @@ type PriceDataResponse struct {
 type ProductResponse struct {
 	ID               string            `json:"id"`
 	Name             string            `json:"name"`
-	ReceivingAddress string            `json:"receivingAddress"`
 	FirstChargeNow   bool              `json:"firstChargeNow"`
 	DefaultPriceData PriceDataResponse `json:"priceData"`
+}
+
+type NewDepositWallet struct {
+	Address    string  `json:"address"`
+	Percentage float64 `json:"percentage"`
+	Note       string  `json:"note"`
+}
+
+type DepositWallet struct {
+	ID         string  `json:"id"`
+	Address    string  `json:"address"`
+	Percentage float64 `json:"percentage"`
+	Merchant   string  `json:"merchant"`
+	Note       *string `json:"note,omitempty"`
 }

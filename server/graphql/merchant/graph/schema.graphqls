@@ -57,7 +57,7 @@ input NewProduct {
   name: String!
   owner: String!
   paymentType: PaymentType!
-  receivingAddress: String!
+  receivingAddress: [NewDepositWallet!]!
   firstChargeNow: Boolean!
   priceData: NewPrice!
 }
@@ -158,7 +158,7 @@ type Product {
   priceData: [PriceData!]!
   productId: String!
   merchantId: String!
-  receivingAddress: String!
+  receivingAddress: [DepositWallet]!
   subscriptions: [Sub!]
   createdAt: String
 }
@@ -173,6 +173,20 @@ type MerchantStats {
   users: Int!
   products: Int!
   subscriptions: Int!
+}
+
+input NewDepositWallet {
+  address: String!
+  percentage: Float!
+  note: String!
+}
+
+type DepositWallet {
+  id: ID!
+  address: String!
+  percentage: Float!
+  merchant: String!
+  note: String
 }
 
 enum Mode {

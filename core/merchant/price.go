@@ -51,6 +51,7 @@ func (m *MerchantService) CreatePrice(price *Price, productId string) (*Price, e
 		log.Err(err).Caller().Send()
 		return nil, fmt.Errorf("failed to create price for product [%v]", price.ProductId)
 	}
+	price.ID = id
 
 	return price, nil
 }
@@ -74,18 +75,6 @@ func (m *MerchantService) RetrievePriceData(priceId string) (*model.PriceData, e
 			return nil, errMsg
 		}
 	}
-	// priceData := &Price{
-	// 	ID:            price.ID,
-	// 	Active:        price.Active,
-	// 	Token:         price.Token,
-	// 	Amount:        price.Amount,
-	// 	Type:          PriceType(price.Type),
-	// 	Interval:      RecuringInterval(price.Interval),
-	// 	IntervalCount: price.IntervalCount,
-	// 	TrialPeriod:   price.TrialPeriod,
-	// 	ProductId:     price.ProductID.String(),
-	// 	CreatedAt:     price.CreatedAt.Unix(),
-	// }
 	amount := conversions.ParseTransferAmountFloat(price.Token, price.Amount)
 
 	priceData := &model.PriceData{

@@ -187,7 +187,7 @@ func (p *PostgresDB) CreateProduct(m *models.Product) error {
 
 func (p *PostgresDB) FetchProduct(id uuid.UUID) (*models.Product, error) {
 	var product *models.Product
-	if err := p.Db.Where("id = ?", id).Preload("Subscriptions").Find(&product).Error; err != nil {
+	if err := p.Db.Where("id = ?", id).Preload("Subscriptions").Preload("DepositWallets").Find(&product).Error; err != nil {
 		return nil, err
 	}
 	return product, nil
@@ -429,6 +429,35 @@ func (p *PostgresDB) UpdatePrice(priceId uuid.UUID, update map[string]interface{
 	var price *models.Price
 
 	if err := p.Db.Model(&price).Where("id = ?", priceId).Updates(update).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+// DepositWallet
+func (p *PostgresDB) AddDepositWallet(wallet *models.DepositWallet) error {
+	return p.Db.Create(wallet).Error
+}
+
+func (p *PostgresDB) FetchDepositWallet(id uuid.UUID) (*models.DepositWallet, error) {
+	var depositWallet *models.DepositWallet
+	if err := p.Db.Where("id = ?", id).First(&depositWallet).Error; err != nil {
+		return nil, err
+	}
+	return depositWallet, nil
+}
+
+func (p *PostgresDB) FetchDepositWalletByMerchant(id uuid.UUID) ([]models.DepositWallet, error) {
+	var depositWallets []models.DepositWallet
+	if err := p.Db.Where("merchant_id = ?", id).Find(&depositWallets).Error; err != nil {
+		return nil, err
+	}
+	return depositWallets, nil
+
+}
+func (p *PostgresDB) DeleteDepositWallet(id uuid.UUID) error {
+	var depositWallet *models.DepositWallet
+	if err := p.Db.Where("id = ?", id).Delete(&depositWallet).Error; err != nil {
 		return err
 	}
 	return nil

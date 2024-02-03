@@ -12,9 +12,16 @@ import (
 // A product can only have one deposit wallet attached to it
 type DepositWallet struct {
 	ID            uuid.UUID `gorm:"primaryKey"`
-	MerchantID    uuid.UUID
+	MerchantID    uuid.UUID `gorm:"index"`
 	Merchant      Merchant
 	WalletAddress string
+	Percentage    float64
+	Active        bool
+	Note          string
+	Products      []*Product `gorm:"many2many:product_deposit_wallets;"`
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
+	DeletedAt     time.Time
 }
 
 type Merchant struct {
@@ -24,10 +31,10 @@ type Merchant struct {
 	WebhookUrl   string
 	WebhookToken string
 	OwnerAddress string `gorm:"unique"` // web3 wallet that owns this account
-	// Products           []Product
 	ConvoyEndpointID   string
 	MerchantAccessKeys []MerchantAccessKey
 	PaymentLinks       []PaymentLink
+	DepositWallets     []DepositWallet
 	CreatedAt          time.Time
 }
 

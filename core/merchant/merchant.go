@@ -3,6 +3,7 @@ package merchant
 import (
 	"crypto/rand"
 	"errors"
+	"fmt"
 	"math/big"
 	"os"
 	"strings"
@@ -21,6 +22,15 @@ import (
 type MerchantService struct {
 	repository repository.Database
 	merchant   uuid.UUID // id of the active merchant
+}
+
+type DepositAddress struct {
+	ID            uuid.UUID
+	MerchantID    string
+	WalletAddress string
+	Percentage    float64
+	Active        bool
+	Note          string
 }
 
 func NewMerchantService(r repository.Database, merchant uuid.UUID) *MerchantService {
@@ -258,4 +268,25 @@ func (m *MerchantService) SummarizeMerchant(owner string) (*model.MerchantStats,
 		Subscriptions: totalSubscriptions,
 	}
 	return stats, nil
+}
+
+func (m *MerchantService) AddDepositAddress(address *DepositAddress) (*DepositAddress, error) {
+	id := uuid.New()
+	depositWallet := &models.DepositWallet{
+		ID:            id,
+		MerchantID:    m.merchant,
+		WalletAddress: address.WalletAddress,
+		Percentage:    address.Percentage,
+		Active:        address.Active,
+		Note:          address.Note,
+	}
+
+	if err := m.repository.AddDepositWallet(depositWallet); err != nil {
+		log.Err(err).Caller().Send()
+		return nil, fmt.Errorf("failed to add merchant deposit wallet")
+	}
+
+	address.ID = id
+
+	return address, nil
 }

@@ -10,9 +10,10 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/lucidconnect/silver-arrow/conversions"
+	"github.com/lucidconnect/silver-arrow/core"
+	"github.com/lucidconnect/silver-arrow/core/merchant"
 	"github.com/lucidconnect/silver-arrow/repository/models"
 	"github.com/lucidconnect/silver-arrow/server/api"
-	"github.com/lucidconnect/silver-arrow/server/graphql/wallet/graph/model"
 	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 )
@@ -138,17 +139,18 @@ func (s *Server) CreateNewProduct() http.HandlerFunc {
 		response := &httpResponse{}
 
 		auth := strings.Split(r.Header.Get("Authorization"), " ")[1]
-		merchant, err := s.database.FetchMerchantByPublicKey(auth)
-
+		activeMerchant, err := s.database.FetchMerchantByPublicKey(auth)
 		if err != nil {
 			log.Err(err).Msg("decoding request failed")
 			response = &httpResponse{
-				Status: http.StatusBadRequest,
-				Error:  "merchant id is invalid",
+				Status: http.StatusUnauthorized,
+				Error:  "merchant is invalid",
 			}
 			writeJsonResponse(w, response)
 			return
 		}
+
+		merchantService := merchant.NewMerchantService(s.database, activeMerchant.ID)
 
 		if err := json.NewDecoder(r.Body).Decode(request); err != nil {
 			log.Err(err).Caller().Msg("decoding request failed")
@@ -158,19 +160,12 @@ func (s *Server) CreateNewProduct() http.HandlerFunc {
 			writeJsonResponse(w, response)
 			return
 		}
-		productID := uuid.New()
+		request.Owner = activeMerchant.OwnerAddress
+		// productID := uuid.New()
 
-		newProduct := &models.Product{
-			ID:             productID,
-			Name:           request.Name,
-			Owner:          merchant.OwnerAddress,
-			DepositAddress: request.ReceivingAddress,
-			MerchantID:     merchant.ID,
-			CreatedAt:      time.Now(),
-			Mode:           model.ModeTest.String(),
-			InstantCharge:  request.FirstChargeNow,
-		}
-		if err = s.database.CreateProduct(newProduct); err != nil {
+		newProduct := merchant.ParseNewApiProduct(*request)
+		product, err := merchantService.CreateProduct(newProduct)
+		if err != nil {
 			log.Err(err).Send()
 			response = &httpResponse{
 				Status: http.StatusInternalServerError,
@@ -179,40 +174,49 @@ func (s *Server) CreateNewProduct() http.HandlerFunc {
 			writeJsonResponse(w, response)
 			return
 		}
-		product := &api.ProductResponse{
-			ID:               productID.String(),
-			Name:             request.Name,
-			ReceivingAddress: request.ReceivingAddress,
-			FirstChargeNow:   true,
+
+		productResponse := &api.ProductResponse{
+			ID:             product.ID.String(),
+			Name:           request.Name,
+			FirstChargeNow: true,
 		}
 		// create price
 		priceId := uuid.New()
 		amount := conversions.ParseFloatAmountToIntDenomination(request.PriceData.Token, request.PriceData.Amount)
-		newPrice := &models.Price{
-			ID:           priceId,
+		var trialPeriod int64
+		if request.PriceData.TrialPeriod != 0 {
+			trialPeriod = int64(request.PriceData.TrialPeriod)
+		}
+		newPrice := &merchant.Price{
 			Active:       true,
 			Amount:       amount,
-			Token:        request.PriceData.Token,
 			Chain:        request.PriceData.Chain,
-			Type:         string(request.PriceData.Type),
-			IntervalUnit: string(request.PriceData.Interval),
+			Token:        request.PriceData.Token,
+			IntervalUnit: core.RecuringInterval(request.PriceData.Interval),
 			Interval:     int64(request.PriceData.IntervalCount),
-			ProductID:    productID,
-			MerchantID:   merchant.ID,
-			CreatedAt:    time.Now(),
-			TrialPeriod: int64(request.PriceData.TrialPeriod),
+			Type:         request.PriceData.Type,
+			TrialPeriod:  trialPeriod,
 		}
-		if err = s.database.CreatePrice(newPrice); err != nil {
+		price, err := merchantService.CreatePrice(newPrice, product.ID.String())
+		if err != nil {
 			log.Err(err).Send()
 			response = &httpResponse{
 				Status: http.StatusInternalServerError,
-				Data:   product,
 				Error:  err.Error(),
 			}
 			writeJsonResponse(w, response)
 			return
 		}
-		product.DefaultPriceData = api.PriceDataResponse{
+
+		productUpdate := map[string]interface{}{
+			"default_price_id": price.ID,
+		}
+
+		if err = s.database.UpdateProduct(product.ID, activeMerchant.ID, productUpdate); err != nil {
+			log.Err(err).Caller().Send()
+		}
+
+		productResponse.DefaultPriceData = api.PriceDataResponse{
 			ID:            priceId.String(),
 			Active:        true,
 			Amount:        amount,
@@ -221,7 +225,7 @@ func (s *Server) CreateNewProduct() http.HandlerFunc {
 			Type:          request.PriceData.Type,
 			Interval:      request.PriceData.Interval,
 			IntervalCount: request.PriceData.IntervalCount,
-			ProductID:     productID.String(),
+			ProductID:     product.ID.String(),
 		}
 		response = &httpResponse{
 			Status: http.StatusInternalServerError,

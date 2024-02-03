@@ -45,6 +45,12 @@ type Database interface {
 	FetchAllPricesByProduct(productId uuid.UUID) ([]models.Price, error)
 	UpdatePrice(priceId uuid.UUID, update map[string]interface{}) error
 
+	// DepositWallet
+	AddDepositWallet(*models.DepositWallet) error
+	FetchDepositWallet(uuid.UUID) (*models.DepositWallet, error)
+	FetchDepositWalletByMerchant(uuid.UUID) ([]models.DepositWallet, error)
+	DeleteDepositWallet(id uuid.UUID) error
+	
 	// Merchant
 	AddMerchant(*models.Merchant) error
 	FetchMerchantById(uuid.UUID) (*models.Merchant, error)

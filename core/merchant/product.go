@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/lucidconnect/silver-arrow/conversions"
 	"github.com/lucidconnect/silver-arrow/repository/models"
+	"github.com/lucidconnect/silver-arrow/server/api"
 	"github.com/lucidconnect/silver-arrow/server/graphql/merchant/graph/model"
 )
 
@@ -30,32 +31,23 @@ type Product struct {
 	InstantCharge  bool
 	PaymentType    string
 	Owner          string
-	DepositAddress string
+	DepositAddress []*models.DepositWallet
 }
 
 func (m *MerchantService) CreateProduct(product *Product) (*Product, error) {
 	productID := uuid.New()
 
-	// merchant, err := m.repository.FetchMerchantByAddress(input.Owner)
-	// if err != nil {
-	// 	return nil, err
-	// }
 	chainId := int64(product.Chain)
-	// amount := conversions.ParseFloatAmountToInt(input.Token, input.Amount)
-	// interval := conversions.ParseDaysToNanoSeconds(int64(input.Interval))
-
+	depositWallets := product.DepositAddress
 	productObj := &models.Product{
 		ID:    productID,
 		Name:  product.Name,
 		Chain: chainId,
 		Owner: product.Owner,
-		// Token:          product.Token,
-		DepositAddress: product.DepositAddress,
 		MerchantID:     m.merchant,
 		CreatedAt:      time.Now(),
 		Mode:           model.ModeTest.String(),
-		// InstantCharge: product.InstantCharge,
-		// PaymentType:   product.PaymentType,
+		DepositWallets: depositWallets,
 	}
 	if err := m.repository.CreateProduct(productObj); err != nil {
 		log.Err(err).Send()
@@ -85,6 +77,12 @@ func (m *MerchantService) FetchProductsByOwner(owner string) ([]*model.Product, 
 		}
 		priceData, _ := ParsePriceObjects(priceObjects)
 		// interval := conversions.ParseNanoSecondsToDay(v.Interval)
+		var depositWallets []*model.DepositWallet
+		for _, wallet := range v.DepositWallets {
+			w := ParseDepositWalletToGraphqlObject(*wallet)
+
+			depositWallets = append(depositWallets, &w)
+		}
 
 		product := &model.Product{
 			Name:             v.Name,
@@ -92,7 +90,7 @@ func (m *MerchantService) FetchProductsByOwner(owner string) ([]*model.Product, 
 			Owner:            v.Owner,
 			ProductID:        v.ID.String(),
 			MerchantID:       v.MerchantID.String(),
-			ReceivingAddress: v.DepositAddress,
+			ReceivingAddress: depositWallets,
 			Subscriptions:    subscriptions,
 			PriceData:        priceData,
 		}
@@ -122,8 +120,12 @@ func (m *MerchantService) FetchProduct(pid string) (*model.Product, error) {
 		return nil, err
 	}
 	createdAt := v.CreatedAt.Format(time.RFC3339)
-	// interval := conversions.ParseNanoSecondsToDay(v.Interval)
-	// amount := conversions.ParseTransferAmountFloat(v.Token, v.Amount)
+	var depositWallets []*model.DepositWallet
+	for _, wallet := range v.DepositWallets {
+		w := ParseDepositWalletToGraphqlObject(*wallet)
+
+		depositWallets = append(depositWallets, &w)
+	}
 	product := &model.Product{
 		Name:             v.Name,
 		Mode:             model.Mode(v.Mode),
@@ -131,7 +133,7 @@ func (m *MerchantService) FetchProduct(pid string) (*model.Product, error) {
 		ProductID:        pid,
 		MerchantID:       v.MerchantID.String(),
 		DefaultPrice:     v.DefaultPriceID.String(),
-		ReceivingAddress: v.DepositAddress,
+		ReceivingAddress: depositWallets,
 		CreatedAt:        &createdAt,
 		Subscriptions:    subscriptions,
 	}
@@ -187,40 +189,46 @@ func parseUUID(mid string) (uuid.UUID, error) {
 	return id, nil
 }
 
-// func removeUnderscore(s string) string {
-// 	strArr := strings.Split(s, "_")
-// 	return strings.ToTitle(strings.Join(strArr, ""))
-// }
-
-// func parseFloatAmountToInt(token string, amount float64) int64 {
-// 	var divisor int
-// 	if token == "USDC" || token == "USDT" {
-// 		divisor = 6
-// 	} else {
-// 		divisor = 18
-// 	}
-// 	minorFactor := math.Pow10(divisor)
-// 	parsedAmount := int64(amount * minorFactor)
-
-// 	return parsedAmount
-// }
-
-// func daysToNanoSeconds(days int64) time.Duration {
-// 	nanoSsecondsInt := days * 24 * 60 * 60 * 1e9
-// 	return time.Duration(nanoSsecondsInt)
-// }
-
 func ParseGraphqlInput(gqlInput model.NewProduct) *Product {
+	var depositWallets []*models.DepositWallet
+	depositAddresses := gqlInput.ReceivingAddress
+	for _, address := range depositAddresses {
+		wallet := models.DepositWallet{
+			WalletAddress: address.Address,
+			Percentage:    address.Percentage,
+			Note:          address.Note,
+		}
+		depositWallets = append(depositWallets, &wallet)
+	}
 	p := &Product{
 		Name: gqlInput.Name,
-		// Mode:  gqlInput.Mode.String(),
-		// Price: ,
 		Owner:          gqlInput.Owner,
-		DepositAddress: gqlInput.ReceivingAddress,
+		DepositAddress: depositWallets,
 		Active:         true,
-		// Mode: gqlInput.T,
 		InstantCharge: gqlInput.FirstChargeNow,
-		PaymentType:   gqlInput.PaymentType.String(),
+		PaymentType:   gqlInput.PriceData.Type.String(),
+	}
+	return p
+}
+
+func ParseNewApiProduct(input api.NewProduct) *Product {
+	var depositWallets []*models.DepositWallet
+	depositAddresses := input.ReceivingAddress
+	for _, address := range depositAddresses {
+		wallet := models.DepositWallet{
+			WalletAddress: address.Address,
+			Percentage:    address.Percentage,
+			Note:          address.Note,
+		}
+		depositWallets = append(depositWallets, &wallet)
+	}
+	p := &Product{
+		Name: input.Name,
+		Owner:          input.Owner,
+		DepositAddress: depositWallets,
+		Active:         true,
+		InstantCharge: input.FirstChargeNow,
+		PaymentType:   string(input.PriceData.Type),
 	}
 	return p
 }
@@ -264,4 +272,14 @@ func ParsePriceObjects(prices []models.Price) ([]*model.PriceData, error) {
 		priceData = append(priceData, p)
 	}
 	return priceData, nil
+}
+
+func ParseDepositWalletToGraphqlObject(wallet models.DepositWallet) model.DepositWallet {
+	return model.DepositWallet{
+		ID:         wallet.ID.String(),
+		Address:    wallet.WalletAddress,
+		Percentage: wallet.Percentage,
+		Merchant:   wallet.MerchantID.String(),
+		Note:       &wallet.Note,
+	}
 }

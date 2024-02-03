@@ -15,7 +15,7 @@ type Product struct {
 	DepositAddress   string `gorm:"not null"`
 	DepositWalletID  uuid.UUID
 	MerchantID       uuid.UUID
-	DepositWallet    DepositWallet
+	DepositWallets   []*DepositWallet `gorm:"many2many:product_deposit_wallets;"`
 	Merchant         Merchant
 	Subscriptions    []Subscription
 	CheckoutSessions []CheckoutSession
