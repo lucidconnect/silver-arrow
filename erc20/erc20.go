@@ -3,6 +3,7 @@ package erc20
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 
 	"github.com/google/uuid"
@@ -32,10 +33,10 @@ func LoadSupportedTokens(tokenPath string, db *gorm.DB) error {
 	}
 	contents = string(contentBytes)
 	tokenConfigs := initFromJsonString(contents)
-
+	fmt.Println(tokenConfigs)
 	if db != nil {
-		var existing models.Token
 		for _, tokenConfig := range tokenConfigs {
+			var existing models.Token
 			token := &models.Token{
 				ID:          uuid.New(),
 				Name:        tokenConfig.Name,
