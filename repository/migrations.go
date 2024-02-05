@@ -9,7 +9,8 @@ import (
 func (db *PostgresDB) RunMigrations() {
 	migrator := gormigrate.New(db.Db, gormigrate.DefaultOptions, []*gormigrate.Migration{
 		migrations.DropPublicKeysColumnFromProductsTable,
-		migrations.DropDepositWalletIdAndDepositAddressColumnFromProductsTable,
+		migrations.DropDepositAddressColumnFromProductsTable,
+		migrations.DropDepositWalletIdColumnFromProductsTable,
 	})
 
 	if err := migrator.Migrate(); err != nil {

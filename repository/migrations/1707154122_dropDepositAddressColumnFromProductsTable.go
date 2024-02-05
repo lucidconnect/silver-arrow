@@ -6,7 +6,7 @@ import (
 	"gorm.io/gorm"
 )
 
-var DropDepositAddressColumnFromProductsTabl *gormigrate.Migration = &gormigrate.Migration{
+var DropDepositAddressColumnFromProductsTable *gormigrate.Migration = &gormigrate.Migration{
 	ID: "1707154122",
 	Migrate: func(db *gorm.DB) error {
 		if db.Migrator().HasTable("products") {
