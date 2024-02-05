@@ -18,7 +18,7 @@ type DepositWallet struct {
 	Percentage    float64
 	Active        bool
 	Note          string
-	Products      []*Product `gorm:"many2many:product_deposit_wallets;"`
+	Products      []*Product `gorm:"many2many:products_deposit_wallets;"`
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
 	DeletedAt     time.Time
