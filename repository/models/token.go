@@ -3,7 +3,7 @@ package models
 import "github.com/google/uuid"
 
 type Token struct {
-	ID          uuid.UUID
+	ID          uuid.UUID `gorm:"primaryKey"`
 	Name        string
 	Chain       int64
 	Address     string
