@@ -19,6 +19,51 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// CreateAccessKey is the resolver for the createAccessKey field.
+func (r *mutationResolver) CreateAccessKey(ctx context.Context, input model.NewMerchantKey) (*model.MerchantAccessKey, error) {
+	activeMerchant, err := getAuthenticatedAndActiveMerchant(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if activeMerchant == nil {
+		return nil, errors.New("merchant does not exist")
+	}
+
+	merchantService := merchant.NewMerchantService(r.Database, activeMerchant.ID)
+
+	accessKeys, err := merchantService.CreateAccessKeys(activeMerchant.OwnerAddress, input.Mode.String())
+	if err != nil {
+		return nil, err
+	}
+	return accessKeys, nil
+}
+
+// CreateMerchant is the resolver for the createMerchant field.
+func (r *mutationResolver) CreateMerchant(ctx context.Context, input model.NewMerchant) (*model.Merchant, error) {
+	merchantService := merchant.NewMerchantService(r.Database, uuid.Nil)
+	result, err := merchantService.CreateMerchant(input)
+	if err != nil {
+		return nil, gqlerror.ErrToGraphQLError(gqlerror.InternalError, err.Error(), ctx)
+	}
+	return result, nil
+}
+
+// UpdateMerchantwebHookURL is the resolver for the updateMerchantwebHookUrl field.
+func (r *mutationResolver) UpdateMerchantwebHookURL(ctx context.Context, webhookURL string) (*model.Merchant, error) {
+	activeMerchant, err := getAuthenticatedAndActiveMerchant(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	merchantService := merchant.NewMerchantService(r.Database, activeMerchant.ID)
+
+	result, err := merchantService.UpdateMerchantWebhook(*activeMerchant, webhookURL)
+	if err != nil {
+		return nil, gqlerror.ErrToGraphQLError(gqlerror.InternalError, err.Error(), ctx)
+	}
+	return result, nil
+}
+
 // AddProduct is the resolver for the addProduct field.
 func (r *mutationResolver) AddProduct(ctx context.Context, input model.NewProduct) (*model.Product, error) {
 	var product *merchant.Product
@@ -77,7 +122,7 @@ func (r *mutationResolver) AddProduct(ctx context.Context, input model.NewProduc
 		Owner: product.Owner,
 		// Interval:         int(interval),
 		// Amount:           input.Amount,
-		ProductID:        product.ID.String(),
+		ProductID: product.ID.String(),
 		// ReceivingAddress: product.DepositAddress,
 	}
 
@@ -87,51 +132,6 @@ func (r *mutationResolver) AddProduct(ctx context.Context, input model.NewProduc
 // UpdateProduct is the resolver for the updateProduct field.
 func (r *mutationResolver) UpdateProduct(ctx context.Context, input model.ProductUpdate) (*model.Product, error) {
 	panic(fmt.Errorf("not implemented: UpdateProduct - updateProduct"))
-}
-
-// CreateAccessKey is the resolver for the createAccessKey field.
-func (r *mutationResolver) CreateAccessKey(ctx context.Context, input model.NewMerchantKey) (*model.MerchantAccessKey, error) {
-	activeMerchant, err := getAuthenticatedAndActiveMerchant(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if activeMerchant == nil {
-		return nil, errors.New("merchant does not exist")
-	}
-
-	merchantService := merchant.NewMerchantService(r.Database, activeMerchant.ID)
-
-	accessKeys, err := merchantService.CreateAccessKeys(activeMerchant.OwnerAddress, input.Mode.String())
-	if err != nil {
-		return nil, err
-	}
-	return accessKeys, nil
-}
-
-// CreateMerchant is the resolver for the createMerchant field.
-func (r *mutationResolver) CreateMerchant(ctx context.Context, input model.NewMerchant) (*model.Merchant, error) {
-	merchantService := merchant.NewMerchantService(r.Database, uuid.Nil)
-	result, err := merchantService.CreateMerchant(input)
-	if err != nil {
-		return nil, gqlerror.ErrToGraphQLError(gqlerror.InternalError, err.Error(), ctx)
-	}
-	return result, nil
-}
-
-// UpdateMerchantwebHookURL is the resolver for the updateMerchantwebHookUrl field.
-func (r *mutationResolver) UpdateMerchantwebHookURL(ctx context.Context, webhookURL string) (*model.Merchant, error) {
-	activeMerchant, err := getAuthenticatedAndActiveMerchant(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	merchantService := merchant.NewMerchantService(r.Database, activeMerchant.ID)
-
-	result, err := merchantService.UpdateMerchantWebhook(*activeMerchant, webhookURL)
-	if err != nil {
-		return nil, gqlerror.ErrToGraphQLError(gqlerror.InternalError, err.Error(), ctx)
-	}
-	return result, nil
 }
 
 // ToggleProductMode is the resolver for the toggleProductMode field.
@@ -246,6 +246,61 @@ func (r *mutationResolver) CreatePrice(ctx context.Context, input model.NewPrice
 // UpdatePrice is the resolver for the updatePrice field.
 func (r *mutationResolver) UpdatePrice(ctx context.Context, input *model.PriceUpdate) (*model.PriceData, error) {
 	panic(fmt.Errorf("not implemented: UpdatePrice - updatePrice"))
+}
+
+// AddDepositWallet is the resolver for the addDepositWallet field.
+func (r *mutationResolver) AddDepositWallet(ctx context.Context, input model.NewDepositWallet) (*model.DepositWallet, error) {
+	activeMerchant, err := getAuthenticatedAndActiveMerchant(ctx)
+	if err != nil {
+		log.Err(err).Send()
+		return nil, gqlerror.ErrToGraphQLError(gqlerror.MerchantAuthorisationFailed, err.Error(), ctx)
+	}
+	merchantService := merchant.NewMerchantService(r.Database, activeMerchant.ID)
+
+	depositAddress := &merchant.DepositAddress{
+		WalletAddress: input.Address,
+		Percentage:    input.Percentage,
+		Note:          input.Note,
+	}
+	merchantAddress, err := merchantService.AddDepositAddress(depositAddress)
+	if err != nil {
+		return nil, gqlerror.ErrToGraphQLError(gqlerror.InternalError, err.Error(), ctx)
+	}
+	return &model.DepositWallet{
+		ID:         merchantAddress.ID.String(),
+		Address:    merchantAddress.WalletAddress,
+		Percentage: merchantAddress.Percentage,
+		Merchant:   merchantAddress.MerchantID,
+		Note:       &merchantAddress.Note,
+	}, nil
+}
+
+// UpdateDepositWallet is the resolver for the updateDepositWallet field.
+func (r *mutationResolver) UpdateDepositWallet(ctx context.Context, input model.WalletUpdate) (*model.DepositWallet, error) {
+	activeMerchant, err := getAuthenticatedAndActiveMerchant(ctx)
+	if err != nil {
+		log.Err(err).Send()
+		return nil, gqlerror.ErrToGraphQLError(gqlerror.MerchantAuthorisationFailed, err.Error(), ctx)
+	}
+	_ = merchant.NewMerchantService(r.Database, activeMerchant.ID)
+
+	_ = &merchant.DepositAddress{
+		WalletAddress: input.Address,
+		Percentage:    input.Percentage,
+		Note:          *input.Note,
+	}
+
+	panic(fmt.Errorf("not implemented: UpdateDepositWallet - updateDepositWallet"))
+}
+
+// ListDepositWallets is the resolver for the listDepositWallets field.
+func (r *mutationResolver) ListDepositWallets(ctx context.Context, owner string) ([]*model.DepositWallet, error) {
+	panic(fmt.Errorf("not implemented: ListDepositWallets - listDepositWallets"))
+}
+
+// DeleteDepositWallet is the resolver for the deleteDepositWallet field.
+func (r *mutationResolver) DeleteDepositWallet(ctx context.Context, id string) (string, error) {
+	panic(fmt.Errorf("not implemented: DeleteDepositWallet - deleteDepositWallet"))
 }
 
 // FetchOneProduct is the resolver for the fetchOneProduct field.

@@ -13,16 +13,24 @@ type Query {
 }
 
 type Mutation {
-  addProduct(input: NewProduct!): Product!
-  updateProduct(input: ProductUpdate!): Product!
   createAccessKey(input: NewMerchantKey!): MerchantAccessKey!
   createMerchant(input: NewMerchant!): Merchant!
   updateMerchantwebHookUrl(webhookUrl: String!): Merchant!
+
+  addProduct(input: NewProduct!): Product!
+  updateProduct(input: ProductUpdate!): Product!
   toggleProductMode(input: ProductModeUpdate!): Mode!
+
   createPaymentLink(input: NewPaymentLink!): String!
   deletePaymentLink(id: String!): String!
+
   createPrice(input: NewPrice!): PriceData!
   updatePrice(input: PriceUpdate): PriceData!
+
+  addDepositWallet(input: NewDepositWallet!): DepositWallet!
+  updateDepositWallet(input: WalletUpdate!): DepositWallet! 
+  listDepositWallets(owner: String!): [DepositWallet!]!
+  deleteDepositWallet(id: String!): String!
 }
 
 input NewMerchant {
@@ -186,6 +194,13 @@ type DepositWallet {
   address: String!
   percentage: Float!
   merchant: String!
+  note: String
+}
+
+input WalletUpdate {
+  id: ID!
+  address: String!
+  percentage: Float!
   note: String
 }
 

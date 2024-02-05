@@ -166,6 +166,13 @@ type Sub struct {
 	WalletAddress string `json:"walletAddress"`
 }
 
+type WalletUpdate struct {
+	ID         string  `json:"id"`
+	Address    string  `json:"address"`
+	Percentage float64 `json:"percentage"`
+	Note       *string `json:"note,omitempty"`
+}
+
 type IntervalType string
 
 const (

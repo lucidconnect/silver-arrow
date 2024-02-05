@@ -42,6 +42,11 @@ contains integration tests
 
 Contains abis and bindings for the smart contracts silver-arrow interacts with.
 
+```shell
+abigen --abi LucidTokenActions.abi --bin LucidTokenActions.bin --pkg lucidTokenActions --type LucidTokenActions --out ../lucidTokenActions/LucidTokenActions.go
+```
+
+
 ### graph
 
 Graphql related code
