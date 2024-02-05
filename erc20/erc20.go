@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 
+	"github.com/google/uuid"
 	"github.com/lucidconnect/silver-arrow/repository/models"
 	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
@@ -36,6 +37,7 @@ func LoadSupportedTokens(tokenPath string, db *gorm.DB) error {
 		var existing models.Token
 		for _, tokenConfig := range tokenConfigs {
 			token := &models.Token{
+				ID:          uuid.New(),
 				Name:        tokenConfig.Name,
 				Chain:       tokenConfig.Chain,
 				Address:     tokenConfig.Address,
