@@ -2,9 +2,12 @@ package erc20
 
 import (
 	"encoding/json"
+	"errors"
 	"os"
 
+	"github.com/lucidconnect/silver-arrow/repository/models"
 	"github.com/rs/zerolog/log"
+	"gorm.io/gorm"
 )
 
 type Token struct {
@@ -16,7 +19,7 @@ type Token struct {
 
 var tokenCache = make(map[string]map[int64]string)
 
-func LoadSupportedTokens(tokenPath string) error {
+func LoadSupportedTokens(tokenPath string, db *gorm.DB) error {
 	var contents string
 
 	log.Info().Msgf("Pulling supported tokens from json file: %v", tokenPath)
@@ -27,7 +30,24 @@ func LoadSupportedTokens(tokenPath string) error {
 		return err
 	}
 	contents = string(contentBytes)
-	initFromJsonString(contents)
+	tokenConfigs := initFromJsonString(contents)
+
+	if db != nil {
+		var existing models.Token
+		for _, tokenConfig := range tokenConfigs {
+			token := &models.Token{
+				Name:        tokenConfig.Name,
+				Chain:       tokenConfig.Chain,
+				Address:     tokenConfig.Address,
+				MinorFactor: tokenConfig.MinorFactor,
+			}
+			if errors.Is(db.Where(&models.Token{Name: tokenConfig.Name, Chain: tokenConfig.Chain}).First(&existing).Error, gorm.ErrRecordNotFound) {
+				db.Create(&token)
+			} else {
+				db.Where(&models.Token{Name: tokenConfig.Name, Chain: tokenConfig.Chain}).Updates(&tokenConfig)
+			}
+		}
+	}
 	return nil
 }
 
@@ -54,7 +74,7 @@ func GetNativeToken(chain int64) string {
 	return token
 }
 
-func initFromJsonString(jsonString string) {
+func initFromJsonString(jsonString string) []Token {
 	var tokens []Token
 	if err := json.Unmarshal([]byte(jsonString), &tokens); err != nil {
 		log.Fatal().Err(err).Send()
@@ -63,6 +83,7 @@ func initFromJsonString(jsonString string) {
 	for _, token := range tokens {
 		updateTokenCache(tokenCache, token.Name, token.Address, token.Chain)
 	}
+	return tokens
 }
 
 func updateTokenCache(cache map[string]map[int64]string, token, address string, chain int64) {

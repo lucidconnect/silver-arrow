@@ -136,7 +136,7 @@ func TestSignature(t *testing.T) {
 	ercBundler, _ := erc4337.NewAlchemyService(defaultChain)
 
 	amount := big.NewInt(1000000)
-	data, err := erc4337.CreateTransferCallData(target, token, defaultChain, amount)
+	data, err := erc4337.CreateTransferCallData(target, token, defaultChain, amount, false)
 	if !assert.NoError(t, err) {
 		t.FailNow()
 	}

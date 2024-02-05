@@ -15,7 +15,7 @@ import (
 func Test_SendUseropWithPaymaster(t *testing.T) {
 	sender := "0xb96442F14ac82E21c333A8bB9b03274Ae26eb79D"
 	target := "0xB77ce6ec08B85DcC468B94Cea7Cc539a3BbF9510"
-	token := "ETH"
+	// token := "ETH"
 	key := "0xe81f9f7146470e1e728cc44d22089098de6be6ebe3ca39f21b7b092f09b10cf5"
 	chainId := 80001
 	node, err := erc4337.NewAlchemyService(int64(chainId))
@@ -26,7 +26,7 @@ func Test_SendUseropWithPaymaster(t *testing.T) {
 	nonce, _ := node.GetAccountNonce(common.HexToAddress(sender))
 
 	amount := big.NewInt(0)
-	data, err := erc4337.CreateTransferCallData(target, token, int64(chainId), amount)
+	data, err := erc4337.CreateTransferCallData(target, "", int64(chainId), amount, true)
 	if !assert.NoError(t, err) {
 		t.FailNow()
 	}

@@ -248,7 +248,15 @@ func (p *PaymentGateway) CreatePaymentIntent(intent core.PaymentIntent) (map[str
 			sponsored = false
 		}
 		reference := uuid.New()
-		tokenAddress := erc20.GetTokenAddress(price.Token, price.Chain)
+		token, err := p.database.FetchOneToken(price.Token, price.Chain)
+		if err != nil {
+			log.Err(err).Caller().Send()
+			return nil, "", err
+		}
+
+		tokenAddress := token.Address
+
+		// tokenAddress := erc20.GetTokenAddress(price.Token, price.Chain)
 
 		_, _, walletID, err := p.database.GetWalletMetadata(intent.WalletAddress)
 		if err != nil {
@@ -835,4 +843,31 @@ func getDebitInstructions(token common.Address, depositAddress []*models.Deposit
 	}
 
 	return debitInstructions
+}
+
+func (p *PaymentGateway) AddNewToken(name, address string, chain int64) {
+	token := &models.Token{
+		Chain:   chain,
+		Name:    name,
+		Address: address,
+	}
+
+	if err := p.database.AddToken(token); err != nil {
+		log.Err(err).Caller().Send()
+		return
+	}
+}
+
+func (p *PaymentGateway) FetchSupportedTokens(chain int64) ([]models.Token, error) {
+	return p.database.FetchAllTokens(chain)
+}
+
+func (p *PaymentGateway) FindToken(chain int64, name string) (*models.Token, error) {
+	token, err := p.database.FetchOneToken(name, chain)
+	if err != nil {
+		log.Err(err).Caller().Send()
+		return nil, err
+	}
+
+	return token, nil
 }

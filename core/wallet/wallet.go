@@ -755,6 +755,10 @@ func (ws *WalletService) ExecuteCharge(sender, target, token, key string, amount
 
 	return transactionHash, err
 }
+func isNativeToken(token string, chain int64) bool {
+	nativeToken := erc20.GetNativeToken(chain)
+	return token == nativeToken
+}
 
 // Transfer tokens from a smart wallet,
 // authorised by the user's EOA. This is necessary to provide users an interface to move assets
@@ -762,15 +766,25 @@ func (ws *WalletService) ExecuteCharge(sender, target, token, key string, amount
 // hence, using this method to transfer othet tokens with higher decimals will result in unexpected behavior
 func (ws *WalletService) InitiateTransfer(sender, target, token string, amount float64, chain int64, sponsored bool) (*model.ValidationData, map[string]any, error) {
 	var callData []byte
-
+	var nativeToken bool
 	bundler, err := erc4337.NewAlchemyService(chain)
 	if err != nil {
 		log.Err(err).Msg("failed to initialise bundler")
 		return nil, nil, err
 	}
 
+	tok, err := ws.database.FetchOneToken(token, chain)
+	if err != nil {
+		log.Err(err).Caller().Send()
+		return nil, nil, err
+	}
+
+	tokenAddress := tok.Address
+	if isNativeToken(token, chain) {
+		nativeToken = true
+	}
 	transferAmount := conversions.ParseTransferAmount(token, amount)
-	callData, err = erc4337.CreateTransferCallData(target, token, chain, transferAmount)
+	callData, err = erc4337.CreateTransferCallData(target, tokenAddress, chain, transferAmount, nativeToken)
 	if err != nil {
 		err = errors.Wrapf(err, "creating transfer call data failed")
 		return nil, nil, err

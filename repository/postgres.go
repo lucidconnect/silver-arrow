@@ -455,10 +455,34 @@ func (p *PostgresDB) FetchDepositWalletByMerchant(id uuid.UUID) ([]models.Deposi
 	return depositWallets, nil
 
 }
+
 func (p *PostgresDB) DeleteDepositWallet(id uuid.UUID) error {
 	var depositWallet *models.DepositWallet
 	if err := p.Db.Where("id = ?", id).Delete(&depositWallet).Error; err != nil {
 		return err
 	}
 	return nil
+}
+
+func (p *PostgresDB) AddToken(token *models.Token) error {
+	return p.Db.Create(token).Error
+}
+func (p *PostgresDB) FetchAllTokens(chain int64) ([]models.Token, error) {
+	var tokens []models.Token
+
+	if err := p.Db.Where("chain = ?", chain).Find(&tokens).Error; err != nil {
+		return nil, err
+	}
+
+	return tokens, nil
+}
+
+func (p *PostgresDB) FetchOneToken(name string, chain int64) (*models.Token, error) {
+	var token *models.Token
+
+	if err := p.Db.Where("name = ? AND chain = ?", name, chain).First(&token).Error; err != nil {
+		return nil, err
+	}
+
+	return token, nil
 }

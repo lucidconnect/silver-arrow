@@ -50,7 +50,7 @@ type Database interface {
 	FetchDepositWallet(uuid.UUID) (*models.DepositWallet, error)
 	FetchDepositWalletByMerchant(uuid.UUID) ([]models.DepositWallet, error)
 	DeleteDepositWallet(id uuid.UUID) error
-	
+
 	// Merchant
 	AddMerchant(*models.Merchant) error
 	FetchMerchantById(uuid.UUID) (*models.Merchant, error)
@@ -77,6 +77,11 @@ type Database interface {
 	FetchPaymentLinkByProduct(productId uuid.UUID) (*models.PaymentLink, error)
 	FetchPaymentLinkByMerchant(merchantId uuid.UUID) ([]models.PaymentLink, error)
 	DeletePaymentLink(id uuid.UUID) error
+
+	// Tokens
+	AddToken(*models.Token) error
+	FetchAllTokens(chain int64) ([]models.Token, error)
+	FetchOneToken(name string, chain int64) (*models.Token, error)
 }
 
 type Queuer interface {
