@@ -10,6 +10,7 @@ type Query {
   fetchMerchantInfo(owner: String!): Merchant!
   getPaymentLink(id: String!): PaymentLinkDetails!
   getMerchantPaymentLinks(merchantId: String!): [PaymentLinkDetails!]!
+  listDepositWallets(merchantId: String!): [DepositWallet!]!
 }
 
 type Mutation {
@@ -29,7 +30,6 @@ type Mutation {
 
   addDepositWallet(input: NewDepositWallet!): DepositWallet!
   updateDepositWallet(input: WalletUpdate!): DepositWallet! 
-  listDepositWallets(owner: String!): [DepositWallet!]!
   deleteDepositWallet(id: String!): String!
 }
 
@@ -199,8 +199,8 @@ type DepositWallet {
 
 input WalletUpdate {
   id: ID!
-  address: String!
-  percentage: Float!
+  address: String
+  percentage: Float
   note: String
 }
 

@@ -83,7 +83,6 @@ type ComplexityRoot struct {
 		CreatePrice              func(childComplexity int, input model.NewPrice) int
 		DeleteDepositWallet      func(childComplexity int, id string) int
 		DeletePaymentLink        func(childComplexity int, id string) int
-		ListDepositWallets       func(childComplexity int, owner string) int
 		ToggleProductMode        func(childComplexity int, input model.ProductModeUpdate) int
 		UpdateDepositWallet      func(childComplexity int, input model.WalletUpdate) int
 		UpdateMerchantwebHookURL func(childComplexity int, webhookURL string) int
@@ -141,6 +140,7 @@ type ComplexityRoot struct {
 		FetchProducts           func(childComplexity int, owner string) int
 		GetMerchantPaymentLinks func(childComplexity int, merchantID string) int
 		GetPaymentLink          func(childComplexity int, id string) int
+		ListDepositWallets      func(childComplexity int, merchantID string) int
 	}
 
 	Sub struct {
@@ -166,7 +166,6 @@ type MutationResolver interface {
 	UpdatePrice(ctx context.Context, input *model.PriceUpdate) (*model.PriceData, error)
 	AddDepositWallet(ctx context.Context, input model.NewDepositWallet) (*model.DepositWallet, error)
 	UpdateDepositWallet(ctx context.Context, input model.WalletUpdate) (*model.DepositWallet, error)
-	ListDepositWallets(ctx context.Context, owner string) ([]*model.DepositWallet, error)
 	DeleteDepositWallet(ctx context.Context, id string) (string, error)
 }
 type QueryResolver interface {
@@ -177,6 +176,7 @@ type QueryResolver interface {
 	FetchMerchantInfo(ctx context.Context, owner string) (*model.Merchant, error)
 	GetPaymentLink(ctx context.Context, id string) (*model.PaymentLinkDetails, error)
 	GetMerchantPaymentLinks(ctx context.Context, merchantID string) ([]*model.PaymentLinkDetails, error)
+	ListDepositWallets(ctx context.Context, merchantID string) ([]*model.DepositWallet, error)
 }
 
 type executableSchema struct {
@@ -415,18 +415,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.DeletePaymentLink(childComplexity, args["id"].(string)), true
-
-	case "Mutation.listDepositWallets":
-		if e.complexity.Mutation.ListDepositWallets == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_listDepositWallets_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.ListDepositWallets(childComplexity, args["owner"].(string)), true
 
 	case "Mutation.toggleProductMode":
 		if e.complexity.Mutation.ToggleProductMode == nil {
@@ -803,6 +791,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.GetPaymentLink(childComplexity, args["id"].(string)), true
 
+	case "Query.listDepositWallets":
+		if e.complexity.Query.ListDepositWallets == nil {
+			break
+		}
+
+		args, err := ec.field_Query_listDepositWallets_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.ListDepositWallets(childComplexity, args["merchantId"].(string)), true
+
 	case "Sub.active":
 		if e.complexity.Sub.Active == nil {
 			break
@@ -974,6 +974,7 @@ type Query {
   fetchMerchantInfo(owner: String!): Merchant!
   getPaymentLink(id: String!): PaymentLinkDetails!
   getMerchantPaymentLinks(merchantId: String!): [PaymentLinkDetails!]!
+  listDepositWallets(merchantId: String!): [DepositWallet!]!
 }
 
 type Mutation {
@@ -993,7 +994,6 @@ type Mutation {
 
   addDepositWallet(input: NewDepositWallet!): DepositWallet!
   updateDepositWallet(input: WalletUpdate!): DepositWallet! 
-  listDepositWallets(owner: String!): [DepositWallet!]!
   deleteDepositWallet(id: String!): String!
 }
 
@@ -1163,8 +1163,8 @@ type DepositWallet {
 
 input WalletUpdate {
   id: ID!
-  address: String!
-  percentage: Float!
+  address: String
+  percentage: Float
   note: String
 }
 
@@ -1304,21 +1304,6 @@ func (ec *executionContext) field_Mutation_deletePaymentLink_args(ctx context.Co
 		}
 	}
 	args["id"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_listDepositWallets_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["owner"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("owner"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["owner"] = arg0
 	return args, nil
 }
 
@@ -1523,6 +1508,21 @@ func (ec *executionContext) field_Query_getPaymentLink_args(ctx context.Context,
 		}
 	}
 	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_listDepositWallets_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["merchantId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("merchantId"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["merchantId"] = arg0
 	return args, nil
 }
 
@@ -3167,73 +3167,6 @@ func (ec *executionContext) fieldContext_Mutation_updateDepositWallet(ctx contex
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_updateDepositWallet_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_listDepositWallets(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_listDepositWallets(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().ListDepositWallets(rctx, fc.Args["owner"].(string))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.([]*model.DepositWallet)
-	fc.Result = res
-	return ec.marshalNDepositWallet2ᚕᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐDepositWalletᚄ(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_listDepositWallets(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_DepositWallet_id(ctx, field)
-			case "address":
-				return ec.fieldContext_DepositWallet_address(ctx, field)
-			case "percentage":
-				return ec.fieldContext_DepositWallet_percentage(ctx, field)
-			case "merchant":
-				return ec.fieldContext_DepositWallet_merchant(ctx, field)
-			case "note":
-				return ec.fieldContext_DepositWallet_note(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type DepositWallet", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_listDepositWallets_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -5292,6 +5225,73 @@ func (ec *executionContext) fieldContext_Query_getMerchantPaymentLinks(ctx conte
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_getMerchantPaymentLinks_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_listDepositWallets(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_listDepositWallets(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().ListDepositWallets(rctx, fc.Args["merchantId"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.DepositWallet)
+	fc.Result = res
+	return ec.marshalNDepositWallet2ᚕᚖgithubᚗcomᚋlucidconnectᚋsilverᚑarrowᚋserverᚋgraphqlᚋmerchantᚋgraphᚋmodelᚐDepositWalletᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_listDepositWallets(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_DepositWallet_id(ctx, field)
+			case "address":
+				return ec.fieldContext_DepositWallet_address(ctx, field)
+			case "percentage":
+				return ec.fieldContext_DepositWallet_percentage(ctx, field)
+			case "merchant":
+				return ec.fieldContext_DepositWallet_merchant(ctx, field)
+			case "note":
+				return ec.fieldContext_DepositWallet_note(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DepositWallet", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_listDepositWallets_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -8098,7 +8098,7 @@ func (ec *executionContext) unmarshalInputWalletUpdate(ctx context.Context, obj 
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("address"))
-			data, err := ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -8107,7 +8107,7 @@ func (ec *executionContext) unmarshalInputWalletUpdate(ctx context.Context, obj 
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("percentage"))
-			data, err := ec.unmarshalNFloat2float64(ctx, v)
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -8457,13 +8457,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "updateDepositWallet":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_updateDepositWallet(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "listDepositWallets":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_listDepositWallets(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -8920,6 +8913,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_getMerchantPaymentLinks(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "listDepositWallets":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_listDepositWallets(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -10141,6 +10156,22 @@ func (ec *executionContext) marshalODepositWallet2ᚖgithubᚗcomᚋlucidconnect
 		return graphql.Null
 	}
 	return ec._DepositWallet(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOFloat2ᚖfloat64(ctx context.Context, v interface{}) (*float64, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalFloatContext(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOFloat2ᚖfloat64(ctx context.Context, sel ast.SelectionSet, v *float64) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalFloatContext(*v)
+	return graphql.WrapContextMarshaler(ctx, res)
 }
 
 func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v interface{}) (*int, error) {

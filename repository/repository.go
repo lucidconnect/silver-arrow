@@ -49,6 +49,7 @@ type Database interface {
 	AddDepositWallet(*models.DepositWallet) error
 	FetchDepositWallet(uuid.UUID) (*models.DepositWallet, error)
 	FetchDepositWalletByMerchant(uuid.UUID) ([]models.DepositWallet, error)
+	UpdateDepositWallet(walletId uuid.UUID, update *models.DepositWallet) error
 	DeleteDepositWallet(id uuid.UUID) error
 
 	// Merchant

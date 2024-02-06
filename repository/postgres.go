@@ -486,3 +486,12 @@ func (p *PostgresDB) FetchOneToken(name string, chain int64) (*models.Token, err
 
 	return token, nil
 }
+
+func (p *PostgresDB) UpdateDepositWallet(walletId uuid.UUID, update *models.DepositWallet) error {
+	var wallet *models.DepositWallet
+
+	if err := p.Db.Model(&wallet).Where("id = ?", walletId).Updates(update).Error; err != nil {
+		return err
+	}
+	return nil
+}

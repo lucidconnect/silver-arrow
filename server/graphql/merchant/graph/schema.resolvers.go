@@ -14,6 +14,7 @@ import (
 	"github.com/lucidconnect/silver-arrow/core"
 	"github.com/lucidconnect/silver-arrow/core/merchant"
 	"github.com/lucidconnect/silver-arrow/gqlerror"
+	"github.com/lucidconnect/silver-arrow/repository/models"
 	"github.com/lucidconnect/silver-arrow/server/graphql/merchant/graph/generated"
 	"github.com/lucidconnect/silver-arrow/server/graphql/merchant/graph/model"
 	"github.com/rs/zerolog/log"
@@ -283,24 +284,34 @@ func (r *mutationResolver) UpdateDepositWallet(ctx context.Context, input model.
 		return nil, gqlerror.ErrToGraphQLError(gqlerror.MerchantAuthorisationFailed, err.Error(), ctx)
 	}
 	_ = merchant.NewMerchantService(r.Database, activeMerchant.ID)
-
-	_ = &merchant.DepositAddress{
-		WalletAddress: input.Address,
-		Percentage:    input.Percentage,
+	walletId, _ := uuid.Parse(input.ID)
+	update := &models.DepositWallet{
+		WalletAddress: *input.Address,
+		Percentage:    *input.Percentage,
 		Note:          *input.Note,
 	}
-
-	panic(fmt.Errorf("not implemented: UpdateDepositWallet - updateDepositWallet"))
-}
-
-// ListDepositWallets is the resolver for the listDepositWallets field.
-func (r *mutationResolver) ListDepositWallets(ctx context.Context, owner string) ([]*model.DepositWallet, error) {
-	panic(fmt.Errorf("not implemented: ListDepositWallets - listDepositWallets"))
+	if err := r.Database.UpdateDepositWallet(walletId, update); err != nil {
+		log.Err(err).Caller().Send()
+		return nil, gqlerror.ErrToGraphQLError(gqlerror.InternalError, err.Error(), ctx)
+	}
+	return &model.DepositWallet{
+		ID:         input.ID,
+		Address:    *input.Address,
+		Percentage: *input.Percentage,
+		Note:       input.Note,
+	}, nil
 }
 
 // DeleteDepositWallet is the resolver for the deleteDepositWallet field.
 func (r *mutationResolver) DeleteDepositWallet(ctx context.Context, id string) (string, error) {
-	panic(fmt.Errorf("not implemented: DeleteDepositWallet - deleteDepositWallet"))
+	merchantService := merchant.NewMerchantService(r.Database, uuid.Nil)
+
+	err := merchantService.DeleteDepositWallet(id)
+	if err != nil {
+		return "", gqlerror.ErrToGraphQLError(gqlerror.InternalError, err.Error(), ctx)
+	}
+
+	return id, nil
 }
 
 // FetchOneProduct is the resolver for the fetchOneProduct field.
@@ -425,6 +436,17 @@ func (r *queryResolver) GetMerchantPaymentLinks(ctx context.Context, merchantID 
 	return paymentLinkDetails, nil
 }
 
+// ListDepositWallets is the resolver for the listDepositWallets field.
+func (r *queryResolver) ListDepositWallets(ctx context.Context, merchantID string) ([]*model.DepositWallet, error) {
+	merchantService := merchant.NewMerchantService(r.Database, uuid.Nil)
+	wallets, err := merchantService.ListDepositWallets(merchantID)
+	if err != nil {
+		return nil, gqlerror.ErrToGraphQLError(gqlerror.InternalError, err.Error(), ctx)
+	}
+
+	return wallets, nil
+}
+
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
 
@@ -440,6 +462,9 @@ type queryResolver struct{ *Resolver }
 //   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
 //     it when you're done.
 //   - You have helper methods in this file. Move them out to keep these resolver files clean.
+func (r *mutationResolver) ListDepositWallets(ctx context.Context, owner string) ([]*model.DepositWallet, error) {
+	panic(fmt.Errorf("not implemented: ListDepositWallets - listDepositWallets"))
+}
 func (r *mutationResolver) UpdateMerchantDetails(ctx context.Context, input model.MerchantUpdate) (*model.Merchant, error) {
 
 	return nil, gqlerror.ErrToGraphQLError(gqlerror.InternalError, "err.Error()", ctx)

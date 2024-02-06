@@ -290,3 +290,48 @@ func (m *MerchantService) AddDepositAddress(address *DepositAddress) (*DepositAd
 
 	return address, nil
 }
+
+func (m *MerchantService) UpdateDepositWallet(id string, wallet *DepositAddress) error {
+	walletId, _ := uuid.Parse(id)
+	update := &models.DepositWallet{
+		WalletAddress: wallet.WalletAddress,
+	}
+
+	if err := m.repository.UpdateDepositWallet(walletId, update); err != nil {
+		log.Err(err).Caller().Send()
+		return fmt.Errorf("failed to update merchant deposit detail")
+	}
+
+	return nil
+}
+
+func (m *MerchantService) ListDepositWallets(merchantId string) ([]*model.DepositWallet, error) {
+	var depositAddresses []*model.DepositWallet
+	mid, _ := uuid.Parse(merchantId)
+	depositWallets, err := m.repository.FetchDepositWalletByMerchant(mid)
+	if err != nil {
+		log.Err(err).Caller().Send()
+		return nil, err
+	}
+
+	for _, wallet := range depositWallets {
+		depositAddress := &model.DepositWallet{
+			ID: wallet.ID.String(),
+		}
+
+		depositAddresses = append(depositAddresses, depositAddress)
+	}
+
+	return depositAddresses, nil
+}
+
+func (m *MerchantService) DeleteDepositWallet(walletId string) error {
+	wid, _ := uuid.Parse(walletId)
+
+	if err := m.repository.DeleteDepositWallet(wid); err != nil {
+		log.Err(err).Caller().Send()
+		return err
+	}
+
+	return nil
+}
